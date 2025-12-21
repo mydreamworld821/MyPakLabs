@@ -6,71 +6,44 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LabCard from "@/components/labs/LabCard";
 import { labs } from "@/data/mockData";
-import {
-  FlaskConical,
-  ArrowRight,
-  Shield,
-  Percent,
-  Clock,
-  CheckCircle,
-  Building2,
-  BarChart3,
-  FileText,
-  Sparkles,
-  ChevronRight,
-} from "lucide-react";
-
+import { FlaskConical, ArrowRight, Shield, Percent, Clock, CheckCircle, Building2, BarChart3, FileText, Sparkles, ChevronRight } from "lucide-react";
 const Index = () => {
   const featuredLabs = labs.slice(0, 3);
-
-  const steps = [
-    {
-      icon: Building2,
-      title: "Choose a Lab",
-      description: "Browse top-rated labs near you with exclusive discounts",
-    },
-    {
-      icon: FileText,
-      title: "Select Tests",
-      description: "Pick tests manually or upload your prescription",
-    },
-    {
-      icon: Sparkles,
-      title: "Get Discount ID",
-      description: "Receive a unique ID with locked discounted prices",
-    },
-    {
-      icon: CheckCircle,
-      title: "Visit & Save",
-      description: "Show your ID at the lab and pay the discounted rate",
-    },
-  ];
-
-  const benefits = [
-    {
-      icon: Percent,
-      title: "Up to 35% Off",
-      description: "Exclusive discounts on all lab tests across Pakistan",
-    },
-    {
-      icon: Shield,
-      title: "Verified Labs",
-      description: "All partner labs are ISO certified and trusted",
-    },
-    {
-      icon: Clock,
-      title: "Quick Results",
-      description: "Get your reports faster with priority processing",
-    },
-    {
-      icon: BarChart3,
-      title: "Price Comparison",
-      description: "Compare prices across labs to find the best deal",
-    },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background">
+  const steps = [{
+    icon: Building2,
+    title: "Choose a Lab",
+    description: "Browse top-rated labs near you with exclusive discounts"
+  }, {
+    icon: FileText,
+    title: "Select Tests",
+    description: "Pick tests manually or upload your prescription"
+  }, {
+    icon: Sparkles,
+    title: "Get Discount ID",
+    description: "Receive a unique ID with locked discounted prices"
+  }, {
+    icon: CheckCircle,
+    title: "Visit & Save",
+    description: "Show your ID at the lab and pay the discounted rate"
+  }];
+  const benefits = [{
+    icon: Percent,
+    title: "Up to 35% Off",
+    description: "Exclusive discounts on all lab tests across Pakistan"
+  }, {
+    icon: Shield,
+    title: "Verified Labs",
+    description: "All partner labs are ISO certified and trusted"
+  }, {
+    icon: Clock,
+    title: "Quick Results",
+    description: "Get your reports faster with priority processing"
+  }, {
+    icon: BarChart3,
+    title: "Price Comparison",
+    description: "Compare prices across labs to find the best deal"
+  }];
+  return <div className="min-h-screen bg-background">
       <Navbar />
 
       {/* Hero Section */}
@@ -87,17 +60,23 @@ const Index = () => {
               Save up to 35% on lab tests
             </Badge>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-fade-up" style={{
+            animationDelay: "0.1s"
+          }}>
               Get Lab Tests at{" "}
               <span className="text-gradient">Discounted Prices</span>{" "}
               Across Pakistan
             </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: "0.2s" }}>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up" style={{
+            animationDelay: "0.2s"
+          }}>
               Compare prices from top diagnostic labs, get exclusive discounts, and download your unique discount ID for instant savings.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up" style={{ animationDelay: "0.3s" }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up" style={{
+            animationDelay: "0.3s"
+          }}>
               <Link to="/labs">
                 <Button size="xl" variant="medical" className="w-full sm:w-auto">
                   Browse Labs
@@ -113,7 +92,9 @@ const Index = () => {
             </div>
 
             {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center gap-6 mt-12 animate-fade-up" style={{ animationDelay: "0.4s" }}>
+            <div className="flex flex-wrap justify-center gap-6 mt-12 animate-fade-up" style={{
+            animationDelay: "0.4s"
+          }}>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <CheckCircle className="w-5 h-5 text-medical-green" />
                 <span className="text-sm">50+ Partner Labs</span>
@@ -142,8 +123,7 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step, index) => (
-              <Card key={index} variant="elevated" className="relative">
+            {steps.map((step, index) => <Card key={index} variant="elevated" className="relative">
                 <CardContent className="p-6 text-center">
                   <div className="absolute -top-3 -left-3 w-8 h-8 gradient-hero rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm shadow-glow">
                     {index + 1}
@@ -154,13 +134,10 @@ const Index = () => {
                   <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
                   <p className="text-sm text-muted-foreground">{step.description}</p>
                 </CardContent>
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
+                {index < steps.length - 1 && <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
                     <ChevronRight className="w-6 h-6 text-muted-foreground/30" />
-                  </div>
-                )}
-              </Card>
-            ))}
+                  </div>}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -184,9 +161,7 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredLabs.map((lab) => (
-              <LabCard key={lab.id} lab={lab} />
-            ))}
+            {featuredLabs.map(lab => <LabCard key={lab.id} lab={lab} />)}
           </div>
 
           <div className="text-center mt-8 sm:hidden">
@@ -213,21 +188,19 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <Card key={index} variant="glass" className="border-primary-foreground/10">
+            {benefits.map((benefit, index) => <Card key={index} variant="glass" className="border-primary-foreground/10">
                 <CardContent className="p-6 text-center">
                   <div className="w-14 h-14 rounded-2xl bg-primary-foreground/10 flex items-center justify-center mx-auto mb-4">
                     <benefit.icon className="w-7 h-7 text-primary-foreground" />
                   </div>
-                  <h3 className="font-semibold text-lg text-primary-foreground mb-2">
+                  <h3 className="font-semibold text-lg text-primary-foreground mb-2 bg-card-foreground">
                     {benefit.title}
                   </h3>
                   <p className="text-sm text-primary-foreground/70">
                     {benefit.description}
                   </p>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -265,8 +238,6 @@ const Index = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;

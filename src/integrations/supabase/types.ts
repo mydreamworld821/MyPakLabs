@@ -14,16 +14,344 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      lab_tests: {
+        Row: {
+          created_at: string
+          discounted_price: number | null
+          id: string
+          is_available: boolean | null
+          lab_id: string
+          price: number
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discounted_price?: number | null
+          id?: string
+          is_available?: boolean | null
+          lab_id: string
+          price: number
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discounted_price?: number | null
+          id?: string
+          is_available?: boolean | null
+          lab_id?: string
+          price?: number
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_tests_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "labs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_tests_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labs: {
+        Row: {
+          branches: Json | null
+          cities: string[] | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          popular_tests: string[] | null
+          rating: number | null
+          review_count: number | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          branches?: Json | null
+          cities?: string[] | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          popular_tests?: string[] | null
+          rating?: number | null
+          review_count?: number | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          branches?: Json | null
+          cities?: string[] | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          popular_tests?: string[] | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          discount_percentage: number | null
+          discounted_total: number
+          id: string
+          lab_id: string
+          notes: string | null
+          original_total: number
+          pdf_url: string | null
+          prescription_id: string | null
+          qr_code_url: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          tests: Json
+          unique_id: string
+          updated_at: string
+          user_id: string
+          validity_date: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percentage?: number | null
+          discounted_total: number
+          id?: string
+          lab_id: string
+          notes?: string | null
+          original_total: number
+          pdf_url?: string | null
+          prescription_id?: string | null
+          qr_code_url?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          tests?: Json
+          unique_id: string
+          updated_at?: string
+          user_id: string
+          validity_date: string
+        }
+        Update: {
+          created_at?: string
+          discount_percentage?: number | null
+          discounted_total?: number
+          id?: string
+          lab_id?: string
+          notes?: string | null
+          original_total?: number
+          pdf_url?: string | null
+          prescription_id?: string | null
+          qr_code_url?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          tests?: Json
+          unique_id?: string
+          updated_at?: string
+          user_id?: string
+          validity_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "labs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prescriptions: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          image_url: string
+          lab_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["prescription_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          lab_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["prescription_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          lab_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["prescription_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "labs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          city: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          medical_history: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          medical_history?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          medical_history?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tests: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sample_type: string | null
+          slug: string
+          turnaround_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sample_type?: string | null
+          slug: string
+          turnaround_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sample_type?: string | null
+          slug?: string
+          turnaround_time?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "patient" | "lab"
+      order_status: "pending" | "confirmed" | "completed" | "cancelled"
+      prescription_status: "pending_review" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +478,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "patient", "lab"],
+      order_status: ["pending", "confirmed", "completed", "cancelled"],
+      prescription_status: ["pending_review", "approved", "rejected"],
+    },
   },
 } as const

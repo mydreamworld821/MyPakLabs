@@ -196,7 +196,7 @@ const Index = () => {
                   <h3 className="font-semibold text-lg text-primary-foreground mb-2 bg-card-foreground">
                     {benefit.title}
                   </h3>
-                  <p className="text-sm text-primary-foreground/70">
+                  <p className="text-sm text-primary-foreground/70 bg-medical-blue">
                     {benefit.description}
                   </p>
                 </CardContent>

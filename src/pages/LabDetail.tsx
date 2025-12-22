@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import TestSelector from "@/components/labs/TestSelector";
 import PrescriptionUploader from "@/components/labs/PrescriptionUploader";
 import { getLabById, getTestsForLab, generateUniqueId } from "@/data/mockData";
+import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import {
   ArrowLeft,
   Star,
@@ -66,8 +67,26 @@ const LabDetail = () => {
   };
 
   const handleDownloadPDF = () => {
-    toast.success("PDF download started!");
-    // In a real app, this would generate and download a PDF
+    try {
+      generateBookingPDF({
+        uniqueId,
+        labName: lab.name,
+        tests: selectedTestItems.map((test: any) => ({
+          name: test.name,
+          originalPrice: test.originalPrice,
+          discountedPrice: test.discountedPrice,
+        })),
+        totalOriginal,
+        totalDiscounted,
+        totalSavings,
+        discountPercentage: lab.discount,
+        validityDays: 7,
+      });
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF. Please try again.");
+    }
   };
 
   if (bookingConfirmed) {

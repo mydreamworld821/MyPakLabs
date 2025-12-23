@@ -1,15 +1,25 @@
-import { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FlaskConical, Mail, Lock, User, Phone, ArrowLeft } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { FlaskConical, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { z } from "zod";
+
+const emailSchema = z.string().email("Please enter a valid email address");
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+const nameSchema = z.string().min(2, "Name must be at least 2 characters");
+const phoneSchema = z.string().regex(/^\+?[0-9]{10,14}$/, "Please enter a valid phone number");
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, signUp, signIn, verifyOtp, resendOtp } = useAuth();
   const defaultTab = searchParams.get("mode") === "signup" ? "signup" : "login";
 
   const [loginEmail, setLoginEmail] = useState("");
@@ -19,26 +29,215 @@ const Auth = () => {
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // OTP verification state
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [otpValue, setOtpValue] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    try {
+      emailSchema.parse(loginEmail);
+      passwordSchema.parse(loginPassword);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
+    }
+    
     setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      toast.success("Login successful! Redirecting...");
-      setIsLoading(false);
-    }, 1500);
+    
+    const { error } = await signIn(loginEmail, loginPassword);
+    
+    if (error) {
+      if (error.message.includes("Email not confirmed")) {
+        setPendingEmail(loginEmail);
+        setShowOtpVerification(true);
+        toast.info("Please verify your email with the OTP sent to you.");
+      } else if (error.message.includes("Invalid login credentials")) {
+        toast.error("Invalid email or password. Please try again.");
+      } else {
+        toast.error(error.message);
+      }
+    } else {
+      toast.success("Login successful!");
+      navigate("/");
+    }
+    
+    setIsLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    try {
+      nameSchema.parse(signupName);
+      emailSchema.parse(signupEmail);
+      phoneSchema.parse(signupPhone.replace(/\s/g, ""));
+      passwordSchema.parse(signupPassword);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
+    }
+    
     setIsLoading(true);
-    // Simulate signup
-    setTimeout(() => {
-      toast.success("Account created! Please check your email to verify.");
-      setIsLoading(false);
-    }, 1500);
+    
+    const { error } = await signUp(signupEmail, signupPassword, signupName, signupPhone);
+    
+    if (error) {
+      if (error.message.includes("already registered")) {
+        toast.error("This email is already registered. Please login instead.");
+      } else {
+        toast.error(error.message);
+      }
+    } else {
+      setPendingEmail(signupEmail);
+      setShowOtpVerification(true);
+      setResendCooldown(60);
+      toast.success("Account created! Please check your email for the verification code.");
+    }
+    
+    setIsLoading(false);
   };
+
+  const handleVerifyOtp = async () => {
+    if (otpValue.length !== 6) {
+      toast.error("Please enter the complete 6-digit code");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    const { error } = await verifyOtp(pendingEmail, otpValue);
+    
+    if (error) {
+      toast.error("Invalid or expired code. Please try again.");
+    } else {
+      toast.success("Email verified successfully!");
+      navigate("/");
+    }
+    
+    setIsLoading(false);
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    
+    setIsLoading(true);
+    
+    const { error } = await resendOtp(pendingEmail);
+    
+    if (error) {
+      toast.error("Failed to resend code. Please try again.");
+    } else {
+      toast.success("New verification code sent!");
+      setResendCooldown(60);
+      setOtpValue("");
+    }
+    
+    setIsLoading(false);
+  };
+
+  // OTP Verification Screen
+  if (showOtpVerification) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 gradient-hero rounded-full flex items-center justify-center mb-4">
+              <Mail className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <CardTitle className="text-2xl">Verify Your Email</CardTitle>
+            <CardDescription>
+              We've sent a 6-digit verification code to<br />
+              <span className="font-medium text-foreground">{pendingEmail}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={otpValue}
+                onChange={(value) => setOtpValue(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            
+            <Button 
+              onClick={handleVerifyOtp} 
+              className="w-full" 
+              disabled={isLoading || otpValue.length !== 6}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "Verify Email"
+              )}
+            </Button>
+            
+            <div className="text-center text-sm text-muted-foreground">
+              Didn't receive the code?{" "}
+              {resendCooldown > 0 ? (
+                <span>Resend in {resendCooldown}s</span>
+              ) : (
+                <button
+                  onClick={handleResendOtp}
+                  className="text-primary hover:underline font-medium"
+                  disabled={isLoading}
+                >
+                  Resend Code
+                </button>
+              )}
+            </div>
+            
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setShowOtpVerification(false);
+                setOtpValue("");
+              }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -119,7 +318,14 @@ const Auth = () => {
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Signing in..." : "Sign In"}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Signing in...
+                        </>
+                      ) : (
+                        "Sign In"
+                      )}
                     </Button>
                   </form>
                 </CardContent>
@@ -212,7 +418,14 @@ const Auth = () => {
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Creating account..." : "Create Account"}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        "Create Account"
+                      )}
                     </Button>
                   </form>
                 </CardContent>

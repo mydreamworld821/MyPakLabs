@@ -26,6 +26,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/labs", label: "Labs", icon: Building2 },
   { href: "/admin/tests", label: "Tests", icon: TestTube },
+  { href: "/admin/lab-tests", label: "Lab Pricing", icon: FlaskConical },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/prescriptions", label: "Prescriptions", icon: FileText },
   { href: "/admin/users", label: "Users", icon: Users },

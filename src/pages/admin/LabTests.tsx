@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Filter, Download, Upload } from "lucide-react";
 
 interface LabTest {
   id: string;
@@ -53,12 +53,22 @@ interface Test {
   category: string | null;
 }
 
+interface CSVRow {
+  lab_name: string;
+  test_name: string;
+  price: string;
+  discounted_price: string;
+  is_available: string;
+}
+
 const LabTests = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLabTest, setEditingLabTest] = useState<LabTest | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLabId, setFilterLabId] = useState<string>("all");
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     lab_id: "",
@@ -246,6 +256,211 @@ const LabTests = () => {
     return Math.round(((price - discountedPrice) / price) * 100);
   };
 
+  // CSV Export function
+  const handleExport = () => {
+    if (!labTests || labTests.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const csvHeader = "lab_name,test_name,price,discounted_price,is_available\n";
+    const csvRows = labTests.map((lt) => {
+      const labName = lt.labs?.name || "";
+      const testName = lt.tests?.name || "";
+      const price = lt.price;
+      const discountedPrice = lt.discounted_price || "";
+      const isAvailable = lt.is_available ? "true" : "false";
+      return `"${labName}","${testName}",${price},${discountedPrice},${isAvailable}`;
+    }).join("\n");
+
+    const csvContent = csvHeader + csvRows;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `lab_test_pricing_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported successfully");
+  };
+
+  // Download template function
+  const handleDownloadTemplate = () => {
+    const csvHeader = "lab_name,test_name,price,discounted_price,is_available\n";
+    const exampleRow = '"Example Lab","Blood Test",500,450,true';
+    const csvContent = csvHeader + exampleRow;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "lab_test_pricing_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded");
+  };
+
+  // Parse CSV function
+  const parseCSV = (text: string): CSVRow[] => {
+    const lines = text.split("\n").filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const rows: CSVRow[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values: string[] = [];
+      let current = "";
+      let inQuotes = false;
+      
+      for (const char of lines[i]) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          values.push(current.trim());
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+
+      if (values.length >= 3) {
+        rows.push({
+          lab_name: values[0] || "",
+          test_name: values[1] || "",
+          price: values[2] || "",
+          discounted_price: values[3] || "",
+          is_available: values[4] || "true",
+        });
+      }
+    }
+    return rows;
+  };
+
+  // CSV Import function
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!labs || !tests) {
+      toast.error("Labs and tests data not loaded yet");
+      return;
+    }
+
+    setIsImporting(true);
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const rows = parseCSV(text);
+
+        if (rows.length === 0) {
+          toast.error("No valid data found in CSV");
+          setIsImporting(false);
+          return;
+        }
+
+        const labMap = new Map(labs.map((l) => [l.name.toLowerCase(), l.id]));
+        const testMap = new Map(tests.map((t) => [t.name.toLowerCase(), t.id]));
+
+        let successCount = 0;
+        let errorCount = 0;
+        const errors: string[] = [];
+
+        for (const row of rows) {
+          const labId = labMap.get(row.lab_name.toLowerCase());
+          const testId = testMap.get(row.test_name.toLowerCase());
+
+          if (!labId) {
+            errors.push(`Lab not found: ${row.lab_name}`);
+            errorCount++;
+            continue;
+          }
+          if (!testId) {
+            errors.push(`Test not found: ${row.test_name}`);
+            errorCount++;
+            continue;
+          }
+
+          const price = parseFloat(row.price);
+          if (isNaN(price) || price < 0) {
+            errors.push(`Invalid price for ${row.lab_name} - ${row.test_name}`);
+            errorCount++;
+            continue;
+          }
+
+          const discountedPrice = row.discounted_price ? parseFloat(row.discounted_price) : null;
+          const isAvailable = row.is_available.toLowerCase() !== "false";
+
+          // Upsert: check if exists, then update or insert
+          const { data: existing } = await supabase
+            .from("lab_tests")
+            .select("id")
+            .eq("lab_id", labId)
+            .eq("test_id", testId)
+            .maybeSingle();
+
+          if (existing) {
+            const { error } = await supabase
+              .from("lab_tests")
+              .update({
+                price,
+                discounted_price: discountedPrice,
+                is_available: isAvailable,
+              })
+              .eq("id", existing.id);
+
+            if (error) {
+              errors.push(`Failed to update ${row.lab_name} - ${row.test_name}: ${error.message}`);
+              errorCount++;
+            } else {
+              successCount++;
+            }
+          } else {
+            const { error } = await supabase.from("lab_tests").insert({
+              lab_id: labId,
+              test_id: testId,
+              price,
+              discounted_price: discountedPrice,
+              is_available: isAvailable,
+            });
+
+            if (error) {
+              errors.push(`Failed to add ${row.lab_name} - ${row.test_name}: ${error.message}`);
+              errorCount++;
+            } else {
+              successCount++;
+            }
+          }
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["admin-lab-tests"] });
+
+        if (successCount > 0 && errorCount === 0) {
+          toast.success(`Successfully imported ${successCount} pricing entries`);
+        } else if (successCount > 0 && errorCount > 0) {
+          toast.warning(`Imported ${successCount} entries, ${errorCount} failed`);
+          console.error("Import errors:", errors);
+        } else {
+          toast.error(`Import failed: ${errors.slice(0, 3).join(", ")}`);
+        }
+      } catch (error) {
+        toast.error("Failed to parse CSV file");
+        console.error(error);
+      } finally {
+        setIsImporting(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
   return (
     <AdminLayout>
       <div className="p-6 lg:p-8">
@@ -256,13 +471,37 @@ const LabTests = () => {
               Manage test prices for each laboratory
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Pricing
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleDownloadTemplate}>
+              <Download className="w-4 h-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" onClick={handleExport} disabled={!labTests?.length}>
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {isImporting ? "Importing..." : "Import CSV"}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleImport}
+              className="hidden"
+            />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => resetForm()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Pricing
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>
@@ -375,6 +614,7 @@ const LabTests = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Filters */}

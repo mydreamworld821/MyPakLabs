@@ -11,6 +11,7 @@ import LabDetail from "./pages/LabDetail";
 import Compare from "./pages/Compare";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import MyPrescriptions from "./pages/MyPrescriptions";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLabs from "./pages/admin/Labs";
 import AdminTests from "./pages/admin/Tests";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/labs/:id" element={<LabDetail />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/my-prescriptions" element={<MyPrescriptions />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

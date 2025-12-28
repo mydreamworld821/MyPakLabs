@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import TestSelector from "@/components/labs/TestSelector";
 import PrescriptionUploader from "@/components/labs/PrescriptionUploader";
 import { getLabById, getTestsForLab, generateUniqueId } from "@/data/mockData";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
+import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowLeft,
   Star,
@@ -23,16 +26,22 @@ import {
   Download,
   Copy,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const LabDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { uploadPrescription, isUploading } = usePrescriptionUpload();
+  
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [uniqueId, setUniqueId] = useState("");
+  const [isSavingPrescription, setIsSavingPrescription] = useState(false);
+  const [prescriptionSaved, setPrescriptionSaved] = useState(false);
 
   const lab = getLabById(id || "");
   const tests = getTestsForLab(id || "");
@@ -86,6 +95,55 @@ const LabDetail = () => {
     } catch (error) {
       console.error("PDF generation error:", error);
       toast.error("Failed to generate PDF. Please try again.");
+    }
+  };
+
+  const handlePrescriptionUpload = async (file: File) => {
+    if (!user) {
+      toast.error("Please sign in to upload prescriptions");
+      navigate("/auth");
+      return;
+    }
+    setPrescriptionFile(file);
+  };
+
+  const handleSubmitPrescription = async () => {
+    if (!prescriptionFile || !user) return;
+
+    setIsSavingPrescription(true);
+
+    try {
+      // Upload file to storage
+      const uploadResult = await uploadPrescription(prescriptionFile);
+      
+      if (!uploadResult) {
+        setIsSavingPrescription(false);
+        return;
+      }
+
+      // Save prescription record to database
+      const { error } = await supabase
+        .from("prescriptions")
+        .insert({
+          user_id: user.id,
+          lab_id: id || null,
+          image_url: uploadResult.path,
+          status: "pending_review" as any,
+        });
+
+      if (error) {
+        console.error("Error saving prescription:", error);
+        toast.error("Failed to save prescription");
+        return;
+      }
+
+      setPrescriptionSaved(true);
+      toast.success("Prescription submitted for review!");
+    } catch (error) {
+      console.error("Error submitting prescription:", error);
+      toast.error("Failed to submit prescription");
+    } finally {
+      setIsSavingPrescription(false);
     }
   };
 
@@ -153,6 +211,48 @@ const LabDetail = () => {
               <Button className="flex-1" onClick={handleDownloadPDF}>
                 <Download className="w-4 h-4" />
                 Download PDF Slip
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => navigate("/labs")}>
+                Browse More Labs
+              </Button>
+            </div>
+          </Card>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (prescriptionSaved) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <Card variant="elevated" className="max-w-2xl mx-auto text-center p-8">
+            <div className="w-20 h-20 gradient-hero rounded-full flex items-center justify-center mx-auto mb-6 shadow-glow">
+              <FileText className="w-10 h-10 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Prescription Submitted!</h1>
+            <p className="text-muted-foreground mb-6">
+              Your prescription has been sent to our admin team for review. You will be notified once the tests are approved.
+            </p>
+
+            <Card className="bg-primary/5 border-primary/20 mb-6">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Badge variant="warning">Pending Review</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Our team will review your prescription and approve the appropriate tests. 
+                  You can check the status in your <span className="font-medium">My Prescriptions</span> page.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button className="flex-1" onClick={() => navigate("/my-prescriptions")}>
+                <FileText className="w-4 h-4 mr-2" />
+                View My Prescriptions
               </Button>
               <Button variant="outline" className="flex-1" onClick={() => navigate("/labs")}>
                 Browse More Labs
@@ -239,14 +339,33 @@ const LabDetail = () => {
 
                     <TabsContent value="prescription">
                       <PrescriptionUploader
-                        onUpload={setPrescriptionFile}
+                        onUpload={handlePrescriptionUpload}
                         uploadedFile={prescriptionFile}
                         onRemove={() => setPrescriptionFile(null)}
                       />
                       {prescriptionFile && (
-                        <p className="text-sm text-muted-foreground mt-4 text-center">
-                          Our team will review your prescription and contact you with the final test list and pricing.
-                        </p>
+                        <div className="mt-4 space-y-3">
+                          <p className="text-sm text-muted-foreground text-center">
+                            Click below to submit your prescription for admin review. Our team will approve the tests and notify you.
+                          </p>
+                          <Button 
+                            className="w-full" 
+                            onClick={handleSubmitPrescription}
+                            disabled={isUploading || isSavingPrescription}
+                          >
+                            {(isUploading || isSavingPrescription) ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-4 h-4 mr-2" />
+                                Submit Prescription for Review
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       )}
                     </TabsContent>
                   </Tabs>

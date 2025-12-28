@@ -191,6 +191,7 @@ export type Database = {
       prescriptions: {
         Row: {
           admin_notes: string | null
+          approved_tests: Json | null
           created_at: string
           id: string
           image_url: string
@@ -203,6 +204,7 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          approved_tests?: Json | null
           created_at?: string
           id?: string
           image_url: string
@@ -215,6 +217,7 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          approved_tests?: Json | null
           created_at?: string
           id?: string
           image_url?: string

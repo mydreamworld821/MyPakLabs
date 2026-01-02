@@ -25,6 +25,8 @@ import {
   XCircle,
   FlaskConical,
   ArrowLeft,
+  Building2,
+  Percent,
 } from "lucide-react";
 
 interface ApprovedTest {
@@ -42,6 +44,10 @@ interface Prescription {
   reviewed_at: string | null;
   created_at: string;
   lab_id: string | null;
+  labs?: {
+    name: string;
+    discount_percentage: number | null;
+  } | null;
 }
 
 const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
@@ -89,7 +95,13 @@ const MyPrescriptions = () => {
     try {
       const { data, error } = await supabase
         .from("prescriptions")
-        .select("*")
+        .select(`
+          *,
+          labs:lab_id (
+            name,
+            discount_percentage
+          )
+        `)
         .eq("user_id", user?.id)
         .order("created_at", { ascending: false });
 
@@ -170,6 +182,8 @@ const MyPrescriptions = () => {
                 const config = statusConfig[prescription.status] || statusConfig.pending_review;
                 const StatusIcon = config.icon;
                 const totalPrice = prescription.approved_tests?.reduce((sum, t) => sum + t.price, 0) || 0;
+                const discount = prescription.labs?.discount_percentage || 0;
+                const discountedTotal = totalPrice - (totalPrice * discount / 100);
 
                 return (
                   <Card key={prescription.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -183,6 +197,18 @@ const MyPrescriptions = () => {
                           {config.label}
                         </Badge>
                       </div>
+                      {prescription.labs && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <Building2 className="w-3 h-3" />
+                          <span>{prescription.labs.name}</span>
+                          {discount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Percent className="w-3 h-3 mr-1" />
+                              {discount}% off
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="text-sm text-muted-foreground">
@@ -213,9 +239,21 @@ const MyPrescriptions = () => {
                               </p>
                             )}
                           </div>
-                          <div className="border-t border-green-500/20 mt-2 pt-2 flex justify-between font-semibold">
-                            <span>Total</span>
-                            <span className="text-green-700">Rs. {totalPrice}</span>
+                          <div className="border-t border-green-500/20 mt-2 pt-2 space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span>Subtotal</span>
+                              <span>Rs. {totalPrice}</span>
+                            </div>
+                            {discount > 0 && (
+                              <div className="flex justify-between text-sm text-green-600">
+                                <span>Discount ({discount}%)</span>
+                                <span>-Rs. {(totalPrice * discount / 100).toFixed(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between font-semibold text-green-700">
+                              <span>Total</span>
+                              <span>Rs. {discountedTotal.toFixed(0)}</span>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -309,10 +347,30 @@ const MyPrescriptions = () => {
                           <span className="font-medium">Rs. {test.price}</span>
                         </div>
                       ))}
-                      <div className="flex justify-between pt-2 font-semibold text-green-700">
-                        <span>Total</span>
-                        <span>Rs. {selectedPrescription.approved_tests.reduce((sum, t) => sum + t.price, 0)}</span>
-                      </div>
+                      {(() => {
+                        const subtotal = selectedPrescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
+                        const discountPct = selectedPrescription.labs?.discount_percentage || 0;
+                        const discountAmt = subtotal * discountPct / 100;
+                        const finalTotal = subtotal - discountAmt;
+                        return (
+                          <>
+                            <div className="flex justify-between pt-2 text-sm">
+                              <span>Subtotal</span>
+                              <span>Rs. {subtotal}</span>
+                            </div>
+                            {discountPct > 0 && (
+                              <div className="flex justify-between text-sm text-green-600">
+                                <span>Discount ({discountPct}%)</span>
+                                <span>-Rs. {discountAmt.toFixed(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between pt-1 font-semibold text-green-700 border-t border-green-500/20">
+                              <span>Total</span>
+                              <span>Rs. {finalTotal.toFixed(0)}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>

@@ -9,7 +9,8 @@ import {
   Home,
   Building2,
   LogOut,
-  Shield
+  Shield,
+  FileText
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,17 +87,24 @@ const Navbar = () => {
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-prescriptions" className="flex items-center gap-2 cursor-pointer">
+                      <FileText className="w-4 h-4" />
+                      My Prescriptions
+                    </Link>
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
                           <Shield className="w-4 h-4" />
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                     </>
                   )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
@@ -154,6 +162,12 @@ const Navbar = () => {
                     <p className="text-sm font-medium">{user.user_metadata?.full_name || 'User'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
+                  <Link to="/my-prescriptions" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <FileText className="w-4 h-4" />
+                      My Prescriptions
+                    </Button>
+                  </Link>
                   {isAdmin && (
                     <Link to="/admin" onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full gap-2">

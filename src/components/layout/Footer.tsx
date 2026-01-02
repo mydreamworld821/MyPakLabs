@@ -12,7 +12,7 @@ const Footer = () => {
               <div className="w-10 h-10 gradient-hero rounded-xl flex items-center justify-center">
                 <FlaskConical className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">Medilabs</span>
+              <span className="text-xl font-bold">MyPakLabs</span>
             </Link>
             <p className="text-muted-foreground text-sm">
               Pakistan's trusted platform for discounted lab tests. Compare prices, get exclusive discounts, and save on healthcare.
@@ -40,19 +40,17 @@ const Footer = () => {
               <li><Link to="/labs" className="text-muted-foreground hover:text-background text-sm transition-colors">Browse Labs</Link></li>
               <li><Link to="/compare" className="text-muted-foreground hover:text-background text-sm transition-colors">Compare Prices</Link></li>
               <li><Link to="/auth" className="text-muted-foreground hover:text-background text-sm transition-colors">Login / Sign Up</Link></li>
-              <li><a href="#" className="text-muted-foreground hover:text-background text-sm transition-colors">How It Works</a></li>
+              <li><Link to="/help" className="text-muted-foreground hover:text-background text-sm transition-colors">Help Center</Link></li>
             </ul>
           </div>
 
-          {/* Popular Tests */}
+          {/* Legal */}
           <div>
-            <h4 className="font-semibold mb-4">Popular Tests</h4>
+            <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-muted-foreground hover:text-background text-sm transition-colors">Complete Blood Count</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-background text-sm transition-colors">Thyroid Profile</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-background text-sm transition-colors">Vitamin D Test</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-background text-sm transition-colors">Lipid Profile</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-background text-sm transition-colors">HbA1c</a></li>
+              <li><Link to="/terms" className="text-muted-foreground hover:text-background text-sm transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/partner-terms" className="text-muted-foreground hover:text-background text-sm transition-colors">Partner Lab Terms</Link></li>
+              <li><Link to="/help" className="text-muted-foreground hover:text-background text-sm transition-colors">Contact Support</Link></li>
             </ul>
           </div>
 
@@ -62,11 +60,11 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Phone className="w-4 h-4" />
-                03167523434
+                <a href="tel:+923167523434" className="hover:text-background transition-colors">03167523434</a>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Mail className="w-4 h-4" />
-                mhmmdaqib@gmail.com
+                <a href="mailto:mhmmdaqib@gmail.com" className="hover:text-background transition-colors">mhmmdaqib@gmail.com</a>
               </li>
               <li className="flex items-start gap-2 text-muted-foreground text-sm">
                 <MapPin className="w-4 h-4 mt-0.5" />
@@ -77,7 +75,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-background/10 mt-8 pt-8 text-center text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} Medilabs. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} MyPakLabs. All rights reserved.</p>
         </div>
       </div>
     </footer>

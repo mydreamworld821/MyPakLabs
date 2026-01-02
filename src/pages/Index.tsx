@@ -205,7 +205,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white">
-              Why Choose Medilabs?
+              Why Choose MyPakLabs?
             </h2>
             <p className="text-white/80 mt-3 max-w-xl mx-auto">
               We're committed to making healthcare affordable and accessible for everyone in Pakistan.

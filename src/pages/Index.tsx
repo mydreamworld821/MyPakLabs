@@ -204,25 +204,25 @@ const Index = () => {
       <section className="py-16 md:py-24 gradient-hero">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">
               Why Choose Medilabs?
             </h2>
-            <p className="text-primary-foreground/80 mt-3 max-w-xl mx-auto">
+            <p className="text-white/80 mt-3 max-w-xl mx-auto">
               We're committed to making healthcare affordable and accessible for everyone in Pakistan.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, index) => (
-              <Card key={index} variant="glass" className="border-primary-foreground/10">
+              <Card key={index} variant="glass" className="border-white/10 bg-white/10 backdrop-blur-sm">
                 <CardContent className="p-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-primary-foreground/10 flex items-center justify-center mx-auto mb-4">
-                    <benefit.icon className="w-7 h-7 text-primary-foreground" />
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
+                    <benefit.icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="font-semibold text-lg text-primary-foreground mb-2">
+                  <h3 className="font-semibold text-lg text-white mb-2">
                     {benefit.title}
                   </h3>
-                  <p className="text-sm text-primary-foreground/70">
+                  <p className="text-sm text-white/70">
                     {benefit.description}
                   </p>
                 </CardContent>

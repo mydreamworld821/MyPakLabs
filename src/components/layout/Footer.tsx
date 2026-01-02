@@ -62,15 +62,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Phone className="w-4 h-4" />
-                +92 300 1234567
+                03167523434
               </li>
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Mail className="w-4 h-4" />
-                support@medilabs.pk
+                mhmmdaqib@gmail.com
               </li>
               <li className="flex items-start gap-2 text-muted-foreground text-sm">
                 <MapPin className="w-4 h-4 mt-0.5" />
-                Lahore, Pakistan
+                G13-1 Islamabad
               </li>
             </ul>
           </div>

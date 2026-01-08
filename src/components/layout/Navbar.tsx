@@ -11,7 +11,8 @@ import {
   LogOut,
   Shield,
   FileText,
-  ShoppingCart
+  ShoppingCart,
+  UserCheck
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +27,7 @@ import {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isModerator, signOut } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
@@ -117,6 +118,17 @@ const Navbar = () => {
                       </DropdownMenuItem>
                     </>
                   )}
+                  {isModerator && !isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/prescriptions" className="flex items-center gap-2 cursor-pointer">
+                          <UserCheck className="w-4 h-4" />
+                          Moderator Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
@@ -198,6 +210,14 @@ const Navbar = () => {
                       <Button variant="outline" className="w-full gap-2">
                         <Shield className="w-4 h-4" />
                         Admin Dashboard
+                      </Button>
+                    </Link>
+                  )}
+                  {isModerator && !isAdmin && (
+                    <Link to="/moderator/prescriptions" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full gap-2">
+                        <UserCheck className="w-4 h-4" />
+                        Moderator Panel
                       </Button>
                     </Link>
                   )}

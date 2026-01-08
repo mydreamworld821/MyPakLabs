@@ -25,6 +25,7 @@ import AdminLabTests from "./pages/admin/LabTests";
 import AdminOrders from "./pages/admin/Orders";
 import AdminPrescriptions from "./pages/admin/Prescriptions";
 import AdminUsers from "./pages/admin/Users";
+import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,9 @@ const App = () => (
             <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrders /></ProtectedRoute>} />
             <Route path="/admin/prescriptions" element={<ProtectedRoute requireAdmin><AdminPrescriptions /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
+            
+            {/* Moderator Routes */}
+            <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

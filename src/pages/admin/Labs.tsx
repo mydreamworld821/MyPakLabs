@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,10 @@ const AdminLabs = () => {
     is_active: true
   });
 
+  // CSV file for new lab
+  const [pendingCsvFile, setPendingCsvFile] = useState<File | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetchLabs();
   }, []);
@@ -109,8 +113,77 @@ const AdminLabs = () => {
         cities: "",
         is_active: true
       });
+      setPendingCsvFile(null);
+      if (csvInputRef.current) csvInputRef.current.value = "";
     }
     setIsDialogOpen(true);
+  };
+
+  const importTestsFromCsv = async (labId: string, file: File) => {
+    const text = await file.text();
+    const lines = text.split("\n").filter(line => line.trim());
+    if (lines.length < 2) return;
+
+    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+    const testNameIndex = headers.findIndex(h => h === "test_name");
+    const priceIndex = headers.findIndex(h => h === "price");
+    const discountedPriceIndex = headers.findIndex(h => h === "discounted_price");
+    const isAvailableIndex = headers.findIndex(h => h === "is_available");
+
+    if (testNameIndex === -1 || priceIndex === -1) {
+      toast.error("CSV must have 'test_name' and 'price' columns");
+      return;
+    }
+
+    const rows = lines.slice(1).map(line => {
+      const values = line.split(",").map(v => v.trim());
+      const price = parseFloat(values[priceIndex]) || 0;
+      const discountedPriceValue = discountedPriceIndex >= 0 ? values[discountedPriceIndex] : "";
+      
+      return {
+        test_name: values[testNameIndex],
+        price,
+        discounted_price: discountedPriceValue ? parseFloat(discountedPriceValue) : null,
+        is_available: isAvailableIndex >= 0 ? values[isAvailableIndex].toLowerCase() !== "false" : true
+      };
+    }).filter(row => row.test_name && row.price > 0);
+
+    if (rows.length === 0) {
+      toast.error("No valid test data in CSV");
+      return;
+    }
+
+    // Fetch all tests to map names to IDs
+    const { data: allTests } = await supabase
+      .from("tests")
+      .select("id, name")
+      .eq("is_active", true);
+
+    const testNameToId = new Map(
+      allTests?.map(t => [t.name.toLowerCase(), t.id]) || []
+    );
+
+    let successCount = 0;
+    for (const row of rows) {
+      const testId = testNameToId.get(row.test_name.toLowerCase());
+      if (!testId) continue;
+
+      const { error } = await supabase
+        .from("lab_tests")
+        .insert({
+          lab_id: labId,
+          test_id: testId,
+          price: row.price,
+          discounted_price: row.discounted_price,
+          is_available: row.is_available
+        });
+
+      if (!error) successCount++;
+    }
+
+    if (successCount > 0) {
+      toast.success(`Imported ${successCount} tests for this lab`);
+    }
   };
 
   const handleSave = async () => {
@@ -142,14 +215,23 @@ const AdminLabs = () => {
         if (error) throw error;
         toast.success("Lab updated successfully");
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("labs")
-          .insert(labData);
+          .insert(labData)
+          .select()
+          .single();
 
         if (error) throw error;
         toast.success("Lab created successfully");
+
+        // Import tests from CSV if provided
+        if (pendingCsvFile && data) {
+          await importTestsFromCsv(data.id, pendingCsvFile);
+        }
       }
 
+      setPendingCsvFile(null);
+      if (csvInputRef.current) csvInputRef.current.value = "";
       setIsDialogOpen(false);
       fetchLabs();
     } catch (error: any) {
@@ -294,19 +376,32 @@ const AdminLabs = () => {
                   />
                 </div>
 
-                {editingLab && (
-                  <div className="border-t pt-4">
-                    <Label className="mb-2 block">Bulk Import Tests</Label>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Upload a CSV file to add/update test prices for this lab
-                    </p>
+                <div className="border-t pt-4">
+                  <Label className="mb-2 block">Bulk Import Tests (CSV)</Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Upload a CSV file with test_name, price, discounted_price, is_available columns
+                  </p>
+                  {editingLab ? (
                     <LabTestsCsvUpload
                       labId={editingLab.id}
                       labName={editingLab.name}
                       onSuccess={() => {}}
                     />
-                  </div>
-                )}
+                  ) : (
+                    <Input
+                      ref={csvInputRef}
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => setPendingCsvFile(e.target.files?.[0] || null)}
+                      className="cursor-pointer"
+                    />
+                  )}
+                  {pendingCsvFile && !editingLab && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✓ {pendingCsvFile.name} selected - will import after saving
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex gap-2 pt-4">
                   <Button

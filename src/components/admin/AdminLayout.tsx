@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { playNotificationSound } from "@/utils/notificationSound";
 import {
   FlaskConical,
   LayoutDashboard,
@@ -68,6 +69,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             .maybeSingle();
 
           const patientName = profile?.full_name || 'A patient';
+          
+          // Play notification sound
+          playNotificationSound();
           
           toast.info(`New Prescription Uploaded`, {
             description: `${patientName} has uploaded a new prescription for review.`,

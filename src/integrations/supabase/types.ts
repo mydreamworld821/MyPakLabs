@@ -130,10 +130,12 @@ export type Database = {
       }
       orders: {
         Row: {
+          availed_at: string | null
           created_at: string
           discount_percentage: number | null
           discounted_total: number
           id: string
+          is_availed: boolean | null
           lab_id: string
           notes: string | null
           original_total: number
@@ -148,10 +150,12 @@ export type Database = {
           validity_date: string
         }
         Insert: {
+          availed_at?: string | null
           created_at?: string
           discount_percentage?: number | null
           discounted_total: number
           id?: string
+          is_availed?: boolean | null
           lab_id: string
           notes?: string | null
           original_total: number
@@ -166,10 +170,12 @@ export type Database = {
           validity_date: string
         }
         Update: {
+          availed_at?: string | null
           created_at?: string
           discount_percentage?: number | null
           discounted_total?: number
           id?: string
+          is_availed?: boolean | null
           lab_id?: string
           notes?: string | null
           original_total?: number

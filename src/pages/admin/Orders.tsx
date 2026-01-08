@@ -27,9 +27,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, ShoppingCart, Loader2, Eye, User, Phone, Building2, Calendar, Clock, Download, Printer } from "lucide-react";
+import { Search, ShoppingCart, Loader2, Eye, User, Phone, Building2, Calendar, Clock, Download, Printer, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PatientProfile {
   full_name: string | null;
@@ -60,6 +61,8 @@ interface Order {
   validity_date: string;
   notes: string | null;
   created_at: string;
+  is_availed: boolean | null;
+  availed_at: string | null;
   profiles?: PatientProfile | null;
   labs?: LabInfo | null;
 }
@@ -161,16 +164,25 @@ const AdminOrders = () => {
     const matchesSearch = order.unique_id.toLowerCase().includes(searchLower) || 
                           patientName.includes(searchLower) ||
                           patientPhone.includes(searchLower);
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    
+    let matchesStatus = true;
+    if (statusFilter === "availed") {
+      matchesStatus = order.is_availed === true;
+    } else if (statusFilter === "not_availed") {
+      matchesStatus = order.is_availed !== true;
+    } else if (statusFilter !== "all") {
+      matchesStatus = order.status === statusFilter;
+    }
+    
     return matchesSearch && matchesStatus;
   });
 
   // Calculate stats for business growth
   const totalOrders = orders.length;
-  const confirmedOrders = orders.filter(o => o.status === 'confirmed' || o.status === 'completed').length;
-  const totalRevenue = orders.filter(o => o.status === 'confirmed' || o.status === 'completed')
+  const availedOrders = orders.filter(o => o.is_availed === true).length;
+  const totalRevenue = orders.filter(o => o.is_availed === true)
     .reduce((sum, o) => sum + o.discounted_total, 0);
-  const totalSavings = orders.filter(o => o.status === 'confirmed' || o.status === 'completed')
+  const totalSavings = orders.filter(o => o.is_availed === true)
     .reduce((sum, o) => sum + (o.original_total - o.discounted_total), 0);
 
   return (
@@ -194,7 +206,7 @@ const AdminOrders = () => {
           <Card>
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Availed Discounts</p>
-              <p className="text-2xl font-bold text-green-600">{confirmedOrders}</p>
+              <p className="text-2xl font-bold text-green-600">{availedOrders}</p>
             </CardContent>
           </Card>
           <Card>
@@ -231,9 +243,11 @@ const AdminOrders = () => {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed (Availed)</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="availed">Availed Only</SelectItem>
+                  <SelectItem value="not_availed">Not Availed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -263,6 +277,7 @@ const AdminOrders = () => {
                       <TableHead>Tests</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Availed</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -325,6 +340,32 @@ const AdminOrders = () => {
                               <SelectItem value="cancelled">Cancelled</SelectItem>
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1">
+                                  {order.is_availed ? (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                                      Yes
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-muted-foreground">
+                                      <XCircle className="w-3 h-3 mr-1" />
+                                      No
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {order.is_availed && order.availed_at 
+                                  ? `Availed on ${format(new Date(order.availed_at), "dd MMM yyyy HH:mm")}`
+                                  : "Not yet availed by customer"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell>
                           {format(new Date(order.created_at), "dd MMM yyyy")}
@@ -444,6 +485,29 @@ const AdminOrders = () => {
                       <div className="flex justify-between font-bold text-lg border-t pt-2">
                         <span>Total</span>
                         <span>Rs. {selectedOrder.discounted_total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Availed Status */}
+                <Card className={selectedOrder.is_availed ? "border-green-500/30 bg-green-500/5" : "border-yellow-500/30 bg-yellow-500/5"}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      {selectedOrder.is_availed ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-600" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-yellow-600" />
+                      )}
+                      <div>
+                        <p className="font-semibold">
+                          {selectedOrder.is_availed ? "Discount Availed by Customer" : "Discount Not Yet Availed"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedOrder.is_availed && selectedOrder.availed_at
+                            ? `Confirmed by customer on ${format(new Date(selectedOrder.availed_at), "dd MMM yyyy 'at' HH:mm")}`
+                            : "Customer has not confirmed visiting the lab yet"}
+                        </p>
                       </div>
                     </div>
                   </CardContent>

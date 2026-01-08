@@ -36,8 +36,20 @@ import {
   Download,
   FileText,
   Printer,
+  ThumbsUp,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface OrderTest {
   test_id: string;
@@ -59,6 +71,8 @@ interface Order {
   notes: string | null;
   pdf_url: string | null;
   created_at: string;
+  is_availed: boolean | null;
+  availed_at: string | null;
   labs?: {
     name: string;
     logo_url: string | null;
@@ -160,6 +174,27 @@ const MyBookings = () => {
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsDialogOpen(true);
+  };
+
+  const handleConfirmAvailed = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ 
+          is_availed: true, 
+          availed_at: new Date().toISOString() 
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+      
+      toast.success("Discount availed confirmed!");
+      fetchOrders();
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error confirming availed:", error);
+      toast.error("Failed to confirm");
+    }
   };
 
   if (authLoading) {
@@ -266,6 +301,7 @@ const MyBookings = () => {
                           <TableHead>Tests</TableHead>
                           <TableHead>Total</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Availed</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -308,6 +344,18 @@ const MyBookings = () => {
                                   <StatusIcon className="w-3 h-3 mr-1" />
                                   {config.label}
                                 </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {order.is_availed ? (
+                                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Yes
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    No
+                                  </Badge>
+                                )}
                               </TableCell>
                               <TableCell>
                                 <span className="text-sm">{format(new Date(order.created_at), "dd MMM yyyy")}</span>
@@ -439,6 +487,58 @@ const MyBookings = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Availed Status */}
+              <Card className={selectedOrder.is_availed ? "border-green-500/30 bg-green-500/5" : "border-yellow-500/30 bg-yellow-500/5"}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {selectedOrder.is_availed ? (
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      ) : (
+                        <ThumbsUp className="w-6 h-6 text-yellow-600" />
+                      )}
+                      <div>
+                        <p className="font-semibold">
+                          {selectedOrder.is_availed ? "Discount Availed" : "Did you avail this discount?"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedOrder.is_availed && selectedOrder.availed_at
+                            ? `Confirmed on ${format(new Date(selectedOrder.availed_at), "dd MMM yyyy")}`
+                            : "Confirm after visiting the lab"}
+                        </p>
+                      </div>
+                    </div>
+                    {!selectedOrder.is_availed && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                            <ThumbsUp className="w-4 h-4 mr-2" />
+                            Yes, Availed
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Discount Availed</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you visited the lab and availed this discount? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleConfirmAvailed(selectedOrder.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Yes, Confirm
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* PDF/Print Actions */}
               <div className="flex gap-3">

@@ -29,8 +29,9 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Filter, Download, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Filter, Download, Upload, TrendingUp } from "lucide-react";
 import ImportInstructions from "@/components/admin/ImportInstructions";
+import { Progress } from "@/components/ui/progress";
 
 interface LabTest {
   id: string;
@@ -476,9 +477,35 @@ const LabTests = () => {
     reader.readAsText(file);
   };
 
+  // Calculate pricing coverage stats
+  const totalPossibleCombinations = (labs?.length || 0) * (tests?.length || 0);
+  const configuredCount = labTests?.length || 0;
+  const coveragePercentage = totalPossibleCombinations > 0 
+    ? Math.round((configuredCount / totalPossibleCombinations) * 100) 
+    : 0;
+
   return (
     <AdminLayout>
       <div className="p-6 lg:p-8">
+        {/* Pricing Coverage Stats */}
+        {labs && tests && (
+          <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <span className="font-medium text-sm">Pricing Coverage</span>
+              </div>
+              <span className="text-sm font-semibold">
+                {configuredCount} / {totalPossibleCombinations} ({coveragePercentage}%)
+              </span>
+            </div>
+            <Progress value={coveragePercentage} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {labs.length} labs × {tests.length} tests = {totalPossibleCombinations} possible combinations
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold">Lab Test Pricing</h1>

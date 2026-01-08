@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LabCard from "@/components/labs/LabCard";
-import { labs } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
 import {
   FlaskConical,
   ArrowRight,
@@ -18,10 +19,48 @@ import {
   FileText,
   Sparkles,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
+interface Lab {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  discount_percentage: number | null;
+  rating: number | null;
+  review_count: number | null;
+  cities: string[] | null;
+  branches: unknown;
+  popular_tests: string[] | null;
+}
+
 const Index = () => {
-  const featuredLabs = labs.slice(0, 3);
+  const [featuredLabs, setFeaturedLabs] = useState<Lab[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedLabs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("labs")
+          .select("*")
+          .eq("is_active", true)
+          .order("discount_percentage", { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+        setFeaturedLabs(data || []);
+      } catch (error) {
+        console.error("Error fetching featured labs:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeaturedLabs();
+  }, []);
 
   const steps = [
     {
@@ -184,9 +223,19 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredLabs.map((lab) => (
-              <LabCard key={lab.id} lab={lab} />
-            ))}
+            {isLoading ? (
+              <div className="col-span-full flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : featuredLabs.length > 0 ? (
+              featuredLabs.map((lab) => (
+                <LabCard key={lab.id} lab={lab} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                No labs available yet
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-8 sm:hidden">

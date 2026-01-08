@@ -8,7 +8,6 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TestSelector from "@/components/labs/TestSelector";
 import PrescriptionUploader from "@/components/labs/PrescriptionUploader";
-import { getLabById, getTestsForLab, generateUniqueId } from "@/data/mockData";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,12 +29,55 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface Lab {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  discount_percentage: number | null;
+  rating: number | null;
+  review_count: number | null;
+  cities: string[] | null;
+  branches: unknown;
+  popular_tests: string[] | null;
+}
+
+interface LabTest {
+  id: string;
+  test_id: string;
+  price: number;
+  discounted_price: number | null;
+  is_available: boolean | null;
+  tests: {
+    id: string;
+    name: string;
+    category: string | null;
+    description: string | null;
+    sample_type: string | null;
+    turnaround_time: string | null;
+  } | null;
+}
+
+interface TestItem {
+  id: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  originalPrice: number;
+  discountedPrice: number;
+  discount: number;
+}
+
 const LabDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { uploadPrescription, isUploading } = usePrescriptionUpload();
   
+  const [lab, setLab] = useState<Lab | null>(null);
+  const [tests, setTests] = useState<TestItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -43,8 +85,91 @@ const LabDetail = () => {
   const [isSavingPrescription, setIsSavingPrescription] = useState(false);
   const [prescriptionSaved, setPrescriptionSaved] = useState(false);
 
-  const lab = getLabById(id || "");
-  const tests = getTestsForLab(id || "");
+  useEffect(() => {
+    if (id) {
+      fetchLabData();
+    }
+  }, [id]);
+
+  const fetchLabData = async () => {
+    try {
+      // Fetch lab details
+      const { data: labData, error: labError } = await supabase
+        .from("labs")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (labError) throw labError;
+      if (!labData) {
+        setIsLoading(false);
+        return;
+      }
+
+      setLab(labData);
+      const discount = labData.discount_percentage || 0;
+
+      // Fetch lab tests with test details
+      const { data: labTestsData, error: testsError } = await supabase
+        .from("lab_tests")
+        .select(`
+          id,
+          test_id,
+          price,
+          discounted_price,
+          is_available,
+          tests:test_id (
+            id,
+            name,
+            category,
+            description,
+            sample_type,
+            turnaround_time
+          )
+        `)
+        .eq("lab_id", id)
+        .eq("is_available", true);
+
+      if (testsError) throw testsError;
+
+      // Transform lab tests to the format expected by TestSelector
+      const transformedTests: TestItem[] = (labTestsData || [])
+        .filter((lt: any) => lt.tests)
+        .map((lt: any) => ({
+          id: lt.test_id,
+          name: lt.tests.name,
+          category: lt.tests.category,
+          description: lt.tests.description,
+          originalPrice: lt.price,
+          discountedPrice: lt.discounted_price || Math.round(lt.price * (1 - discount / 100)),
+          discount: discount,
+        }));
+
+      setTests(transformedTests);
+    } catch (error) {
+      console.error("Error fetching lab data:", error);
+      toast.error("Failed to load lab details");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateUniqueId = (): string => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    return `MEDI-${year}-${random}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-24 flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   if (!lab) {
     return (
@@ -58,14 +183,51 @@ const LabDetail = () => {
     );
   }
 
-  const selectedTestItems = tests.filter((t: any) => selectedTests.includes(t.id));
-  const totalOriginal = selectedTestItems.reduce((sum: number, t: any) => sum + t.originalPrice, 0);
-  const totalDiscounted = selectedTestItems.reduce((sum: number, t: any) => sum + t.discountedPrice, 0);
+  const discount = lab.discount_percentage || 0;
+  const branches = Array.isArray(lab.branches) ? lab.branches as any[] : [];
+  const cities = lab.cities || [];
+
+  const selectedTestItems = tests.filter((t) => selectedTests.includes(t.id));
+  const totalOriginal = selectedTestItems.reduce((sum, t) => sum + t.originalPrice, 0);
+  const totalDiscounted = selectedTestItems.reduce((sum, t) => sum + t.discountedPrice, 0);
   const totalSavings = totalOriginal - totalDiscounted;
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     const newId = generateUniqueId();
     setUniqueId(newId);
+
+    // Save order to database if user is logged in
+    if (user) {
+      try {
+        const validityDate = new Date();
+        validityDate.setDate(validityDate.getDate() + 7);
+
+        const { error } = await supabase
+          .from("orders")
+          .insert({
+            user_id: user.id,
+            lab_id: lab.id,
+            unique_id: newId,
+            tests: selectedTestItems.map(t => ({
+              test_id: t.id,
+              test_name: t.name,
+              price: t.originalPrice,
+              discounted_price: t.discountedPrice
+            })),
+            original_total: totalOriginal,
+            discount_percentage: discount,
+            discounted_total: totalDiscounted,
+            validity_date: validityDate.toISOString().split('T')[0],
+            status: 'pending'
+          });
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error saving order:", error);
+        // Continue with booking even if save fails
+      }
+    }
+
     setBookingConfirmed(true);
     toast.success("Booking confirmed! Your discount ID has been generated.");
   };
@@ -80,7 +242,7 @@ const LabDetail = () => {
       generateBookingPDF({
         uniqueId,
         labName: lab.name,
-        tests: selectedTestItems.map((test: any) => ({
+        tests: selectedTestItems.map((test) => ({
           name: test.name,
           originalPrice: test.originalPrice,
           discountedPrice: test.discountedPrice,
@@ -88,7 +250,7 @@ const LabDetail = () => {
         totalOriginal,
         totalDiscounted,
         totalSavings,
-        discountPercentage: lab.discount,
+        discountPercentage: discount,
         validityDays: 7,
       });
       toast.success("PDF downloaded successfully!");
@@ -113,7 +275,6 @@ const LabDetail = () => {
     setIsSavingPrescription(true);
 
     try {
-      // Upload file to storage
       const uploadResult = await uploadPrescription(prescriptionFile);
       
       if (!uploadResult) {
@@ -121,7 +282,6 @@ const LabDetail = () => {
         return;
       }
 
-      // Save prescription record to database
       const { error } = await supabase
         .from("prescriptions")
         .insert({
@@ -194,7 +354,7 @@ const LabDetail = () => {
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Discount ({lab.discount}%)</span>
+                <span className="text-muted-foreground">Discount ({discount}%)</span>
                 <span className="text-medical-green font-medium">
                   - Rs. {totalSavings.toLocaleString()}
                 </span>
@@ -282,23 +442,34 @@ const LabDetail = () => {
           </Button>
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <Badge className="bg-primary-foreground/10 text-primary-foreground border-0 mb-2">
-                <Sparkles className="w-3 h-3 mr-1" />
-                {lab.discount}% Discount
-              </Badge>
-              <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-2">
-                {lab.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 text-primary-foreground/80">
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-current" />
-                  <span>{lab.rating}</span>
-                  <span className="text-sm">({lab.reviewCount.toLocaleString()} reviews)</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{lab.city}</span>
+            <div className="flex items-center gap-4">
+              {lab.logo_url && (
+                <img src={lab.logo_url} alt={lab.name} className="w-16 h-16 rounded-lg object-contain bg-white p-2" />
+              )}
+              <div>
+                <Badge className="bg-primary-foreground/10 text-primary-foreground border-0 mb-2">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  {discount}% Discount
+                </Badge>
+                <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-2">
+                  {lab.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-primary-foreground/80">
+                  {lab.rating && (
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span>{lab.rating}</span>
+                      {lab.review_count && (
+                        <span className="text-sm">({lab.review_count.toLocaleString()} reviews)</span>
+                      )}
+                    </div>
+                  )}
+                  {cities.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{cities.join(", ")}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -330,11 +501,18 @@ const LabDetail = () => {
                     </TabsList>
 
                     <TabsContent value="manual">
-                      <TestSelector
-                        tests={tests as any}
-                        selectedTests={selectedTests}
-                        onSelectionChange={setSelectedTests}
-                      />
+                      {tests.length > 0 ? (
+                        <TestSelector
+                          tests={tests as any}
+                          selectedTests={selectedTests}
+                          onSelectionChange={setSelectedTests}
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p>No tests available for this lab yet.</p>
+                          <p className="text-sm mt-2">Please check back later or contact the lab directly.</p>
+                        </div>
+                      )}
                     </TabsContent>
 
                     <TabsContent value="prescription">
@@ -381,12 +559,16 @@ const LabDetail = () => {
                   <CardTitle className="text-lg">Lab Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{lab.description}</p>
+                  {lab.description && (
+                    <p className="text-sm text-muted-foreground">{lab.description}</p>
+                  )}
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{lab.branches.length} branches in {lab.city}</span>
-                    </div>
+                    {branches.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span>{branches.length} branches in {cities.join(", ")}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span>Open 7 AM - 10 PM</span>
@@ -412,7 +594,7 @@ const LabDetail = () => {
                   {selectedTests.length > 0 ? (
                     <>
                       <div className="space-y-2">
-                        {selectedTestItems.map((test: any) => (
+                        {selectedTestItems.map((test) => (
                           <div key={test.id} className="flex justify-between text-sm">
                             <span className="truncate flex-1 pr-2">{test.name}</span>
                             <span className="font-medium">
@@ -431,7 +613,7 @@ const LabDetail = () => {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">
-                            Discount ({lab.discount}%)
+                            Discount ({discount}%)
                           </span>
                           <span className="text-medical-green">
                             - Rs. {totalSavings.toLocaleString()}

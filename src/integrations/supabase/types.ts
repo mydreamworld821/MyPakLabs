@@ -66,6 +66,9 @@ export type Database = {
         Row: {
           branches: Json | null
           cities: string[] | null
+          closing_time: string | null
+          contact_email: string | null
+          contact_phone: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -74,6 +77,7 @@ export type Database = {
           is_active: boolean | null
           logo_url: string | null
           name: string
+          opening_time: string | null
           popular_tests: string[] | null
           rating: number | null
           review_count: number | null
@@ -83,6 +87,9 @@ export type Database = {
         Insert: {
           branches?: Json | null
           cities?: string[] | null
+          closing_time?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -91,6 +98,7 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           name: string
+          opening_time?: string | null
           popular_tests?: string[] | null
           rating?: number | null
           review_count?: number | null
@@ -100,6 +108,9 @@ export type Database = {
         Update: {
           branches?: Json | null
           cities?: string[] | null
+          closing_time?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -108,6 +119,7 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           name?: string
+          opening_time?: string | null
           popular_tests?: string[] | null
           rating?: number | null
           review_count?: number | null

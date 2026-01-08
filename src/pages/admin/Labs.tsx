@@ -45,6 +45,7 @@ interface Lab {
 
 const AdminLabs = () => {
   const [labs, setLabs] = useState<Lab[]>([]);
+  const [labTestCounts, setLabTestCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -80,6 +81,21 @@ const AdminLabs = () => {
 
       if (error) throw error;
       setLabs(data || []);
+
+      // Fetch test counts for each lab
+      if (data && data.length > 0) {
+        const { data: labTests } = await supabase
+          .from("lab_tests")
+          .select("lab_id");
+
+        if (labTests) {
+          const counts: Record<string, number> = {};
+          labTests.forEach((lt) => {
+            counts[lt.lab_id] = (counts[lt.lab_id] || 0) + 1;
+          });
+          setLabTestCounts(counts);
+        }
+      }
     } catch (error) {
       console.error("Error fetching labs:", error);
       toast.error("Failed to fetch labs");
@@ -465,6 +481,7 @@ const AdminLabs = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Lab</TableHead>
+                      <TableHead>Tests</TableHead>
                       <TableHead>Discount</TableHead>
                       <TableHead>Cities</TableHead>
                       <TableHead>Status</TableHead>
@@ -492,6 +509,11 @@ const AdminLabs = () => {
                               <p className="text-sm text-muted-foreground">{lab.slug}</p>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {labTestCounts[lab.id] || 0}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">

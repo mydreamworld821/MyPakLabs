@@ -287,21 +287,35 @@ const LabTests = () => {
     toast.success("CSV exported successfully");
   };
 
-  // Download template function
-  const handleDownloadTemplate = () => {
+  // Download template function - generates all lab-test combinations
+  const handleDownloadTemplate = (includeAllCombinations: boolean = false) => {
     const csvHeader = "lab_name,test_name,price,discounted_price,is_available\n";
-    const exampleRow = '"Example Lab","Blood Test",500,450,true';
-    const csvContent = csvHeader + exampleRow;
+    
+    let csvRows: string;
+    if (includeAllCombinations && labs && tests) {
+      // Generate all lab-test combinations with placeholder prices
+      csvRows = labs.flatMap(lab => 
+        tests.map(test => `"${lab.name}","${test.name}",0,,true`)
+      ).join("\n");
+      toast.success(`Template with ${labs.length * tests.length} combinations downloaded`);
+    } else {
+      // Simple example template
+      csvRows = '"Example Lab","Blood Test",500,450,true';
+      toast.success("Template downloaded");
+    }
+    
+    const csvContent = csvHeader + csvRows;
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "lab_test_pricing_template.csv";
+    link.download = includeAllCombinations 
+      ? `lab_test_pricing_bulk_${new Date().toISOString().split("T")[0]}.csv`
+      : "lab_test_pricing_template.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success("Template downloaded");
   };
 
   // Parse CSV function
@@ -474,9 +488,13 @@ const LabTests = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             <ImportInstructions />
-            <Button variant="outline" onClick={handleDownloadTemplate}>
+            <Button variant="outline" onClick={() => handleDownloadTemplate(false)}>
               <Download className="w-4 h-4 mr-2" />
               Template
+            </Button>
+            <Button variant="outline" onClick={() => handleDownloadTemplate(true)} disabled={!labs?.length || !tests?.length}>
+              <Download className="w-4 h-4 mr-2" />
+              Bulk Template
             </Button>
             <Button variant="outline" onClick={handleExport} disabled={!labTests?.length}>
               <Download className="w-4 h-4 mr-2" />

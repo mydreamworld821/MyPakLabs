@@ -47,10 +47,12 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 gradient-hero rounded-xl flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-              <FlaskConical className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">MyPakLabs</span>
+            <img 
+              src="/images/mypaklabs-logo.png" 
+              alt="My Pak Labs" 
+              className="w-10 h-10 object-contain group-hover:scale-105 transition-transform"
+            />
+            <span className="text-xl font-bold text-primary">My Pak Labs</span>
           </Link>
 
           {/* Desktop Navigation */}

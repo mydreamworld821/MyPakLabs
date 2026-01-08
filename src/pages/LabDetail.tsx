@@ -534,10 +534,10 @@ const LabDetail = () => {
                       </div>
                     </div>
                   )}
-                  {branches.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {discount > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-primary font-medium">
                       <Shield className="w-4 h-4" />
-                      <span>{branches.length} collection point{branches.length > 1 ? 's' : ''}</span>
+                      <span>Discount available across Pakistan</span>
                     </div>
                   )}
                 </div>
@@ -641,13 +641,13 @@ const LabDetail = () => {
                     <Shield className="w-4 h-4 text-muted-foreground" />
                     <span>ISO 15189 Certified</span>
                   </div>
-                  {branches.length > 0 && (
+                  {discount > 0 && (
                     <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                      <MapPin className="w-4 h-4 text-primary mt-0.5" />
                       <div>
-                        <span className="font-medium">{branches.length} Collection Points</span>
+                        <span className="font-medium text-primary">{discount}% Discount</span>
                         <div className="text-muted-foreground mt-1">
-                          {cities.join(", ")}
+                          Available anywhere in Pakistan
                         </div>
                       </div>
                     </div>

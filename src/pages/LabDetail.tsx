@@ -193,43 +193,56 @@ const LabDetail = () => {
   const totalSavings = totalOriginal - totalDiscounted;
 
   const handleConfirmBooking = async () => {
+    if (!user) {
+      toast.error("Please sign in to book tests");
+      navigate("/auth");
+      return;
+    }
+
+    if (selectedTests.length === 0) {
+      toast.error("Please select at least one test");
+      return;
+    }
+
     const newId = generateUniqueId();
     setUniqueId(newId);
 
-    // Save order to database if user is logged in
-    if (user) {
-      try {
-        const validityDate = new Date();
-        validityDate.setDate(validityDate.getDate() + 7);
+    // Save order to database
+    try {
+      const validityDate = new Date();
+      validityDate.setDate(validityDate.getDate() + 7);
 
-        const { error } = await supabase
-          .from("orders")
-          .insert({
-            user_id: user.id,
-            lab_id: lab.id,
-            unique_id: newId,
-            tests: selectedTestItems.map(t => ({
-              test_id: t.id,
-              test_name: t.name,
-              price: t.originalPrice,
-              discounted_price: t.discountedPrice
-            })),
-            original_total: totalOriginal,
-            discount_percentage: discount,
-            discounted_total: totalDiscounted,
-            validity_date: validityDate.toISOString().split('T')[0],
-            status: 'pending'
-          });
+      const { error } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          lab_id: lab.id,
+          unique_id: newId,
+          tests: selectedTestItems.map(t => ({
+            test_id: t.id,
+            test_name: t.name,
+            price: t.originalPrice,
+            discounted_price: t.discountedPrice
+          })),
+          original_total: totalOriginal,
+          discount_percentage: discount,
+          discounted_total: totalDiscounted,
+          validity_date: validityDate.toISOString().split('T')[0],
+          status: 'pending'
+        });
 
-        if (error) throw error;
-      } catch (error) {
+      if (error) {
         console.error("Error saving order:", error);
-        // Continue with booking even if save fails
+        toast.error("Failed to save order. Please try again.");
+        return;
       }
-    }
 
-    setBookingConfirmed(true);
-    toast.success("Booking confirmed! Your discount ID has been generated.");
+      setBookingConfirmed(true);
+      toast.success("Booking confirmed! Your discount ID has been generated.");
+    } catch (error) {
+      console.error("Error saving order:", error);
+      toast.error("Failed to save order. Please try again.");
+    }
   };
 
   const handleCopyId = () => {

@@ -600,7 +600,7 @@ const LabTests = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price (₹) *</Label>
+                    <Label htmlFor="price">Price (Rs.) *</Label>
                     <Input
                       id="price"
                       type="number"
@@ -615,7 +615,7 @@ const LabTests = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="discounted_price">Discounted Price (₹)</Label>
+                    <Label htmlFor="discounted_price">Discounted Price (Rs.)</Label>
                     <Input
                       id="discounted_price"
                       type="number"
@@ -733,10 +733,10 @@ const LabTests = () => {
                       <TableCell className="text-muted-foreground">
                         {labTest.tests?.category || "-"}
                       </TableCell>
-                      <TableCell className="text-right">₹{labTest.price}</TableCell>
+                      <TableCell className="text-right">Rs. {labTest.price.toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         {labTest.discounted_price ? (
-                          <span className="text-green-600">₹{labTest.discounted_price}</span>
+                          <span className="text-green-600">Rs. {labTest.discounted_price.toLocaleString()}</span>
                         ) : (
                           "-"
                         )}

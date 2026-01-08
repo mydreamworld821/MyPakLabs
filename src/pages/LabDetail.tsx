@@ -36,6 +36,7 @@ interface Lab {
   slug: string;
   description: string | null;
   logo_url: string | null;
+  cover_image_url: string | null;
   discount_percentage: number | null;
   rating: number | null;
   review_count: number | null;
@@ -442,51 +443,107 @@ const LabDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Header */}
-      <section className="pt-24 pb-8 gradient-hero relative overflow-hidden">
-        <div className="container mx-auto px-4 relative">
+      {/* Hero Banner */}
+      <section className="pt-20 relative">
+        {/* Cover Image */}
+        <div className="relative h-64 md:h-80 lg:h-96 w-full overflow-hidden">
+          {lab.cover_image_url ? (
+            <img 
+              src={lab.cover_image_url} 
+              alt={`${lab.name} cover`} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full gradient-hero" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        </div>
+
+        {/* Lab Info Overlay */}
+        <div className="container mx-auto px-4 relative -mt-32 md:-mt-40">
           <Button
             variant="ghost"
-            className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 mb-4"
+            className="text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 mb-4"
             onClick={() => navigate("/labs")}
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Labs
           </Button>
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {lab.logo_url && (
-                <img src={lab.logo_url} alt={lab.name} className="w-16 h-16 rounded-lg object-contain bg-white p-2" />
-              )}
-              <div>
-                <Badge className="bg-primary-foreground/10 text-primary-foreground border-0 mb-2">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  {discount}% Discount
-                </Badge>
-                <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-2">
-                  {lab.name}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4 text-primary-foreground/80">
-                  {lab.rating && (
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-current" />
-                      <span>{lab.rating}</span>
-                      {lab.review_count && (
-                        <span className="text-sm">({lab.review_count.toLocaleString()} reviews)</span>
-                      )}
+          <Card className="p-6 md:p-8 shadow-lg">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Logo */}
+              <div className="shrink-0">
+                {lab.logo_url ? (
+                  <img 
+                    src={lab.logo_url} 
+                    alt={lab.name} 
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-contain bg-muted p-3 border border-border" 
+                  />
+                ) : (
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl gradient-hero flex items-center justify-center">
+                    <span className="text-2xl md:text-3xl font-bold text-primary-foreground">
+                      {lab.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Lab Details */}
+              <div className="flex-1 space-y-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <Badge className="bg-primary/10 text-primary border-primary/20">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      {discount}% Discount
+                    </Badge>
+                    {lab.rating && (
+                      <Badge variant="outline" className="gap-1">
+                        <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                        {lab.rating}
+                        {lab.review_count && (
+                          <span className="text-muted-foreground ml-1">({lab.review_count.toLocaleString()})</span>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+                    {lab.name}
+                  </h1>
+                </div>
+
+                {/* Description */}
+                {lab.description && (
+                  <p className="text-muted-foreground leading-relaxed">
+                    {lab.description}
+                  </p>
+                )}
+
+                {/* Cities & Branches */}
+                <div className="flex flex-wrap gap-4 pt-2">
+                  {cities.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span className="font-medium">Available in:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {cities.map((city, index) => (
+                          <Badge key={city} variant="secondary" className="text-xs">
+                            {city}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {cities.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>{cities.join(", ")}</span>
+                  {branches.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Shield className="w-4 h-4" />
+                      <span>{branches.length} collection point{branches.length > 1 ? 's' : ''}</span>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </section>
 
@@ -566,35 +623,35 @@ const LabDetail = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Lab Info */}
+              {/* Quick Info */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Lab Information</CardTitle>
+                  <CardTitle className="text-lg">Quick Info</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {lab.description && (
-                    <p className="text-sm text-muted-foreground">{lab.description}</p>
-                  )}
-                  <div className="space-y-2">
-                    {branches.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span>{branches.length} branches in {cities.join(", ")}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>Open 7 AM - 10 PM</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>+92 300 1234567</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Shield className="w-4 h-4 text-muted-foreground" />
-                      <span>ISO 15189 Certified</span>
-                    </div>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span>Open 7 AM - 10 PM</span>
                   </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>+92 300 1234567</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Shield className="w-4 h-4 text-muted-foreground" />
+                    <span>ISO 15189 Certified</span>
+                  </div>
+                  {branches.length > 0 && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="font-medium">{branches.length} Collection Points</span>
+                        <div className="text-muted-foreground mt-1">
+                          {cities.join(", ")}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

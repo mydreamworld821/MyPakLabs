@@ -43,9 +43,9 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
 
   // Company Name - Center
   doc.setTextColor(75, 0, 130);
-  doc.setFontSize(20);
+  doc.setFontSize(28);
   doc.setFont('helvetica', 'bold');
-  doc.text('My Pak Labs', pageWidth / 2, y + 10, { align: 'center' });
+  doc.text('My Pak Labs', pageWidth / 2, y + 12, { align: 'center' });
 
   // Contact Details - Two rows below company name
   doc.setFontSize(8);
@@ -217,14 +217,15 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
 
   // Instructions Box
   doc.setFillColor(254, 249, 195);
-  doc.roundedRect(margin, y, pageWidth - 2 * margin, 44, 2, 2, 'F');
+  doc.roundedRect(margin, y, pageWidth - 2 * margin, 36, 2, 2, 'F');
   
   doc.setTextColor(161, 98, 7);
-  doc.setFontSize(12);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.text('Important Instructions:', margin + 5, y + 10);
+  doc.text('Important Instructions:', margin + 5, y + 8);
   
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
   const instructions = [
     '1. Present this slip at the lab reception with your CNIC/ID',
     '2. Quote your Discount ID to avail the discounted prices',
@@ -232,13 +233,13 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
     '4. One-time use only - ID cannot be reused after redemption'
   ];
   
-  let instY = y + 18;
+  let instY = y + 14;
   instructions.forEach(inst => {
     doc.text(inst, margin + 5, instY);
-    instY += 6;
+    instY += 5;
   });
   
-  y += 52;
+  y += 42;
 
   // Footer
   doc.setDrawColor(75, 0, 130);

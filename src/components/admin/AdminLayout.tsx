@@ -50,6 +50,30 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   }, [isAdmin, navigate]);
 
+  const ADMIN_EMAIL = "mhmmdaqib@gmail.com";
+
+  // Helper function to send email notification
+  const sendEmailNotification = async (
+    type: "prescription" | "order",
+    patientName: string,
+    labName?: string,
+    orderId?: string
+  ) => {
+    try {
+      await supabase.functions.invoke('send-admin-notification', {
+        body: {
+          type,
+          patientName,
+          labName,
+          orderId,
+          adminEmail: ADMIN_EMAIL,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to send email notification:', error);
+    }
+  };
+
   // Real-time subscription for new prescriptions
   useEffect(() => {
     const channel = supabase
@@ -73,6 +97,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           
           // Play notification sound
           playNotificationSound();
+          
+          // Send email notification
+          sendEmailNotification('prescription', patientName);
           
           toast.info(`New Prescription Uploaded`, {
             description: `${patientName} has uploaded a new prescription for review.`,
@@ -124,6 +151,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           
           // Play notification sound
           playNotificationSound();
+          
+          // Send email notification
+          sendEmailNotification('order', patientName, labName, payload.new.unique_id);
           
           toast.success(`New Order Placed`, {
             description: `${patientName} booked tests at ${labName} (${payload.new.unique_id})`,

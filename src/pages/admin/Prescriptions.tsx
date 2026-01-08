@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { Search, FileText, Loader2, Eye, Check, X, FlaskConical } from "lucide-react";
 import { format } from "date-fns";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { generateLabId } from "@/utils/generateLabId";
 
 interface Test {
   id: string;
@@ -70,6 +71,7 @@ interface Prescription {
   approved_tests: ApprovedTest[] | null;
   reviewed_at: string | null;
   created_at: string;
+  unique_id: string | null;
   profiles?: PatientProfile | null;
   labs?: { name: string; discount_percentage: number | null } | null;
 }
@@ -245,6 +247,9 @@ const AdminPrescriptions = () => {
 
       if (status === "approved") {
         updateData.approved_tests = selectedTests;
+        // Generate unique ID based on lab name when approving
+        const labName = selectedPrescription.labs?.name || "MEDI";
+        updateData.unique_id = generateLabId(labName);
       }
 
       const { error } = await supabase
@@ -346,7 +351,7 @@ const AdminPrescriptions = () => {
                       <TableRow key={prescription.id}>
                         <TableCell>
                           <span className="font-mono text-sm">
-                            {prescription.id.slice(0, 8)}...
+                            {prescription.unique_id || `${prescription.id.slice(0, 8)}...`}
                           </span>
                         </TableCell>
                         <TableCell>

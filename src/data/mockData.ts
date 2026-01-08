@@ -214,8 +214,5 @@ export const getTestsForLab = (labId: string) => {
     .filter(Boolean);
 };
 
-export const generateUniqueId = (): string => {
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-  return `MEDI-${year}-${random}`;
-};
+// Note: generateUniqueId has been moved to src/utils/generateLabId.ts
+// Use generateLabId(labName) for lab-based IDs like "IDC-2025-00001"

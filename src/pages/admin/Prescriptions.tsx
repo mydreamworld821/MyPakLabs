@@ -46,6 +46,12 @@ interface ApprovedTest {
   price: number;
 }
 
+interface PatientProfile {
+  full_name: string | null;
+  phone: string | null;
+  city: string | null;
+}
+
 interface Prescription {
   id: string;
   user_id: string;
@@ -56,6 +62,8 @@ interface Prescription {
   approved_tests: ApprovedTest[] | null;
   reviewed_at: string | null;
   created_at: string;
+  profiles?: PatientProfile | null;
+  labs?: { name: string } | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -91,17 +99,29 @@ const AdminPrescriptions = () => {
     try {
       const { data, error } = await supabase
         .from("prescriptions")
-        .select("*")
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            phone,
+            city
+          ),
+          labs:lab_id (
+            name
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
+
       // Parse approved_tests from JSON
-      const parsedData = (data || []).map(p => ({
+      const parsedData = (data || []).map((p) => ({
         ...p,
-        approved_tests: Array.isArray(p.approved_tests) ? p.approved_tests as unknown as ApprovedTest[] : null
+        approved_tests: Array.isArray(p.approved_tests)
+          ? (p.approved_tests as unknown as ApprovedTest[])
+          : null,
       }));
-      
+
       setPrescriptions(parsedData);
     } catch (error) {
       console.error("Error fetching prescriptions:", error);

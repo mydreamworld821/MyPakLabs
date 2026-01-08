@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,30 +12,68 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LabCard from "@/components/labs/LabCard";
-import { labs } from "@/data/mockData";
-import { Search, SlidersHorizontal, MapPin, Building2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Search, SlidersHorizontal, MapPin, Building2, Loader2 } from "lucide-react";
+
+interface Lab {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  discount_percentage: number | null;
+  rating: number | null;
+  review_count: number | null;
+  cities: string[] | null;
+  branches: unknown;
+  popular_tests: string[] | null;
+  is_active: boolean | null;
+}
 
 const Labs = () => {
+  const [labs, setLabs] = useState<Lab[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
   const [sortBy, setSortBy] = useState("discount");
 
-  const cities = [...new Set(labs.map((lab) => lab.city))];
+  useEffect(() => {
+    fetchLabs();
+  }, []);
+
+  const fetchLabs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("labs")
+        .select("*")
+        .eq("is_active", true)
+        .order("discount_percentage", { ascending: false });
+
+      if (error) throw error;
+      setLabs(data || []);
+    } catch (error) {
+      console.error("Error fetching labs:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const allCities = [...new Set(labs.flatMap((lab) => lab.cities || []))];
 
   const filteredLabs = labs
     .filter((lab) => {
       const matchesSearch =
         lab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lab.city.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCity = selectedCity === "all" || lab.city === selectedCity;
+        (lab.cities || []).some(city => city.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCity = selectedCity === "all" || (lab.cities || []).includes(selectedCity);
       return matchesSearch && matchesCity;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case "discount":
-          return b.discount - a.discount;
+          return (b.discount_percentage || 0) - (a.discount_percentage || 0);
         case "rating":
-          return b.rating - a.rating;
+          return (b.rating || 0) - (a.rating || 0);
         case "name":
           return a.name.localeCompare(b.name);
         default:
@@ -89,7 +127,7 @@ const Labs = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Cities</SelectItem>
-                {cities.map((city) => (
+                {allCities.map((city) => (
                   <SelectItem key={city} value={city}>
                     {city}
                   </SelectItem>
@@ -116,7 +154,11 @@ const Labs = () => {
       {/* Labs Grid */}
       <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
-          {filteredLabs.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filteredLabs.length > 0 ? (
             <>
               <p className="text-sm text-muted-foreground mb-6">
                 Showing {filteredLabs.length} lab{filteredLabs.length !== 1 ? "s" : ""}

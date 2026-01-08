@@ -10,7 +10,8 @@ import {
   Building2,
   LogOut,
   Shield,
-  FileText
+  FileText,
+  ShoppingCart
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -88,6 +89,12 @@ const Navbar = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link to="/my-bookings" className="flex items-center gap-2 cursor-pointer">
+                      <ShoppingCart className="w-4 h-4" />
+                      My Bookings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/my-prescriptions" className="flex items-center gap-2 cursor-pointer">
                       <FileText className="w-4 h-4" />
                       My Prescriptions
@@ -162,6 +169,12 @@ const Navbar = () => {
                     <p className="text-sm font-medium">{user.user_metadata?.full_name || 'User'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
+                  <Link to="/my-bookings" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <ShoppingCart className="w-4 h-4" />
+                      My Bookings
+                    </Button>
+                  </Link>
                   <Link to="/my-prescriptions" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full gap-2">
                       <FileText className="w-4 h-4" />

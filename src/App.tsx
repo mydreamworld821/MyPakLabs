@@ -12,9 +12,11 @@ import Compare from "./pages/Compare";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import MyPrescriptions from "./pages/MyPrescriptions";
+import MyBookings from "./pages/MyBookings";
 import Terms from "./pages/Terms";
 import HelpCenter from "./pages/HelpCenter";
 import PartnerTerms from "./pages/PartnerTerms";
+import Privacy from "./pages/Privacy";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLabs from "./pages/admin/Labs";
 import AdminTests from "./pages/admin/Tests";
@@ -39,9 +41,11 @@ const App = () => (
             <Route path="/compare" element={<Compare />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/partner-terms" element={<PartnerTerms />} />
+            <Route path="/privacy" element={<Privacy />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

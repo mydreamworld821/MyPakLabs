@@ -129,7 +129,7 @@ const MyPrescriptions = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDownloadPDF = (prescription: Prescription) => {
+  const handleDownloadPDF = async (prescription: Prescription) => {
     if (!prescription.approved_tests || prescription.approved_tests.length === 0) {
       toast.error("No approved tests to download");
       return;
@@ -139,7 +139,7 @@ const MyPrescriptions = () => {
     const totalOriginal = prescription.approved_tests.reduce((sum, t) => sum + (t.original_price || t.price), 0);
     const discountAmount = totalOriginal - totalDiscounted;
 
-    generatePrescriptionPDF({
+    await generatePrescriptionPDF({
       prescriptionId: prescription.id,
       uniqueId: prescription.unique_id || undefined,
       labName: prescription.labs?.name || "Unknown Lab",

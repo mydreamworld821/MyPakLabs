@@ -80,8 +80,8 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   // Row 1
   doc.setFont('helvetica', 'bold');
   doc.text('Discount ID:', col1X, y);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(79, 70, 229);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(75, 0, 130);
   doc.text(booking.uniqueId, col2X, y);
   
   doc.setTextColor(0, 0, 0);
@@ -142,7 +142,7 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.text('Rate', pageWidth - margin - 80, y + 7);
   doc.text('Discount', pageWidth - margin - 50, y + 7);
   doc.text('Payable', pageWidth - margin - 5, y + 7, { align: 'right' });
-  y += 12;
+  y += 16;
 
   // Tests List
   doc.setFont('helvetica', 'normal');

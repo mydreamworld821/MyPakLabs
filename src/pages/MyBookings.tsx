@@ -352,9 +352,31 @@ const MyBookings = () => {
                                     Yes
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-muted-foreground">
-                                    No
-                                  </Badge>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button size="sm" variant="outline" className="h-7 text-xs">
+                                        <ThumbsUp className="w-3 h-3 mr-1" />
+                                        Confirm
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Discount Availed</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Did you visit the lab and avail this discount? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>No, Cancel</AlertDialogCancel>
+                                        <AlertDialogAction 
+                                          onClick={() => handleConfirmAvailed(order.id)}
+                                          className="bg-green-600 hover:bg-green-700"
+                                        >
+                                          Yes, Availed
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 )}
                               </TableCell>
                               <TableCell>

@@ -90,7 +90,7 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.setFont('helvetica', 'normal');
   doc.text(booking.patientName || 'N/A', col4X, y);
   
-  y += 4;
+  y += 8;
   
   // Row 2
   doc.setTextColor(0, 0, 0);
@@ -108,7 +108,7 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.setFont('helvetica', 'normal');
   doc.text(booking.patientPhone || 'N/A', col4X, y);
   
-  y += 4;
+  y += 8;
   
   // Row 3
   doc.setFont('helvetica', 'bold');
@@ -122,7 +122,7 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.setTextColor(16, 185, 129);
   doc.text(`${booking.discountPercentage}%`, col4X, y);
   
-  y += 6;
+  y += 10;
   
   // Separator line
   doc.setDrawColor(200, 200, 200);

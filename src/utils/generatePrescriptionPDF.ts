@@ -7,6 +7,7 @@ interface PrescriptionPDFDetails {
   tests: Array<{
     name: string;
     price: number;
+    originalPrice?: number;
   }>;
   subtotal: number;
   discountAmount: number;
@@ -98,7 +99,8 @@ export const generatePrescriptionPDF = (details: PrescriptionPDFDetails) => {
   doc.setFontSize(10);
   doc.setTextColor(107, 114, 128);
   doc.text('Test Name', margin + 5, y + 2);
-  doc.text('Price', pageWidth - margin - 25, y + 2);
+  doc.text('Original', pageWidth - margin - 55, y + 2);
+  doc.text('Discounted', pageWidth - margin - 20, y + 2);
   y += 12;
 
   // Tests List
@@ -112,9 +114,14 @@ export const generatePrescriptionPDF = (details: PrescriptionPDFDetails) => {
       y = 20;
     }
     
-    const testName = test.name.length > 45 ? test.name.substring(0, 45) + '...' : test.name;
+    const testName = test.name.length > 35 ? test.name.substring(0, 35) + '...' : test.name;
+    const originalPrice = test.originalPrice || test.price;
     doc.text(testName, margin + 5, y);
-    doc.text(`Rs. ${test.price.toLocaleString()}`, pageWidth - margin - 25, y);
+    doc.setTextColor(156, 163, 175);
+    doc.text(`Rs. ${originalPrice.toLocaleString()}`, pageWidth - margin - 55, y);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`Rs. ${test.price.toLocaleString()}`, pageWidth - margin - 20, y);
+    doc.setTextColor(55, 65, 81);
     y += 8;
   });
 

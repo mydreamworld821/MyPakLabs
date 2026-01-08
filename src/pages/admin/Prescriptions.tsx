@@ -40,10 +40,18 @@ interface Test {
   sample_type: string | null;
 }
 
+interface LabTestPrice {
+  test_id: string;
+  price: number;
+  discounted_price: number | null;
+  is_available: boolean | null;
+}
+
 interface ApprovedTest {
   test_id: string;
   test_name: string;
   price: number;
+  original_price: number;
 }
 
 interface PatientProfile {
@@ -63,7 +71,7 @@ interface Prescription {
   reviewed_at: string | null;
   created_at: string;
   profiles?: PatientProfile | null;
-  labs?: { name: string } | null;
+  labs?: { name: string; discount_percentage: number | null } | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -75,6 +83,7 @@ const statusColors: Record<string, string> = {
 const AdminPrescriptions = () => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [tests, setTests] = useState<Test[]>([]);
+  const [labTestPrices, setLabTestPrices] = useState<Record<string, LabTestPrice>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -83,8 +92,8 @@ const AdminPrescriptions = () => {
   const [adminNotes, setAdminNotes] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedTests, setSelectedTests] = useState<ApprovedTest[]>([]);
-  const [testPrices, setTestPrices] = useState<Record<string, number>>({});
   const [testSearch, setTestSearch] = useState("");
+  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
 
   const { signedUrl, isLoading: isLoadingUrl } = useSignedUrl(
     selectedPrescription?.image_url || ""
@@ -97,13 +106,14 @@ const AdminPrescriptions = () => {
 
   const fetchPrescriptions = async () => {
     try {
-      // Fetch prescriptions with labs
+      // Fetch prescriptions with labs including discount_percentage
       const { data: prescriptionsData, error: prescriptionsError } = await supabase
         .from("prescriptions")
         .select(`
           *,
           labs:lab_id (
-            name
+            name,
+            discount_percentage
           )
         `)
         .order("created_at", { ascending: false });
@@ -157,42 +167,63 @@ const AdminPrescriptions = () => {
     }
   };
 
-  const handleViewPrescription = (prescription: Prescription) => {
+  const fetchLabTestPrices = async (labId: string) => {
+    setIsLoadingPrices(true);
+    try {
+      const { data, error } = await supabase
+        .from("lab_tests")
+        .select("test_id, price, discounted_price, is_available")
+        .eq("lab_id", labId);
+
+      if (error) throw error;
+
+      const pricesMap: Record<string, LabTestPrice> = {};
+      (data || []).forEach(item => {
+        pricesMap[item.test_id] = {
+          test_id: item.test_id,
+          price: item.price,
+          discounted_price: item.discounted_price,
+          is_available: item.is_available
+        };
+      });
+      setLabTestPrices(pricesMap);
+    } catch (error) {
+      console.error("Error fetching lab test prices:", error);
+      toast.error("Failed to fetch test prices for this lab");
+    } finally {
+      setIsLoadingPrices(false);
+    }
+  };
+
+  const handleViewPrescription = async (prescription: Prescription) => {
     setSelectedPrescription(prescription);
     setAdminNotes(prescription.admin_notes || "");
     setSelectedTests(prescription.approved_tests || []);
-    
-    // Initialize prices from existing approved tests
-    const prices: Record<string, number> = {};
-    (prescription.approved_tests || []).forEach(t => {
-      prices[t.test_id] = t.price;
-    });
-    setTestPrices(prices);
     setTestSearch("");
+    setLabTestPrices({});
     setIsDialogOpen(true);
+
+    // Fetch lab test prices if lab_id exists
+    if (prescription.lab_id) {
+      await fetchLabTestPrices(prescription.lab_id);
+    }
   };
 
   const handleTestToggle = (test: Test, checked: boolean) => {
     if (checked) {
-      const defaultPrice = testPrices[test.id] || 0;
+      const labPrice = labTestPrices[test.id];
+      const originalPrice = labPrice?.price || 0;
+      const discountedPrice = labPrice?.discounted_price ?? originalPrice;
+      
       setSelectedTests(prev => [...prev, { 
         test_id: test.id, 
         test_name: test.name, 
-        price: defaultPrice 
+        price: discountedPrice,
+        original_price: originalPrice
       }]);
-      if (!testPrices[test.id]) {
-        setTestPrices(prev => ({ ...prev, [test.id]: 0 }));
-      }
     } else {
       setSelectedTests(prev => prev.filter(t => t.test_id !== test.id));
     }
-  };
-
-  const handlePriceChange = (testId: string, price: number) => {
-    setTestPrices(prev => ({ ...prev, [testId]: price }));
-    setSelectedTests(prev => 
-      prev.map(t => t.test_id === testId ? { ...t, price } : t)
-    );
   };
 
   const handleUpdateStatus = async (status: "approved" | "rejected") => {
@@ -427,14 +458,21 @@ const AdminPrescriptions = () => {
                         </p>
                         <div className="space-y-1">
                           {selectedTests.map(test => (
-                            <div key={test.test_id} className="flex justify-between text-sm">
+                            <div key={test.test_id} className="flex justify-between text-sm gap-2">
                               <span className="truncate flex-1">{test.test_name}</span>
-                              <span className="font-medium">Rs. {test.price}</span>
+                              <div className="text-right">
+                                {test.original_price !== test.price && (
+                                  <span className="text-xs text-muted-foreground line-through mr-2">
+                                    Rs. {test.original_price}
+                                  </span>
+                                )}
+                                <span className="font-medium text-green-600">Rs. {test.price}</span>
+                              </div>
                             </div>
                           ))}
                           <div className="border-t pt-1 mt-2 flex justify-between font-semibold">
                             <span>Total</span>
-                            <span>Rs. {selectedTests.reduce((sum, t) => sum + t.price, 0)}</span>
+                            <span className="text-green-600">Rs. {selectedTests.reduce((sum, t) => sum + t.price, 0)}</span>
                           </div>
                         </div>
                       </CardContent>
@@ -442,44 +480,71 @@ const AdminPrescriptions = () => {
                   )}
 
                   {/* Test List */}
-                  <div className="border rounded-lg max-h-64 overflow-y-auto">
-                    {filteredTests.length === 0 ? (
-                      <div className="p-4 text-center text-muted-foreground">
-                        No tests found
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {filteredTests.map(test => (
-                          <div key={test.id} className="p-3 hover:bg-muted/50">
-                            <div className="flex items-start gap-3">
-                              <Checkbox
-                                checked={isTestSelected(test.id)}
-                                onCheckedChange={(checked) => handleTestToggle(test, checked as boolean)}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm">{test.name}</p>
-                                {test.category && (
-                                  <p className="text-xs text-muted-foreground">{test.category}</p>
-                                )}
-                              </div>
-                              {isTestSelected(test.id) && (
-                                <div className="flex items-center gap-1">
-                                  <span className="text-xs text-muted-foreground">Rs.</span>
-                                  <Input
-                                    type="number"
-                                    value={testPrices[test.id] || 0}
-                                    onChange={(e) => handlePriceChange(test.id, Number(e.target.value))}
-                                    className="w-20 h-7 text-sm"
-                                    min={0}
+                  {isLoadingPrices ? (
+                    <div className="flex items-center justify-center p-8 border rounded-lg">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">Loading prices...</span>
+                    </div>
+                  ) : !selectedPrescription?.lab_id ? (
+                    <div className="p-4 text-center text-muted-foreground border rounded-lg">
+                      No lab selected for this prescription
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg max-h-64 overflow-y-auto">
+                      {filteredTests.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          No tests found
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {filteredTests.map(test => {
+                            const labPrice = labTestPrices[test.id];
+                            const hasPrice = !!labPrice;
+                            const isAvailable = labPrice?.is_available !== false;
+                            const originalPrice = labPrice?.price || 0;
+                            const discountedPrice = labPrice?.discounted_price ?? originalPrice;
+                            
+                            return (
+                              <div 
+                                key={test.id} 
+                                className={`p-3 ${!hasPrice || !isAvailable ? 'opacity-50 bg-muted/30' : 'hover:bg-muted/50'}`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <Checkbox
+                                    checked={isTestSelected(test.id)}
+                                    onCheckedChange={(checked) => handleTestToggle(test, checked as boolean)}
+                                    disabled={!hasPrice || !isAvailable}
                                   />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm">{test.name}</p>
+                                    {test.category && (
+                                      <p className="text-xs text-muted-foreground">{test.category}</p>
+                                    )}
+                                    {!hasPrice && (
+                                      <p className="text-xs text-yellow-600">Price not set for this lab</p>
+                                    )}
+                                    {hasPrice && !isAvailable && (
+                                      <p className="text-xs text-red-600">Not available at this lab</p>
+                                    )}
+                                  </div>
+                                  {hasPrice && isAvailable && (
+                                    <div className="text-right text-sm">
+                                      {discountedPrice < originalPrice && (
+                                        <p className="text-xs text-muted-foreground line-through">
+                                          Rs. {originalPrice}
+                                        </p>
+                                      )}
+                                      <p className="font-medium text-green-600">Rs. {discountedPrice}</p>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons - Full Width */}

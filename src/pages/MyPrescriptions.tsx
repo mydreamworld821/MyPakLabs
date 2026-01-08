@@ -26,7 +26,6 @@ import {
   FlaskConical,
   ArrowLeft,
   Building2,
-  Percent,
   Download,
 } from "lucide-react";
 import { generatePrescriptionPDF } from "@/utils/generatePrescriptionPDF";
@@ -35,6 +34,7 @@ interface ApprovedTest {
   test_id: string;
   test_name: string;
   price: number;
+  original_price?: number;
 }
 
 interface Prescription {
@@ -134,22 +134,22 @@ const MyPrescriptions = () => {
       return;
     }
 
-    const subtotal = prescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
-    const discountPct = prescription.labs?.discount_percentage || 0;
-    const discountAmount = subtotal * discountPct / 100;
-    const total = subtotal - discountAmount;
+    const totalDiscounted = prescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
+    const totalOriginal = prescription.approved_tests.reduce((sum, t) => sum + (t.original_price || t.price), 0);
+    const discountAmount = totalOriginal - totalDiscounted;
 
     generatePrescriptionPDF({
       prescriptionId: prescription.id,
       labName: prescription.labs?.name || "Unknown Lab",
-      labDiscount: discountPct,
+      labDiscount: discountAmount > 0 ? Math.round((discountAmount / totalOriginal) * 100) : 0,
       tests: prescription.approved_tests.map(t => ({
         name: t.test_name,
-        price: t.price
+        price: t.price,
+        originalPrice: t.original_price
       })),
-      subtotal,
+      subtotal: totalOriginal,
       discountAmount,
-      total,
+      total: totalDiscounted,
       approvedDate: prescription.reviewed_at 
         ? format(new Date(prescription.reviewed_at), "dd MMM yyyy")
         : format(new Date(), "dd MMM yyyy"),
@@ -213,9 +213,9 @@ const MyPrescriptions = () => {
               {prescriptions.map((prescription) => {
                 const config = statusConfig[prescription.status] || statusConfig.pending_review;
                 const StatusIcon = config.icon;
-                const totalPrice = prescription.approved_tests?.reduce((sum, t) => sum + t.price, 0) || 0;
-                const discount = prescription.labs?.discount_percentage || 0;
-                const discountedTotal = totalPrice - (totalPrice * discount / 100);
+                const totalDiscountedPrice = prescription.approved_tests?.reduce((sum, t) => sum + t.price, 0) || 0;
+                const totalOriginalPrice = prescription.approved_tests?.reduce((sum, t) => sum + (t.original_price || t.price), 0) || 0;
+                const totalSavings = totalOriginalPrice - totalDiscountedPrice;
 
                 return (
                   <Card key={prescription.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -233,12 +233,6 @@ const MyPrescriptions = () => {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                           <Building2 className="w-3 h-3" />
                           <span>{prescription.labs.name}</span>
-                          {discount > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              <Percent className="w-3 h-3 mr-1" />
-                              {discount}% off
-                            </Badge>
-                          )}
                         </div>
                       )}
                     </CardHeader>
@@ -260,9 +254,16 @@ const MyPrescriptions = () => {
                           </div>
                           <div className="space-y-1">
                             {prescription.approved_tests.slice(0, 3).map(test => (
-                              <div key={test.test_id} className="flex justify-between text-sm">
+                              <div key={test.test_id} className="flex justify-between text-sm gap-2">
                                 <span className="truncate flex-1 text-muted-foreground">{test.test_name}</span>
-                                <span className="font-medium">Rs. {test.price}</span>
+                                <div className="text-right">
+                                  {test.original_price && test.original_price > test.price && (
+                                    <span className="text-xs text-muted-foreground line-through mr-1">
+                                      Rs. {test.original_price}
+                                    </span>
+                                  )}
+                                  <span className="font-medium text-green-600">Rs. {test.price}</span>
+                                </div>
                               </div>
                             ))}
                             {prescription.approved_tests.length > 3 && (
@@ -272,19 +273,21 @@ const MyPrescriptions = () => {
                             )}
                           </div>
                           <div className="border-t border-green-500/20 mt-2 pt-2 space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span>Subtotal</span>
-                              <span>Rs. {totalPrice}</span>
-                            </div>
-                            {discount > 0 && (
-                              <div className="flex justify-between text-sm text-green-600">
-                                <span>Discount ({discount}%)</span>
-                                <span>-Rs. {(totalPrice * discount / 100).toFixed(0)}</span>
-                              </div>
+                            {totalSavings > 0 && (
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span>Original</span>
+                                  <span className="line-through text-muted-foreground">Rs. {totalOriginalPrice}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-green-600">
+                                  <span>You Save</span>
+                                  <span>-Rs. {totalSavings}</span>
+                                </div>
+                              </>
                             )}
                             <div className="flex justify-between font-semibold text-green-700">
                               <span>Total</span>
-                              <span>Rs. {discountedTotal.toFixed(0)}</span>
+                              <span>Rs. {totalDiscountedPrice}</span>
                             </div>
                           </div>
                         </div>
@@ -386,31 +389,39 @@ const MyPrescriptions = () => {
                   <CardContent>
                     <div className="space-y-2">
                       {selectedPrescription.approved_tests.map(test => (
-                        <div key={test.test_id} className="flex justify-between py-1 border-b border-green-500/10 last:border-0">
+                        <div key={test.test_id} className="flex justify-between py-1 border-b border-green-500/10 last:border-0 gap-2">
                           <span>{test.test_name}</span>
-                          <span className="font-medium">Rs. {test.price}</span>
+                          <div className="text-right">
+                            {test.original_price && test.original_price > test.price && (
+                              <span className="text-xs text-muted-foreground line-through mr-2">
+                                Rs. {test.original_price}
+                              </span>
+                            )}
+                            <span className="font-medium text-green-600">Rs. {test.price}</span>
+                          </div>
                         </div>
                       ))}
                       {(() => {
-                        const subtotal = selectedPrescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
-                        const discountPct = selectedPrescription.labs?.discount_percentage || 0;
-                        const discountAmt = subtotal * discountPct / 100;
-                        const finalTotal = subtotal - discountAmt;
+                        const totalDiscounted = selectedPrescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
+                        const totalOriginal = selectedPrescription.approved_tests.reduce((sum, t) => sum + (t.original_price || t.price), 0);
+                        const savings = totalOriginal - totalDiscounted;
                         return (
                           <>
-                            <div className="flex justify-between pt-2 text-sm">
-                              <span>Subtotal</span>
-                              <span>Rs. {subtotal}</span>
-                            </div>
-                            {discountPct > 0 && (
-                              <div className="flex justify-between text-sm text-green-600">
-                                <span>Discount ({discountPct}%)</span>
-                                <span>-Rs. {discountAmt.toFixed(0)}</span>
-                              </div>
+                            {savings > 0 && (
+                              <>
+                                <div className="flex justify-between pt-2 text-sm">
+                                  <span>Original Total</span>
+                                  <span className="line-through text-muted-foreground">Rs. {totalOriginal}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-green-600">
+                                  <span>You Save</span>
+                                  <span>-Rs. {savings}</span>
+                                </div>
+                              </>
                             )}
                             <div className="flex justify-between pt-1 font-semibold text-green-700 border-t border-green-500/20">
                               <span>Total</span>
-                              <span>Rs. {finalTotal.toFixed(0)}</span>
+                              <span>Rs. {totalDiscounted}</span>
                             </div>
                           </>
                         );

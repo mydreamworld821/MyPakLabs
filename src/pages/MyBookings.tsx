@@ -35,7 +35,9 @@ import {
   XCircle,
   Download,
   FileText,
+  Printer,
 } from "lucide-react";
+import { generateBookingPDF } from "@/utils/generateBookingPDF";
 
 interface OrderTest {
   test_id: string;
@@ -86,6 +88,14 @@ const statusConfig: Record<string, { icon: any; color: string; label: string }> 
   }
 };
 
+interface UserProfile {
+  full_name: string | null;
+  phone: string | null;
+  city: string | null;
+  age: number | null;
+  gender: string | null;
+}
+
 const MyBookings = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
@@ -93,6 +103,7 @@ const MyBookings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -102,8 +113,19 @@ const MyBookings = () => {
 
     if (user) {
       fetchOrders();
+      fetchProfile();
     }
   }, [user, authLoading, navigate]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name, phone, city, age, gender")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data) setUserProfile(data);
+  };
 
   const fetchOrders = async () => {
     try {
@@ -418,15 +440,43 @@ const MyBookings = () => {
                 </Card>
               )}
 
-              {/* Actions */}
-              {selectedOrder.pdf_url && (
-                <Button className="w-full" variant="outline" asChild>
-                  <a href={selectedOrder.pdf_url} target="_blank" rel="noopener noreferrer">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Booking Slip
-                  </a>
+              {/* PDF/Print Actions */}
+              <div className="flex gap-3">
+                <Button 
+                  className="flex-1" 
+                  onClick={() => {
+                    generateBookingPDF({
+                      uniqueId: selectedOrder.unique_id,
+                      labName: selectedOrder.labs?.name || 'Lab',
+                      patientName: userProfile?.full_name || undefined,
+                      patientPhone: userProfile?.phone || undefined,
+                      patientCity: userProfile?.city || undefined,
+                      patientAge: userProfile?.age || undefined,
+                      patientGender: userProfile?.gender || undefined,
+                      tests: selectedOrder.tests.map(t => ({
+                        name: t.test_name,
+                        originalPrice: t.price,
+                        discountedPrice: t.discounted_price || t.price
+                      })),
+                      totalOriginal: selectedOrder.original_total,
+                      totalDiscounted: selectedOrder.discounted_total,
+                      totalSavings: selectedOrder.original_total - selectedOrder.discounted_total,
+                      discountPercentage: selectedOrder.discount_percentage || 0,
+                      bookingDate: format(new Date(selectedOrder.created_at), 'dd/MM/yyyy'),
+                    });
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
                 </Button>
-              )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.print()}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

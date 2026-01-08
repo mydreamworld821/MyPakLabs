@@ -21,8 +21,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, ShoppingCart, Loader2, Eye } from "lucide-react";
+import { Search, ShoppingCart, Loader2, Eye, User, Phone } from "lucide-react";
 import { format } from "date-fns";
+
+interface PatientProfile {
+  full_name: string | null;
+  phone: string | null;
+}
+
+interface LabInfo {
+  name: string;
+}
 
 interface Order {
   id: string;
@@ -37,6 +46,8 @@ interface Order {
   validity_date: string;
   notes: string | null;
   created_at: string;
+  profiles?: PatientProfile | null;
+  labs?: LabInfo | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -59,13 +70,40 @@ const AdminOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch orders with labs
+      const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          labs:lab_id (
+            name
+          )
+        `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (ordersError) throw ordersError;
+
+      // Get unique user_ids to fetch profiles
+      const userIds = [...new Set((ordersData || []).map(o => o.user_id))];
+      
+      // Fetch profiles separately
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, phone")
+        .in("user_id", userIds);
+
+      // Create a map of user_id to profile
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.user_id, p])
+      );
+
+      // Attach profiles to orders
+      const ordersWithProfiles = (ordersData || []).map(order => ({
+        ...order,
+        profiles: profilesMap.get(order.user_id) || null,
+      }));
+
+      setOrders(ordersWithProfiles);
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast.error("Failed to fetch orders");
@@ -95,7 +133,12 @@ const AdminOrders = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.unique_id.toLowerCase().includes(searchQuery.toLowerCase());
+    const patientName = order.profiles?.full_name?.toLowerCase() || '';
+    const patientPhone = order.profiles?.phone?.toLowerCase() || '';
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = order.unique_id.toLowerCase().includes(searchLower) || 
+                          patientName.includes(searchLower) ||
+                          patientPhone.includes(searchLower);
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -157,9 +200,10 @@ const AdminOrders = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Order ID</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Lab</TableHead>
                       <TableHead>Tests</TableHead>
                       <TableHead>Total</TableHead>
-                      <TableHead>Validity</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -169,7 +213,28 @@ const AdminOrders = () => {
                     {filteredOrders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell>
-                          <span className="font-mono font-medium">{order.unique_id}</span>
+                          <span className="font-mono font-medium text-sm">{order.unique_id}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="font-medium text-sm">
+                                {order.profiles?.full_name || 'Unknown'}
+                              </span>
+                            </div>
+                            {order.profiles?.phone && (
+                              <div className="flex items-center gap-1.5">
+                                <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">
+                                  {order.profiles.phone}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{order.labs?.name || 'N/A'}</span>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm">
@@ -185,9 +250,6 @@ const AdminOrders = () => {
                               </p>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(order.validity_date), "dd MMM yyyy")}
                         </TableCell>
                         <TableCell>
                           <Select

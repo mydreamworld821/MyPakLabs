@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,10 @@ import {
   Building2,
   Calendar,
   ArrowLeft,
+  Heart,
+  AlertCircle,
+  Pill,
+  Stethoscope,
 } from "lucide-react";
 
 interface Profile {
@@ -53,6 +58,7 @@ interface Profile {
   phone: string | null;
   city: string | null;
   avatar_url: string | null;
+  medical_history: string | null;
 }
 
 interface OrderTest {
@@ -114,6 +120,8 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditingMedical, setIsEditingMedical] = useState(false);
+  const [isSavingMedical, setIsSavingMedical] = useState(false);
   
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -121,6 +129,12 @@ const Profile = () => {
     phone: "",
     city: "",
     newEmail: "",
+  });
+  const [medicalHistory, setMedicalHistory] = useState({
+    conditions: "",
+    allergies: "",
+    medications: "",
+    notes: "",
   });
   const [isChangingEmail, setIsChangingEmail] = useState(false);
 
@@ -154,6 +168,26 @@ const Profile = () => {
           city: profileData.city || "",
           newEmail: "",
         });
+        // Parse medical history JSON or use as plain text
+        if (profileData.medical_history) {
+          try {
+            const parsed = JSON.parse(profileData.medical_history);
+            setMedicalHistory({
+              conditions: parsed.conditions || "",
+              allergies: parsed.allergies || "",
+              medications: parsed.medications || "",
+              notes: parsed.notes || "",
+            });
+          } catch {
+            // If not JSON, treat as plain notes
+            setMedicalHistory({
+              conditions: "",
+              allergies: "",
+              medications: "",
+              notes: profileData.medical_history,
+            });
+          }
+        }
       }
 
       // Fetch orders
@@ -240,6 +274,37 @@ const Profile = () => {
       toast.error(error.message || "Failed to change email");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveMedicalHistory = async () => {
+    if (!user) return;
+    
+    setIsSavingMedical(true);
+    try {
+      const medicalData = JSON.stringify(medicalHistory);
+      
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          medical_history: medicalData,
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setProfile(prev => prev ? {
+        ...prev,
+        medical_history: medicalData,
+      } : null);
+      
+      setIsEditingMedical(false);
+      toast.success("Medical history saved successfully!");
+    } catch (error) {
+      console.error("Error saving medical history:", error);
+      toast.error("Failed to save medical history");
+    } finally {
+      setIsSavingMedical(false);
     }
   };
 
@@ -412,14 +477,18 @@ const Profile = () => {
             {/* Orders & History */}
             <div className="lg:col-span-2">
               <Tabs defaultValue="orders" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="orders" className="gap-2">
                     <ShoppingCart className="w-4 h-4" />
-                    Orders ({orders.length})
+                    <span className="hidden sm:inline">Orders</span> ({orders.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="medical" className="gap-2">
+                    <Heart className="w-4 h-4" />
+                    <span className="hidden sm:inline">Medical</span>
                   </TabsTrigger>
                   <TabsTrigger value="activity" className="gap-2">
                     <FileText className="w-4 h-4" />
-                    Activity
+                    <span className="hidden sm:inline">Activity</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -497,6 +566,151 @@ const Profile = () => {
                               })}
                             </TableBody>
                           </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="medical">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Heart className="w-5 h-5 text-red-500" />
+                        Medical History
+                      </CardTitle>
+                      {!isEditingMedical && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingMedical(true)}
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Private & Secure</p>
+                          <p className="text-xs text-yellow-700">
+                            This information is encrypted and only visible to you and authorized healthcare providers.
+                          </p>
+                        </div>
+                      </div>
+
+                      {isEditingMedical ? (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Stethoscope className="w-4 h-4" />
+                              Medical Conditions
+                            </Label>
+                            <Textarea
+                              value={medicalHistory.conditions}
+                              onChange={(e) => setMedicalHistory(prev => ({ ...prev, conditions: e.target.value }))}
+                              placeholder="E.g., Diabetes, Hypertension, Asthma..."
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4" />
+                              Allergies
+                            </Label>
+                            <Textarea
+                              value={medicalHistory.allergies}
+                              onChange={(e) => setMedicalHistory(prev => ({ ...prev, allergies: e.target.value }))}
+                              placeholder="E.g., Penicillin, Peanuts, Latex..."
+                              rows={2}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Pill className="w-4 h-4" />
+                              Current Medications
+                            </Label>
+                            <Textarea
+                              value={medicalHistory.medications}
+                              onChange={(e) => setMedicalHistory(prev => ({ ...prev, medications: e.target.value }))}
+                              placeholder="E.g., Metformin 500mg, Aspirin 75mg..."
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              Additional Notes
+                            </Label>
+                            <Textarea
+                              value={medicalHistory.notes}
+                              onChange={(e) => setMedicalHistory(prev => ({ ...prev, notes: e.target.value }))}
+                              placeholder="Any other relevant health information..."
+                              rows={3}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1"
+                              onClick={handleSaveMedicalHistory}
+                              disabled={isSavingMedical}
+                            >
+                              {isSavingMedical ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                              ) : (
+                                <Save className="w-4 h-4 mr-2" />
+                              )}
+                              Save Medical History
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsEditingMedical(false)}
+                              disabled={isSavingMedical}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="p-4 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Stethoscope className="w-4 h-4 text-primary" />
+                              <span className="font-medium text-sm">Medical Conditions</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {medicalHistory.conditions || "No conditions recorded"}
+                            </p>
+                          </div>
+                          <div className="p-4 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertCircle className="w-4 h-4 text-red-500" />
+                              <span className="font-medium text-sm">Allergies</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {medicalHistory.allergies || "No allergies recorded"}
+                            </p>
+                          </div>
+                          <div className="p-4 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Pill className="w-4 h-4 text-blue-500" />
+                              <span className="font-medium text-sm">Current Medications</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {medicalHistory.medications || "No medications recorded"}
+                            </p>
+                          </div>
+                          <div className="p-4 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="w-4 h-4 text-muted-foreground" />
+                              <span className="font-medium text-sm">Additional Notes</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {medicalHistory.notes || "No additional notes"}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </CardContent>

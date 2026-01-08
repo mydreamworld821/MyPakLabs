@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, Building2, Loader2 } from "lucide-react";
+import LabsCsvUpload from "@/components/admin/LabsCsvUpload";
 
 interface Lab {
   id: string;
@@ -192,13 +193,16 @@ const AdminLabs = () => {
             </p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Lab
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <LabsCsvUpload onSuccess={fetchLabs} />
+            
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleOpenDialog()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Lab
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
@@ -314,7 +318,8 @@ const AdminLabs = () => {
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {/* Search */}

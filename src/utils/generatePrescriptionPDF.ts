@@ -20,28 +20,65 @@ interface PrescriptionPDFDetails {
   validityDays?: number;
 }
 
-export const generatePrescriptionPDF = (details: PrescriptionPDFDetails) => {
+export const generatePrescriptionPDF = async (details: PrescriptionPDFDetails) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
-  let y = 20;
+  let y = 10;
 
-  // Header
-  doc.setFillColor(79, 70, 229); // Primary color
-  doc.rect(0, 0, pageWidth, 50, 'F');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+  // Load and add logo
+  try {
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    await new Promise((resolve, reject) => {
+      logoImg.onload = resolve;
+      logoImg.onerror = reject;
+      logoImg.src = '/images/mypaklabs-logo.png';
+    });
+    doc.addImage(logoImg, 'PNG', margin, y, 25, 25);
+  } catch (e) {
+    console.log('Logo could not be loaded');
+  }
+
+  // Company Name - Center
+  doc.setTextColor(75, 0, 130); // Purple color matching logo
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('MediCompare', margin, 30);
-  
-  doc.setFontSize(12);
+  doc.text('My Pak Labs', pageWidth / 2, y + 12, { align: 'center' });
+
+  // Contact Details - Two rows below company name
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('Approved Prescription Slip', margin, 42);
+  doc.setTextColor(75, 85, 99);
+  
+  // Row 1: Web and Phone
+  doc.text('Web: www.mypaklabs.com', pageWidth / 2 - 30, y + 22);
+  doc.text('0316-7523434', pageWidth / 2 + 30, y + 22);
+  
+  // Row 2: Email and Address
+  doc.text('Email: mhmmdaqib@gmail.com', pageWidth / 2 - 30, y + 28);
+  doc.text('Address: Islamabad', pageWidth / 2 + 30, y + 28);
+
+  y += 35;
+
+  // Separator line
+  doc.setDrawColor(75, 0, 130);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  
+  y += 8;
+
+  // Document Title
+  doc.setFillColor(75, 0, 130);
+  doc.roundedRect(pageWidth / 2 - 45, y, 90, 12, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Approved Prescription Slip', pageWidth / 2, y + 8, { align: 'center' });
 
   // Reset text color
   doc.setTextColor(0, 0, 0);
-  y = 70;
+  y += 25;
 
   // Prescription ID Box
   doc.setFillColor(243, 244, 246);
@@ -241,18 +278,23 @@ export const generatePrescriptionPDF = (details: PrescriptionPDFDetails) => {
   y += 20;
 
   // Footer
-  doc.setDrawColor(229, 231, 235);
+  doc.setDrawColor(75, 0, 130);
+  doc.setLineWidth(0.5);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 10;
+  y += 8;
   
   doc.setFontSize(9);
-  doc.setTextColor(156, 163, 175);
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, margin, y);
-  doc.text('www.medicompare.pk', pageWidth - margin, y, { align: 'right' });
+  doc.setTextColor(75, 0, 130);
+  doc.setFont('helvetica', 'bold');
+  doc.text('My Pak Labs', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text('www.mypaklabs.com', pageWidth - margin, y, { align: 'right' });
 
   // Save the PDF
   const fileName = details.uniqueId 
-    ? `MediCompare-Prescription-${details.uniqueId}.pdf`
+    ? `MyPakLabs-Prescription-${details.uniqueId}.pdf`
     : `Prescription-${details.prescriptionId.slice(0, 8).toUpperCase()}.pdf`;
   doc.save(fileName);
 };

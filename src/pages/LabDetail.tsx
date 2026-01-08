@@ -250,9 +250,9 @@ const LabDetail = () => {
     toast.success("ID copied to clipboard!");
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
-      generateBookingPDF({
+      await generateBookingPDF({
         uniqueId,
         labName: lab.name,
         tests: selectedTestItems.map((test) => ({

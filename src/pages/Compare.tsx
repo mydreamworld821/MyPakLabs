@@ -38,7 +38,7 @@ const Compare = () => {
   const toggleLab = (labId: string) => {
     if (selectedLabs.includes(labId)) {
       setSelectedLabs(selectedLabs.filter((id) => id !== labId));
-    } else if (selectedLabs.length < 5) {
+    } else if (selectedLabs.length < 10) {
       setSelectedLabs([...selectedLabs, labId]);
     }
   };
@@ -46,7 +46,7 @@ const Compare = () => {
   const toggleTest = (testId: string) => {
     if (selectedTests.includes(testId)) {
       setSelectedTests(selectedTests.filter((id) => id !== testId));
-    } else if (selectedTests.length < 5) {
+    } else {
       setSelectedTests([...selectedTests, testId]);
     }
   };
@@ -119,7 +119,7 @@ const Compare = () => {
               Compare Lab Prices
             </h1>
             <p className="text-primary-foreground/80">
-              Select up to 5 labs and 5 tests to compare prices and find the best deals
+              Select up to 10 labs and any number of tests to compare prices and find the best deals
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ const Compare = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-primary" />
-                  Select Labs (up to 5)
+                  Select Labs (up to 10)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -155,7 +155,7 @@ const Compare = () => {
                           onCheckedChange={() => toggleLab(lab.id)}
                           disabled={
                             !selectedLabs.includes(lab.id) &&
-                            selectedLabs.length >= 5
+                            selectedLabs.length >= 10
                           }
                         />
                         <div className="flex-1 min-w-0">
@@ -183,7 +183,7 @@ const Compare = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FlaskConical className="w-5 h-5 text-primary" />
-                  Select Tests (up to 5)
+                  Select Tests
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -202,10 +202,6 @@ const Compare = () => {
                         <Checkbox
                           checked={selectedTests.includes(test.id)}
                           onCheckedChange={() => toggleTest(test.id)}
-                          disabled={
-                            !selectedTests.includes(test.id) &&
-                            selectedTests.length >= 5
-                          }
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{test.name}</p>

@@ -104,12 +104,11 @@ const LabCard = ({ lab }: LabCardProps) => {
               </div>
             )}
 
-            {/* Branches */}
-            {branches.length > 0 && (
-              <div className="text-xs text-muted-foreground">
-                <span className="font-medium">{branches.length} branches:</span>{" "}
-                {branches.slice(0, 3).map((b: any) => b.name || b).join(", ")}
-                {branches.length > 3 && ` +${branches.length - 3} more`}
+            {/* Discount Availability */}
+            {discount > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                <MapPin className="w-3 h-3" />
+                <span>Discount available across Pakistan</span>
               </div>
             )}
 

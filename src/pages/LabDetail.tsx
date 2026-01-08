@@ -519,28 +519,13 @@ const LabDetail = () => {
                   </p>
                 )}
 
-                {/* Cities & Branches */}
-                <div className="flex flex-wrap gap-4 pt-2">
-                  {cities.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span className="font-medium">Available in:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {cities.map((city, index) => (
-                          <Badge key={city} variant="secondary" className="text-xs">
-                            {city}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {discount > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-primary font-medium">
-                      <Shield className="w-4 h-4" />
-                      <span>Discount available across Pakistan</span>
-                    </div>
-                  )}
-                </div>
+                {/* Discount Info */}
+                {discount > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-primary font-medium pt-2">
+                    <Shield className="w-4 h-4" />
+                    <span>Discount available across Pakistan</span>
+                  </div>
+                )}
               </div>
             </div>
           </Card>

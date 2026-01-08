@@ -43,6 +43,10 @@ interface Lab {
   cities: string[] | null;
   branches: unknown;
   popular_tests: string[] | null;
+  opening_time: string | null;
+  closing_time: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
 }
 
 interface LabTest {
@@ -614,14 +618,20 @@ const LabDetail = () => {
                   <CardTitle className="text-lg">Quick Info</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span>Open 7 AM - 10 PM</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>+92 300 1234567</span>
-                  </div>
+                  {(lab.opening_time || lab.closing_time) && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>Open {lab.opening_time || "7:00 AM"} - {lab.closing_time || "10:00 PM"}</span>
+                    </div>
+                  )}
+                  {lab.contact_phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <a href={`tel:${lab.contact_phone}`} className="hover:text-primary transition-colors">
+                        {lab.contact_phone}
+                      </a>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-sm">
                     <Shield className="w-4 h-4 text-muted-foreground" />
                     <span>ISO 15189 Certified</span>

@@ -41,6 +41,10 @@ interface Lab {
   cities: string[] | null;
   is_active: boolean | null;
   created_at: string;
+  opening_time: string | null;
+  closing_time: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
 }
 
 const AdminLabs = () => {
@@ -61,7 +65,11 @@ const AdminLabs = () => {
     cover_image_url: "",
     discount_percentage: 0,
     cities: "",
-    is_active: true
+    is_active: true,
+    opening_time: "7:00 AM",
+    closing_time: "10:00 PM",
+    contact_phone: "",
+    contact_email: ""
   });
 
   // CSV file for new lab
@@ -115,7 +123,11 @@ const AdminLabs = () => {
         cover_image_url: lab.cover_image_url || "",
         discount_percentage: lab.discount_percentage || 0,
         cities: lab.cities?.join(", ") || "",
-        is_active: lab.is_active ?? true
+        is_active: lab.is_active ?? true,
+        opening_time: lab.opening_time || "7:00 AM",
+        closing_time: lab.closing_time || "10:00 PM",
+        contact_phone: lab.contact_phone || "",
+        contact_email: lab.contact_email || ""
       });
     } else {
       setEditingLab(null);
@@ -127,7 +139,11 @@ const AdminLabs = () => {
         cover_image_url: "",
         discount_percentage: 0,
         cities: "",
-        is_active: true
+        is_active: true,
+        opening_time: "7:00 AM",
+        closing_time: "10:00 PM",
+        contact_phone: "",
+        contact_email: ""
       });
       setPendingCsvFile(null);
       if (csvInputRef.current) csvInputRef.current.value = "";
@@ -219,7 +235,11 @@ const AdminLabs = () => {
         cover_image_url: formData.cover_image_url || null,
         discount_percentage: formData.discount_percentage,
         cities: formData.cities.split(",").map(c => c.trim()).filter(Boolean),
-        is_active: formData.is_active
+        is_active: formData.is_active,
+        opening_time: formData.opening_time || null,
+        closing_time: formData.closing_time || null,
+        contact_phone: formData.contact_phone || null,
+        contact_email: formData.contact_email || null
       };
 
       if (editingLab) {
@@ -381,6 +401,53 @@ const AdminLabs = () => {
                     onChange={(e) => setFormData({ ...formData, cities: e.target.value })}
                     placeholder="Lahore, Karachi, Islamabad"
                   />
+                </div>
+
+                {/* Timing & Contact Section */}
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="font-medium mb-3">Timing & Contact Details</h3>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="opening_time">Opening Time</Label>
+                      <Input
+                        id="opening_time"
+                        value={formData.opening_time}
+                        onChange={(e) => setFormData({ ...formData, opening_time: e.target.value })}
+                        placeholder="7:00 AM"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="closing_time">Closing Time</Label>
+                      <Input
+                        id="closing_time"
+                        value={formData.closing_time}
+                        onChange={(e) => setFormData({ ...formData, closing_time: e.target.value })}
+                        placeholder="10:00 PM"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-3">
+                    <Label htmlFor="contact_phone">Contact Phone</Label>
+                    <Input
+                      id="contact_phone"
+                      value={formData.contact_phone}
+                      onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                      placeholder="+92 300 1234567"
+                    />
+                  </div>
+
+                  <div className="space-y-2 mt-3">
+                    <Label htmlFor="contact_email">Contact Email</Label>
+                    <Input
+                      id="contact_email"
+                      type="email"
+                      value={formData.contact_email}
+                      onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                      placeholder="info@lab.com"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">

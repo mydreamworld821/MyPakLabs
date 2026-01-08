@@ -46,6 +46,7 @@ interface Prescription {
   reviewed_at: string | null;
   created_at: string;
   lab_id: string | null;
+  unique_id: string | null;
   labs?: {
     name: string;
     discount_percentage: number | null;
@@ -140,6 +141,7 @@ const MyPrescriptions = () => {
 
     generatePrescriptionPDF({
       prescriptionId: prescription.id,
+      uniqueId: prescription.unique_id || undefined,
       labName: prescription.labs?.name || "Unknown Lab",
       labDiscount: discountAmount > 0 ? Math.round((discountAmount / totalOriginal) * 100) : 0,
       tests: prescription.approved_tests.map(t => ({
@@ -153,6 +155,8 @@ const MyPrescriptions = () => {
       approvedDate: prescription.reviewed_at 
         ? format(new Date(prescription.reviewed_at), "dd MMM yyyy")
         : format(new Date(), "dd MMM yyyy"),
+      adminNotes: prescription.admin_notes || undefined,
+      validityDays: 7,
     });
 
     toast.success("PDF downloaded successfully!");
@@ -222,7 +226,7 @@ const MyPrescriptions = () => {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-mono">
-                          #{prescription.id.slice(0, 8)}
+                          {prescription.unique_id || `#${prescription.id.slice(0, 8)}`}
                         </CardTitle>
                         <Badge className={config.color}>
                           <StatusIcon className="w-3 h-3 mr-1" />

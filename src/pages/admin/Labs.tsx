@@ -294,6 +294,20 @@ const AdminLabs = () => {
                   />
                 </div>
 
+                {editingLab && (
+                  <div className="border-t pt-4">
+                    <Label className="mb-2 block">Bulk Import Tests</Label>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Upload a CSV file to add/update test prices for this lab
+                    </p>
+                    <LabTestsCsvUpload
+                      labId={editingLab.id}
+                      labName={editingLab.name}
+                      onSuccess={() => {}}
+                    />
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-4">
                   <Button
                     variant="outline"

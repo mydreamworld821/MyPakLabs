@@ -90,6 +90,35 @@ const LabDetail = () => {
   const [uniqueId, setUniqueId] = useState("");
   const [isSavingPrescription, setIsSavingPrescription] = useState(false);
   const [prescriptionSaved, setPrescriptionSaved] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string | null;
+    phone: string | null;
+    city: string | null;
+    age: number | null;
+    gender: string | null;
+  } | null>(null);
+
+  // Fetch user profile when user is logged in
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) {
+        setUserProfile(null);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, phone, city, age, gender")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     if (id) {
@@ -260,6 +289,11 @@ const LabDetail = () => {
       await generateBookingPDF({
         uniqueId,
         labName: lab.name,
+        patientName: userProfile?.full_name || undefined,
+        patientPhone: userProfile?.phone || undefined,
+        patientCity: userProfile?.city || undefined,
+        patientAge: userProfile?.age || undefined,
+        patientGender: userProfile?.gender || undefined,
         tests: selectedTestItems.map((test) => ({
           name: test.name,
           originalPrice: test.originalPrice,

@@ -59,6 +59,8 @@ interface Profile {
   city: string | null;
   avatar_url: string | null;
   medical_history: string | null;
+  age: number | null;
+  gender: string | null;
 }
 
 interface OrderTest {
@@ -128,6 +130,8 @@ const Profile = () => {
     full_name: "",
     phone: "",
     city: "",
+    age: "",
+    gender: "",
     newEmail: "",
   });
   const [medicalHistory, setMedicalHistory] = useState({
@@ -166,6 +170,8 @@ const Profile = () => {
           full_name: profileData.full_name || "",
           phone: profileData.phone || "",
           city: profileData.city || "",
+          age: profileData.age?.toString() || "",
+          gender: profileData.gender || "",
           newEmail: "",
         });
         // Parse medical history JSON or use as plain text
@@ -230,6 +236,8 @@ const Profile = () => {
           full_name: editForm.full_name.trim() || null,
           phone: editForm.phone.trim() || null,
           city: editForm.city.trim() || null,
+          age: editForm.age ? parseInt(editForm.age) : null,
+          gender: editForm.gender.trim() || null,
         })
         .eq("user_id", user.id);
 
@@ -240,6 +248,8 @@ const Profile = () => {
         full_name: editForm.full_name.trim() || null,
         phone: editForm.phone.trim() || null,
         city: editForm.city.trim() || null,
+        age: editForm.age ? parseInt(editForm.age) : null,
+        gender: editForm.gender.trim() || null,
       } : null);
       
       setIsEditing(false);
@@ -407,6 +417,34 @@ const Profile = () => {
                           placeholder="Enter your city"
                         />
                       </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="age">Age</Label>
+                          <Input
+                            id="age"
+                            type="number"
+                            value={editForm.age}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, age: e.target.value }))}
+                            placeholder="Age"
+                            min="1"
+                            max="120"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="gender">Gender</Label>
+                          <select
+                            id="gender"
+                            value={editForm.gender}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, gender: e.target.value }))}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                      </div>
                       <div className="flex gap-2">
                         <Button
                           className="flex-1"
@@ -450,6 +488,22 @@ const Profile = () => {
                         <div className="flex-1">
                           <p className="text-xs text-muted-foreground">City</p>
                           <p className="text-sm font-medium">{profile?.city || "Not set"}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground">Age</p>
+                            <p className="text-sm font-medium">{profile?.age ? `${profile.age} years` : "Not set"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground">Gender</p>
+                            <p className="text-sm font-medium">{profile?.gender || "Not set"}</p>
+                          </div>
                         </div>
                       </div>
                       <Button

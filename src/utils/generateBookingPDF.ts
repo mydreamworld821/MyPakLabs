@@ -146,7 +146,7 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
 
   // Tests List
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(14);
+  doc.setFontSize(10);
   
   booking.tests.forEach((test, index) => {
     if (y > 250) {

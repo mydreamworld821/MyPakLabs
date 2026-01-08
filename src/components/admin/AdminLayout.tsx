@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   FlaskConical,
   LayoutDashboard,
@@ -14,7 +16,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,12 +40,60 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [newPrescriptionCount, setNewPrescriptionCount] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) {
       navigate("/");
     }
   }, [isAdmin, navigate]);
+
+  // Real-time subscription for new prescriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-prescriptions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'prescriptions',
+        },
+        async (payload) => {
+          // Fetch patient info for the notification
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', payload.new.user_id)
+            .maybeSingle();
+
+          const patientName = profile?.full_name || 'A patient';
+          
+          toast.info(`New Prescription Uploaded`, {
+            description: `${patientName} has uploaded a new prescription for review.`,
+            action: {
+              label: 'View',
+              onClick: () => navigate('/admin/prescriptions'),
+            },
+            duration: 10000,
+          });
+
+          setNewPrescriptionCount((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate]);
+
+  // Reset notification count when visiting prescriptions page
+  useEffect(() => {
+    if (location.pathname === '/admin/prescriptions') {
+      setNewPrescriptionCount(0);
+    }
+  }, [location.pathname]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -91,13 +142,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <nav className="flex-1 p-4 space-y-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;
+              const isPrescriptions = item.href === '/admin/prescriptions';
+              const showBadge = isPrescriptions && newPrescriptionCount > 0;
+              
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   onClick={() => setIsSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -105,7 +159,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 >
                   <item.icon className="w-5 h-5" />
                   {item.label}
-                  {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  {showBadge && (
+                    <span className="ml-auto flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold bg-destructive text-destructive-foreground rounded-full animate-pulse">
+                      {newPrescriptionCount}
+                    </span>
+                  )}
+                  {isActive && !showBadge && <ChevronRight className="w-4 h-4 ml-auto" />}
                 </Link>
               );
             })}

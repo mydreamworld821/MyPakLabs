@@ -89,6 +89,12 @@ const Navbar = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="w-4 h-4" />
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/my-bookings" className="flex items-center gap-2 cursor-pointer">
                       <ShoppingCart className="w-4 h-4" />
                       My Bookings
@@ -169,6 +175,12 @@ const Navbar = () => {
                     <p className="text-sm font-medium">{user.user_metadata?.full_name || 'User'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
+                  <Link to="/profile" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <User className="w-4 h-4" />
+                      My Profile
+                    </Button>
+                  </Link>
                   <Link to="/my-bookings" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full gap-2">
                       <ShoppingCart className="w-4 h-4" />

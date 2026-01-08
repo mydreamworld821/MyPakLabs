@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import MyPrescriptions from "./pages/MyPrescriptions";
 import MyBookings from "./pages/MyBookings";
+import Profile from "./pages/Profile";
 import Terms from "./pages/Terms";
 import HelpCenter from "./pages/HelpCenter";
 import PartnerTerms from "./pages/PartnerTerms";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/my-prescriptions" element={<MyPrescriptions />} />
             <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/partner-terms" element={<PartnerTerms />} />

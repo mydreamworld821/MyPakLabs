@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,11 +18,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, ShoppingCart, Loader2, Eye, User, Phone } from "lucide-react";
+import { Search, ShoppingCart, Loader2, Eye, User, Phone, Building2, Calendar, Clock, Download, Printer } from "lucide-react";
 import { format } from "date-fns";
+import { generateBookingPDF } from "@/utils/generateBookingPDF";
 
 interface PatientProfile {
   full_name: string | null;
@@ -33,12 +40,19 @@ interface LabInfo {
   name: string;
 }
 
+interface OrderTest {
+  test_id: string;
+  test_name: string;
+  price: number;
+  discounted_price?: number;
+}
+
 interface Order {
   id: string;
   unique_id: string;
   user_id: string;
   lab_id: string;
-  tests: unknown;
+  tests: OrderTest[];
   original_total: number;
   discount_percentage: number | null;
   discounted_total: number;
@@ -63,6 +77,8 @@ const AdminOrders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -100,6 +116,7 @@ const AdminOrders = () => {
       // Attach profiles to orders
       const ordersWithProfiles = (ordersData || []).map(order => ({
         ...order,
+        tests: Array.isArray(order.tests) ? order.tests as unknown as OrderTest[] : [],
         profiles: profilesMap.get(order.user_id) || null,
       }));
 
@@ -130,6 +147,11 @@ const AdminOrders = () => {
     } finally {
       setIsUpdating(null);
     }
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDialogOpen(true);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -274,7 +296,7 @@ const AdminOrders = () => {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm">
-                            {Array.isArray(order.tests) ? order.tests.length : 0} tests
+                            {order.tests.length} tests
                           </span>
                         </TableCell>
                         <TableCell>
@@ -308,7 +330,7 @@ const AdminOrders = () => {
                           {format(new Date(order.created_at), "dd MMM yyyy")}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => handleViewOrder(order)}>
                             <Eye className="w-4 h-4" />
                           </Button>
                         </TableCell>
@@ -320,6 +342,151 @@ const AdminOrders = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* View Order Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Order Details</DialogTitle>
+            </DialogHeader>
+
+            {selectedOrder && (
+              <div className="space-y-6 mt-4">
+                {/* Order Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Order ID</p>
+                    <p className="font-mono font-bold text-lg">{selectedOrder.unique_id}</p>
+                  </div>
+                  <Badge className={statusColors[selectedOrder.status] || ""}>
+                    {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                  </Badge>
+                </div>
+
+                {/* Patient Info */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{selectedOrder.profiles?.full_name || "Unknown"}</p>
+                        {selectedOrder.profiles?.phone && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {selectedOrder.profiles.phone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Lab Info */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{selectedOrder.labs?.name || "Unknown Lab"}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(selectedOrder.created_at), "dd MMM yyyy")}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Valid till {format(new Date(selectedOrder.validity_date), "dd MMM yyyy")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tests */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Tests Booked</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {selectedOrder.tests.map((test, index) => (
+                        <div key={index} className="flex justify-between py-2 border-b last:border-0">
+                          <span>{test.test_name}</span>
+                          <div className="text-right">
+                            {test.discounted_price && test.discounted_price < test.price ? (
+                              <>
+                                <span className="font-medium">Rs. {test.discounted_price}</span>
+                                <span className="text-xs text-muted-foreground line-through ml-2">Rs. {test.price}</span>
+                              </>
+                            ) : (
+                              <span className="font-medium">Rs. {test.price}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t mt-4 pt-4 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>Rs. {selectedOrder.original_total.toLocaleString()}</span>
+                      </div>
+                      {selectedOrder.discount_percentage && selectedOrder.discount_percentage > 0 && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Discount ({selectedOrder.discount_percentage}%)</span>
+                          <span>-Rs. {(selectedOrder.original_total - selectedOrder.discounted_total).toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-bold text-lg border-t pt-2">
+                        <span>Total</span>
+                        <span>Rs. {selectedOrder.discounted_total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* PDF/Print Actions */}
+                <div className="flex gap-3">
+                  <Button 
+                    className="flex-1" 
+                    onClick={() => {
+                      generateBookingPDF({
+                        uniqueId: selectedOrder.unique_id,
+                        labName: selectedOrder.labs?.name || 'Lab',
+                        patientName: selectedOrder.profiles?.full_name || undefined,
+                        patientPhone: selectedOrder.profiles?.phone || undefined,
+                        tests: selectedOrder.tests.map(t => ({
+                          name: t.test_name,
+                          originalPrice: t.price,
+                          discountedPrice: t.discounted_price || t.price
+                        })),
+                        totalOriginal: selectedOrder.original_total,
+                        totalDiscounted: selectedOrder.discounted_total,
+                        totalSavings: selectedOrder.original_total - selectedOrder.discounted_total,
+                        discountPercentage: selectedOrder.discount_percentage || 0,
+                        bookingDate: format(new Date(selectedOrder.created_at), 'dd/MM/yyyy'),
+                      });
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.print()}
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

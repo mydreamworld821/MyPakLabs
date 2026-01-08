@@ -49,7 +49,10 @@ import {
   AlertCircle,
   Pill,
   Stethoscope,
+  Download,
+  Printer,
 } from "lucide-react";
+import { generateBookingPDF } from "@/utils/generateBookingPDF";
 
 interface Profile {
   id: string;
@@ -941,6 +944,44 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* PDF/Print Actions */}
+              <div className="flex gap-3">
+                <Button 
+                  className="flex-1" 
+                  onClick={() => {
+                    generateBookingPDF({
+                      uniqueId: selectedOrder.unique_id,
+                      labName: selectedOrder.labs?.name || 'Lab',
+                      patientName: profile?.full_name || undefined,
+                      patientPhone: profile?.phone || undefined,
+                      patientCity: profile?.city || undefined,
+                      patientAge: profile?.age || undefined,
+                      patientGender: profile?.gender || undefined,
+                      tests: selectedOrder.tests.map(t => ({
+                        name: t.test_name,
+                        originalPrice: t.price,
+                        discountedPrice: t.discounted_price || t.price
+                      })),
+                      totalOriginal: selectedOrder.original_total,
+                      totalDiscounted: selectedOrder.discounted_total,
+                      totalSavings: selectedOrder.original_total - selectedOrder.discounted_total,
+                      discountPercentage: selectedOrder.discount_percentage || 0,
+                      bookingDate: format(new Date(selectedOrder.created_at), 'dd/MM/yyyy'),
+                    });
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.print()}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

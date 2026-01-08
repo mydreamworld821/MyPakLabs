@@ -12,6 +12,7 @@ import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { generateLabId } from "@/utils/generateLabId";
 import {
   ArrowLeft,
   Star,
@@ -154,10 +155,9 @@ const LabDetail = () => {
     }
   };
 
-  const generateUniqueId = (): string => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-    return `MEDI-${year}-${random}`;
+  // Use the lab-based ID generator
+  const generateUniqueIdForLab = (): string => {
+    return generateLabId(lab?.name || "MEDI");
   };
 
   if (isLoading) {
@@ -204,7 +204,7 @@ const LabDetail = () => {
       return;
     }
 
-    const newId = generateUniqueId();
+    const newId = generateUniqueIdForLab();
     setUniqueId(newId);
 
     // Save order to database

@@ -3,6 +3,8 @@ import jsPDF from 'jspdf';
 interface BookingDetails {
   uniqueId: string;
   labName: string;
+  patientName?: string;
+  patientPhone?: string;
   tests: Array<{
     name: string;
     originalPrice: number;
@@ -13,6 +15,7 @@ interface BookingDetails {
   totalSavings: number;
   discountPercentage: number;
   validityDays?: number;
+  bookingDate?: string;
 }
 
 export const generateBookingPDF = (booking: BookingDetails) => {
@@ -40,40 +43,69 @@ export const generateBookingPDF = (booking: BookingDetails) => {
 
   // Discount ID Box
   doc.setFillColor(243, 244, 246);
-  doc.roundedRect(margin, y - 10, pageWidth - 2 * margin, 35, 3, 3, 'F');
+  doc.roundedRect(margin, y - 10, pageWidth - 2 * margin, 40, 3, 3, 'F');
   
   doc.setFontSize(10);
   doc.setTextColor(107, 114, 128);
   doc.text('Your Unique Discount ID', pageWidth / 2, y, { align: 'center' });
   
-  doc.setFontSize(22);
+  doc.setFontSize(24);
   doc.setTextColor(79, 70, 229);
   doc.setFont('helvetica', 'bold');
-  doc.text(booking.uniqueId, pageWidth / 2, y + 15, { align: 'center' });
+  doc.text(booking.uniqueId, pageWidth / 2, y + 18, { align: 'center' });
   
-  y += 45;
+  y += 50;
 
-  // Lab Information
+  // Lab & Patient Information
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('Lab Details', margin, y);
+  doc.text('Booking Details', margin, y);
   y += 10;
   
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(75, 85, 99);
+  
   doc.text(`Lab: ${booking.labName}`, margin, y);
+  y += 7;
+  
+  if (booking.patientName) {
+    doc.text(`Patient: ${booking.patientName}`, margin, y);
+    y += 7;
+  }
+  
+  if (booking.patientPhone) {
+    doc.text(`Phone: ${booking.patientPhone}`, margin, y);
+    y += 7;
+  }
+  
+  const bookingDate = booking.bookingDate || new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  doc.text(`Booking Date: ${bookingDate}`, margin, y);
   y += 7;
   
   const validityDate = new Date();
   validityDate.setDate(validityDate.getDate() + (booking.validityDays || 7));
+  doc.setTextColor(16, 185, 129);
   doc.text(`Valid Until: ${validityDate.toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   })}`, margin, y);
   y += 15;
+
+  // Discount Badge
+  doc.setFillColor(16, 185, 129);
+  doc.roundedRect(margin, y - 3, 80, 14, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${booking.discountPercentage}% DISCOUNT APPLIED`, margin + 5, y + 6);
+  y += 20;
 
   // Tests Table Header
   doc.setTextColor(0, 0, 0);
@@ -99,13 +131,14 @@ export const generateBookingPDF = (booking: BookingDetails) => {
   
   booking.tests.forEach((test) => {
     // Check if we need a new page
-    if (y > 250) {
+    if (y > 240) {
       doc.addPage();
       y = 20;
     }
     
     const testName = test.name.length > 35 ? test.name.substring(0, 35) + '...' : test.name;
     doc.text(testName, margin + 5, y);
+    doc.setTextColor(156, 163, 175);
     doc.text(`Rs. ${test.originalPrice.toLocaleString()}`, pageWidth - margin - 70, y);
     doc.setTextColor(16, 185, 129);
     doc.text(`Rs. ${test.discountedPrice.toLocaleString()}`, pageWidth - margin - 25, y);
@@ -147,25 +180,36 @@ export const generateBookingPDF = (booking: BookingDetails) => {
 
   // Savings Badge
   doc.setFillColor(16, 185, 129);
-  doc.roundedRect(margin, y, pageWidth - 2 * margin, 15, 3, 3, 'F');
+  doc.roundedRect(margin, y, pageWidth - 2 * margin, 18, 3, 3, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
-  doc.text(`You save Rs. ${booking.totalSavings.toLocaleString()}!`, pageWidth / 2, y + 10, { align: 'center' });
+  doc.setFontSize(13);
+  doc.text(`🎉 You save Rs. ${booking.totalSavings.toLocaleString()}!`, pageWidth / 2, y + 12, { align: 'center' });
   
   y += 30;
 
-  // Instructions
-  doc.setTextColor(107, 114, 128);
-  doc.setFontSize(10);
+  // Instructions Box
+  doc.setFillColor(254, 249, 195); // Light yellow
+  doc.roundedRect(margin, y, pageWidth - 2 * margin, 55, 3, 3, 'F');
+  
+  doc.setTextColor(161, 98, 7); // Dark yellow
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('📋 Important Instructions:', margin + 5, y + 10);
+  
   doc.setFont('helvetica', 'normal');
-  doc.text('Instructions:', margin, y);
+  doc.setFontSize(10);
+  y += 18;
+  doc.text('1. Present this slip at the lab reception', margin + 5, y);
   y += 7;
-  doc.text('1. Show this slip at the lab reception', margin + 5, y);
-  y += 6;
   doc.text('2. Provide your Discount ID to avail the discounted price', margin + 5, y);
-  y += 6;
-  doc.text('3. This discount is valid for 7 days from the booking date', margin + 5, y);
-  y += 15;
+  y += 7;
+  doc.text(`3. This discount is valid for ${booking.validityDays || 7} days only`, margin + 5, y);
+  y += 7;
+  doc.text('4. One-time use only - ID cannot be reused after redemption', margin + 5, y);
+  y += 7;
+  doc.text('5. Original prescription may be required for certain tests', margin + 5, y);
+  
+  y += 20;
 
   // Footer
   doc.setDrawColor(229, 231, 235);

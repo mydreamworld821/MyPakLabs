@@ -42,6 +42,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newPrescriptionCount, setNewPrescriptionCount] = useState(0);
+  const [newOrderCount, setNewOrderCount] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -92,10 +93,64 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     };
   }, [navigate]);
 
-  // Reset notification count when visiting prescriptions page
+  // Real-time subscription for new orders
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        },
+        async (payload) => {
+          // Fetch patient info and lab name for the notification
+          const [profileResult, labResult] = await Promise.all([
+            supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', payload.new.user_id)
+              .maybeSingle(),
+            supabase
+              .from('labs')
+              .select('name')
+              .eq('id', payload.new.lab_id)
+              .maybeSingle()
+          ]);
+
+          const patientName = profileResult.data?.full_name || 'A patient';
+          const labName = labResult.data?.name || 'a lab';
+          
+          // Play notification sound
+          playNotificationSound();
+          
+          toast.success(`New Order Placed`, {
+            description: `${patientName} booked tests at ${labName} (${payload.new.unique_id})`,
+            action: {
+              label: 'View',
+              onClick: () => navigate('/admin/orders'),
+            },
+            duration: 10000,
+          });
+
+          setNewOrderCount((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate]);
+
+  // Reset notification counts when visiting respective pages
   useEffect(() => {
     if (location.pathname === '/admin/prescriptions') {
       setNewPrescriptionCount(0);
+    }
+    if (location.pathname === '/admin/orders') {
+      setNewOrderCount(0);
     }
   }, [location.pathname]);
 
@@ -147,7 +202,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;
               const isPrescriptions = item.href === '/admin/prescriptions';
-              const showBadge = isPrescriptions && newPrescriptionCount > 0;
+              const isOrders = item.href === '/admin/orders';
+              const badgeCount = isPrescriptions ? newPrescriptionCount : isOrders ? newOrderCount : 0;
+              const showBadge = badgeCount > 0;
               
               return (
                 <Link
@@ -164,8 +221,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   <item.icon className="w-5 h-5" />
                   {item.label}
                   {showBadge && (
-                    <span className="ml-auto flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold bg-destructive text-destructive-foreground rounded-full animate-pulse">
-                      {newPrescriptionCount}
+                    <span className={cn(
+                      "ml-auto flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold rounded-full animate-pulse",
+                      isOrders ? "bg-green-500 text-white" : "bg-destructive text-destructive-foreground"
+                    )}>
+                      {badgeCount}
                     </span>
                   )}
                   {isActive && !showBadge && <ChevronRight className="w-4 h-4 ml-auto" />}

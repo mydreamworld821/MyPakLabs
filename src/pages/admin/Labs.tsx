@@ -24,8 +24,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Building2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Building2, Loader2, Upload } from "lucide-react";
 import LabsCsvUpload from "@/components/admin/LabsCsvUpload";
+import LabTestsCsvUpload from "@/components/admin/LabTestsCsvUpload";
 
 interface Lab {
   id: string;
@@ -405,6 +406,11 @@ const AdminLabs = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <LabTestsCsvUpload
+                              labId={lab.id}
+                              labName={lab.name}
+                              onSuccess={() => {}}
+                            />
                             <Button
                               variant="ghost"
                               size="icon"

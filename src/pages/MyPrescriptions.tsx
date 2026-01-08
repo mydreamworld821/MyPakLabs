@@ -27,7 +27,9 @@ import {
   ArrowLeft,
   Building2,
   Percent,
+  Download,
 } from "lucide-react";
+import { generatePrescriptionPDF } from "@/utils/generatePrescriptionPDF";
 
 interface ApprovedTest {
   test_id: string;
@@ -124,6 +126,36 @@ const MyPrescriptions = () => {
   const handleViewPrescription = (prescription: Prescription) => {
     setSelectedPrescription(prescription);
     setIsDialogOpen(true);
+  };
+
+  const handleDownloadPDF = (prescription: Prescription) => {
+    if (!prescription.approved_tests || prescription.approved_tests.length === 0) {
+      toast.error("No approved tests to download");
+      return;
+    }
+
+    const subtotal = prescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
+    const discountPct = prescription.labs?.discount_percentage || 0;
+    const discountAmount = subtotal * discountPct / 100;
+    const total = subtotal - discountAmount;
+
+    generatePrescriptionPDF({
+      prescriptionId: prescription.id,
+      labName: prescription.labs?.name || "Unknown Lab",
+      labDiscount: discountPct,
+      tests: prescription.approved_tests.map(t => ({
+        name: t.test_name,
+        price: t.price
+      })),
+      subtotal,
+      discountAmount,
+      total,
+      approvedDate: prescription.reviewed_at 
+        ? format(new Date(prescription.reviewed_at), "dd MMM yyyy")
+        : format(new Date(), "dd MMM yyyy"),
+    });
+
+    toast.success("PDF downloaded successfully!");
   };
 
   if (authLoading) {
@@ -275,14 +307,26 @@ const MyPrescriptions = () => {
                         </div>
                       )}
 
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => handleViewPrescription(prescription)}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleViewPrescription(prescription)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
+                        {prescription.status === "approved" && prescription.approved_tests && prescription.approved_tests.length > 0 && (
+                          <Button
+                            variant="default"
+                            className="flex-1"
+                            onClick={() => handleDownloadPDF(prescription)}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            PDF
+                          </Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 );
@@ -393,6 +437,17 @@ const MyPrescriptions = () => {
                   <p>Reviewed: {format(new Date(selectedPrescription.reviewed_at), "dd MMM yyyy, HH:mm")}</p>
                 )}
               </div>
+
+              {/* Download PDF Button */}
+              {selectedPrescription.status === "approved" && selectedPrescription.approved_tests && selectedPrescription.approved_tests.length > 0 && (
+                <Button
+                  className="w-full"
+                  onClick={() => handleDownloadPDF(selectedPrescription)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF Slip
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>

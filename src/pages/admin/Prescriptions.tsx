@@ -97,29 +97,40 @@ const AdminPrescriptions = () => {
 
   const fetchPrescriptions = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch prescriptions with labs
+      const { data: prescriptionsData, error: prescriptionsError } = await supabase
         .from("prescriptions")
         .select(`
           *,
-          profiles:user_id (
-            full_name,
-            phone,
-            city
-          ),
           labs:lab_id (
             name
           )
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (prescriptionsError) throw prescriptionsError;
 
-      // Parse approved_tests from JSON
-      const parsedData = (data || []).map((p) => ({
+      // Get unique user_ids to fetch profiles
+      const userIds = [...new Set((prescriptionsData || []).map(p => p.user_id))];
+      
+      // Fetch profiles separately
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, phone, city")
+        .in("user_id", userIds);
+
+      // Create a map of user_id to profile
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.user_id, p])
+      );
+
+      // Parse approved_tests from JSON and attach profiles
+      const parsedData = (prescriptionsData || []).map((p) => ({
         ...p,
         approved_tests: Array.isArray(p.approved_tests)
           ? (p.approved_tests as unknown as ApprovedTest[])
           : null,
+        profiles: profilesMap.get(p.user_id) || null,
       }));
 
       setPrescriptions(parsedData);

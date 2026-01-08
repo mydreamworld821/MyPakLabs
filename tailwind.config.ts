@@ -60,10 +60,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        medical: {
-          teal: "hsl(var(--medical-teal))",
-          "teal-light": "hsl(var(--medical-teal-light))",
-          blue: "hsl(var(--medical-blue))",
+        brand: {
+          purple: "hsl(var(--brand-purple))",
+          "purple-light": "hsl(var(--brand-purple-light))",
+          indigo: "hsl(var(--brand-indigo))",
           green: "hsl(var(--medical-green))",
           orange: "hsl(var(--medical-orange))",
           red: "hsl(var(--medical-red))",

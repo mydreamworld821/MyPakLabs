@@ -30,6 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, Filter, Download, Upload } from "lucide-react";
+import ImportInstructions from "@/components/admin/ImportInstructions";
 
 interface LabTest {
   id: string;
@@ -472,6 +473,7 @@ const LabTests = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <ImportInstructions />
             <Button variant="outline" onClick={handleDownloadTemplate}>
               <Download className="w-4 h-4 mr-2" />
               Template

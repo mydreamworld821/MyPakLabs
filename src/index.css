@@ -110,6 +110,22 @@
     @apply border-border;
   }
 
+  html {
+    font-size: 14px; /* Reduced base font size for mobile */
+  }
+
+  @media (min-width: 640px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 16px; /* Default size for desktop */
+    }
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Plus Jakarta Sans', sans-serif;

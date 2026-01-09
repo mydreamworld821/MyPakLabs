@@ -52,18 +52,40 @@ interface SheetContentProps
     VariantProps<typeof sheetVariants> {}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, ...props }, ref) => {
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+      // Scroll to top when sheet opens
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
+      }
+      // Also scroll the window to ensure sheet is visible
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, []);
+
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content 
+          ref={(node) => {
+            // Handle both refs
+            if (typeof ref === 'function') ref(node);
+            else if (ref) ref.current = node;
+            (contentRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          }}
+          className={cn(sheetVariants({ side }), "overflow-y-auto", className)} 
+          {...props}
+        >
+          {children}
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 

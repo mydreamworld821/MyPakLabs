@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TestSelector from "@/components/labs/TestSelector";
@@ -13,6 +14,7 @@ import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { generateLabId } from "@/utils/generateLabId";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Star,
@@ -484,12 +486,17 @@ const LabDetail = () => {
       {/* Hero Banner */}
       <section className="pt-20 relative">
         {/* Cover Image */}
-        <div className="relative h-64 md:h-80 lg:h-96 w-full overflow-hidden">
+        <div className="relative h-48 sm:h-64 md:h-80 lg:h-96 w-full overflow-hidden">
           {lab.cover_image_url ? (
             <img 
               src={lab.cover_image_url} 
               alt={`${lab.name} cover`} 
               className="w-full h-full object-cover"
+              onError={(e) => {
+                // Hide broken image and show fallback
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.classList.add('gradient-hero');
+              }}
             />
           ) : (
             <div className="w-full h-full gradient-hero" />
@@ -516,11 +523,19 @@ const LabDetail = () => {
                   <img 
                     src={lab.logo_url} 
                     alt={lab.name} 
-                    className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-contain bg-muted p-3 border border-border" 
+                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl object-contain bg-muted p-2 sm:p-3 border border-border" 
+                    onError={(e) => {
+                      // Replace with fallback on error
+                      e.currentTarget.style.display = 'none';
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl gradient-hero flex items-center justify-center';
+                      fallback.innerHTML = `<span class="text-xl sm:text-2xl md:text-3xl font-bold text-primary-foreground">${lab.name.charAt(0)}</span>`;
+                      e.currentTarget.parentElement?.appendChild(fallback);
+                    }}
                   />
                 ) : (
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl gradient-hero flex items-center justify-center">
-                    <span className="text-2xl md:text-3xl font-bold text-primary-foreground">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl gradient-hero flex items-center justify-center">
+                    <span className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-foreground">
                       {lab.name.charAt(0)}
                     </span>
                   </div>
@@ -573,22 +588,19 @@ const LabDetail = () => {
       {/* Content */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2 lg:order-1">
               <Card>
-                <CardHeader>
-                  <CardTitle>Select Your Tests</CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <Tabs defaultValue="manual">
-                    <TabsList className="grid w-full grid-cols-2 mb-6">
-                      <TabsTrigger value="manual">
-                        <ShoppingCart className="w-4 h-4 mr-2" />
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="manual" className="text-xs sm:text-sm">
+                        <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         Select Tests
                       </TabsTrigger>
-                      <TabsTrigger value="prescription">
-                        <FileText className="w-4 h-4 mr-2" />
+                      <TabsTrigger value="prescription" className="text-xs sm:text-sm">
+                        <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         Upload Prescription
                       </TabsTrigger>
                     </TabsList>
@@ -644,73 +656,36 @@ const LabDetail = () => {
               </Card>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Quick Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Quick Info</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {(lab.opening_time || lab.closing_time) && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>Open {lab.opening_time || "7:00 AM"} - {lab.closing_time || "10:00 PM"}</span>
-                    </div>
-                  )}
-                  {lab.contact_phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <a href={`tel:${lab.contact_phone}`} className="hover:text-primary transition-colors">
-                        {lab.contact_phone}
-                      </a>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Shield className="w-4 h-4 text-muted-foreground" />
-                    <span>ISO 15189 Certified</span>
-                  </div>
-                  {discount > 0 && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                      <div>
-                        <span className="font-medium text-primary">{discount}% Discount</span>
-                        <div className="text-muted-foreground mt-1">
-                          Available anywhere in Pakistan
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Order Summary */}
-              <Card className="sticky top-32">
-                <CardHeader>
-                  <CardTitle className="text-lg">Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            {/* Sidebar - Order Summary first on mobile */}
+            <div className="space-y-4 order-1 lg:order-2">
+              {/* Order Summary - Sticky on desktop, prominent on mobile */}
+              <Card className="lg:sticky lg:top-24 border-primary/20 shadow-md">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-base mb-3">Order Summary</h3>
                   {selectedTests.length > 0 ? (
-                    <>
-                      <div className="space-y-2">
-                        {selectedTestItems.map((test) => (
-                          <div key={test.id} className="flex justify-between text-sm">
-                            <span className="truncate flex-1 pr-2">{test.name}</span>
-                            <span className="font-medium">
-                              Rs. {test.discountedPrice.toLocaleString()}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="space-y-3">
+                      {/* Selected tests - Scrollable list */}
+                      <ScrollArea className="max-h-32 sm:max-h-40">
+                        <div className="space-y-1.5 pr-2">
+                          {selectedTestItems.map((test) => (
+                            <div key={test.id} className="flex justify-between text-xs sm:text-sm">
+                              <span className="truncate flex-1 pr-2">{test.name}</span>
+                              <span className="font-medium shrink-0">
+                                Rs. {test.discountedPrice.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
 
-                      <div className="border-t border-border pt-4 space-y-2">
-                        <div className="flex justify-between text-sm">
+                      <div className="border-t border-border pt-3 space-y-1.5">
+                        <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">Subtotal</span>
                           <span className="line-through text-muted-foreground">
                             Rs. {totalOriginal.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">
                             Discount ({discount}%)
                           </span>
@@ -718,7 +693,7 @@ const LabDetail = () => {
                             - Rs. {totalSavings.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between font-semibold text-lg pt-2 border-t border-border">
+                        <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t border-border">
                           <span>Total</span>
                           <span className="text-primary">
                             Rs. {totalDiscounted.toLocaleString()}
@@ -726,24 +701,60 @@ const LabDetail = () => {
                         </div>
                       </div>
 
-                      <Badge variant="success" className="w-full justify-center py-2">
+                      <Badge variant="success" className="w-full justify-center py-1.5 text-xs">
                         You save Rs. {totalSavings.toLocaleString()}!
                       </Badge>
 
                       <Button
                         className="w-full"
-                        size="lg"
+                        size="default"
                         onClick={handleConfirmBooking}
                       >
                         Confirm & Get Discount ID
                       </Button>
-                    </>
+                    </div>
                   ) : (
                     <div className="text-center py-4">
-                      <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
+                      <ShoppingCart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Select tests to see pricing
                       </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Info - Hidden on mobile when no tests selected */}
+              <Card className={cn(selectedTests.length === 0 ? "block" : "hidden lg:block")}>
+                <CardContent className="p-4 space-y-2">
+                  <h3 className="font-semibold text-base mb-2">Quick Info</h3>
+                  {(lab.opening_time || lab.closing_time) && (
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span>Open {lab.opening_time || "7:00 AM"} - {lab.closing_time || "10:00 PM"}</span>
+                    </div>
+                  )}
+                  {lab.contact_phone && (
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <a href={`tel:${lab.contact_phone}`} className="hover:text-primary transition-colors">
+                        {lab.contact_phone}
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                    <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span>ISO 15189 Certified</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex items-start gap-2 text-xs sm:text-sm">
+                      <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-primary">{discount}% Discount</span>
+                        <div className="text-muted-foreground">
+                          Available anywhere in Pakistan
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>

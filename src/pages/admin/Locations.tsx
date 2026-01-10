@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, MapPin, Building } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, Building, Upload, FileText } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
 interface Province {
@@ -45,6 +45,12 @@ const Locations = () => {
   const [cityProvinceId, setCityProvinceId] = useState("");
   const [cityOrder, setCityOrder] = useState(0);
   const [cityActive, setCityActive] = useState(true);
+
+  // Bulk import state
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkProvinceId, setBulkProvinceId] = useState("");
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
     try {
@@ -215,6 +221,82 @@ const Locations = () => {
     return cities.filter(c => c.province_id === provinceId);
   };
 
+  // Bulk import handler
+  const handleBulkImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!bulkProvinceId) {
+      toast.error("Please select a province first");
+      return;
+    }
+
+    setBulkImporting(true);
+
+    try {
+      const text = await file.text();
+      
+      // Parse city names - split by newlines, commas, or semicolons
+      const cityNames = text
+        .split(/[\n\r,;]+/)
+        .map(name => name.trim())
+        .filter(name => name.length > 0 && name.length < 100);
+
+      if (cityNames.length === 0) {
+        toast.error("No valid city names found in file");
+        return;
+      }
+
+      // Get existing cities for this province to avoid duplicates
+      const existingCities = cities
+        .filter(c => c.province_id === bulkProvinceId)
+        .map(c => c.name.toLowerCase());
+
+      // Filter out duplicates
+      const newCityNames = cityNames.filter(
+        name => !existingCities.includes(name.toLowerCase())
+      );
+
+      if (newCityNames.length === 0) {
+        toast.info("All cities already exist in this province");
+        return;
+      }
+
+      // Prepare cities for insert
+      const startOrder = cities.filter(c => c.province_id === bulkProvinceId).length;
+      const citiesToInsert = newCityNames.map((name, index) => ({
+        name,
+        province_id: bulkProvinceId,
+        display_order: startOrder + index,
+        is_active: true
+      }));
+
+      // Insert in batches of 50
+      const batchSize = 50;
+      let insertedCount = 0;
+
+      for (let i = 0; i < citiesToInsert.length; i += batchSize) {
+        const batch = citiesToInsert.slice(i, i + batchSize);
+        const { error } = await supabase.from("cities").insert(batch);
+        
+        if (error) throw error;
+        insertedCount += batch.length;
+      }
+
+      toast.success(`Successfully imported ${insertedCount} cities`);
+      setBulkDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      console.error("Bulk import error:", error);
+      toast.error(error.message || "Failed to import cities");
+    } finally {
+      setBulkImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -320,12 +402,82 @@ const Locations = () => {
               <MapPin className="w-5 h-5" />
               Cities
             </CardTitle>
-            <Dialog open={cityDialogOpen} onOpenChange={setCityDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" onClick={() => openCityDialog()} disabled={provinces.length === 0}>
-                  <Plus className="w-4 h-4 mr-1" /> Add City
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              {/* Bulk Import Button */}
+              <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" disabled={provinces.length === 0}>
+                    <Upload className="w-4 h-4 mr-1" /> Bulk Import
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Bulk Import Cities</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-muted rounded-lg">
+                      <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        How to use
+                      </h4>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>• Create a text file (.txt) with city names</li>
+                        <li>• One city name per line</li>
+                        <li>• Or separate with commas: Lahore, Karachi, Islamabad</li>
+                        <li>• Duplicate cities will be skipped automatically</li>
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <Label>Select Province</Label>
+                      <Select value={bulkProvinceId} onValueChange={setBulkProvinceId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select province for cities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {provinces.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label>Upload File</Label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".txt,.csv,.text"
+                        onChange={handleBulkImport}
+                        disabled={!bulkProvinceId || bulkImporting}
+                        className="mt-1 block w-full text-sm text-muted-foreground
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-lg file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-primary file:text-primary-foreground
+                          hover:file:bg-primary/90
+                          file:cursor-pointer cursor-pointer
+                          disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+
+                    {bulkImporting && (
+                      <div className="flex items-center justify-center gap-2 py-4">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                        <span className="text-sm text-muted-foreground">Importing cities...</span>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Add Single City Button */}
+              <Dialog open={cityDialogOpen} onOpenChange={setCityDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" onClick={() => openCityDialog()} disabled={provinces.length === 0}>
+                    <Plus className="w-4 h-4 mr-1" /> Add City
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{editingCity ? "Edit City" : "Add City"}</DialogTitle>
@@ -368,8 +520,9 @@ const Locations = () => {
                     {editingCity ? "Update" : "Add"} City
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             {provinces.length === 0 ? (

@@ -24,9 +24,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Building2, Loader2, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Building2, Loader2 } from "lucide-react";
 import LabsCsvUpload from "@/components/admin/LabsCsvUpload";
 import LabTestsCsvUpload from "@/components/admin/LabTestsCsvUpload";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 interface Lab {
   id: string;
@@ -361,23 +362,22 @@ const AdminLabs = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="logo_url">Logo URL</Label>
-                  <Input
-                    id="logo_url"
-                    value={formData.logo_url}
-                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                    placeholder="https://..."
+                <div className="grid grid-cols-2 gap-4">
+                  <ImageUpload
+                    label="Logo"
+                    bucket="lab-images"
+                    folder="logos"
+                    currentUrl={formData.logo_url}
+                    onUpload={(url) => setFormData({ ...formData, logo_url: url })}
+                    aspectRatio="square"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cover_image_url">Cover Image URL</Label>
-                  <Input
-                    id="cover_image_url"
-                    value={formData.cover_image_url}
-                    onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                    placeholder="https://..."
+                  <ImageUpload
+                    label="Cover Banner"
+                    bucket="lab-images"
+                    folder="banners"
+                    currentUrl={formData.cover_image_url}
+                    onUpload={(url) => setFormData({ ...formData, cover_image_url: url })}
+                    aspectRatio="banner"
                   />
                 </div>
 

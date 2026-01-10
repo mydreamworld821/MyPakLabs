@@ -19,6 +19,11 @@ import Terms from "./pages/Terms";
 import HelpCenter from "./pages/HelpCenter";
 import PartnerTerms from "./pages/PartnerTerms";
 import Privacy from "./pages/Privacy";
+import FindDoctors from "./pages/FindDoctors";
+import Hospitals from "./pages/Hospitals";
+import Surgeries from "./pages/Surgeries";
+import HealthHub from "./pages/HealthHub";
+import JoinAsDoctor from "./pages/JoinAsDoctor";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLabs from "./pages/admin/Labs";
 import AdminTests from "./pages/admin/Tests";
@@ -52,6 +57,11 @@ const App = () => (
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/partner-terms" element={<PartnerTerms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/find-doctors" element={<FindDoctors />} />
+            <Route path="/hospitals" element={<Hospitals />} />
+            <Route path="/surgeries" element={<Surgeries />} />
+            <Route path="/health-hub" element={<HealthHub />} />
+            <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

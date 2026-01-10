@@ -12,7 +12,12 @@ import {
   Shield,
   FileText,
   ShoppingCart,
-  UserCheck
+  UserCheck,
+  Stethoscope,
+  Hospital,
+  Scissors,
+  Heart,
+  UserPlus
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,8 +36,12 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/labs", label: "Labs", icon: Building2 },
+    { href: "/labs", label: "Labs", icon: FlaskConical },
     { href: "/compare", label: "Compare Prices", icon: BarChart3 },
+    { href: "/find-doctors", label: "Find Doctors", icon: Stethoscope },
+    { href: "/hospitals", label: "Hospitals", icon: Hospital },
+    { href: "/surgeries", label: "Surgeries", icon: Scissors },
+    { href: "/health-hub", label: "Health Hub", icon: Heart },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -55,22 +64,29 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-0.5">
             {navLinks.map((link) => (
               <Link key={link.href} to={link.href}>
                 <Button
                   variant={isActive(link.href) ? "soft" : "ghost"}
-                  className="gap-2"
+                  size="sm"
+                  className="gap-1.5 text-xs px-2"
                 >
-                  <link.icon className="w-4 h-4" />
+                  <link.icon className="w-3.5 h-3.5" />
                   {link.label}
                 </Button>
               </Link>
             ))}
+            <Link to="/join-as-doctor">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 ml-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                <UserPlus className="w-3.5 h-3.5" />
+                Join as Doctor
+              </Button>
+            </Link>
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -153,7 +169,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 hover:bg-accent rounded-lg transition-colors"
+            className="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -161,9 +177,8 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-card border-b border-border animate-fade-in">
+        <div className="lg:hidden bg-card border-b border-border animate-fade-in">
           <div className="container mx-auto px-4 py-4 space-y-2">
             {navLinks.map((link) => (
               <Link
@@ -180,6 +195,12 @@ const Navbar = () => {
                 </Button>
               </Link>
             ))}
+            <Link to="/join-as-doctor" onClick={() => setIsOpen(false)}>
+              <Button variant="outline" className="w-full justify-start gap-2 border-primary text-primary">
+                <UserPlus className="w-4 h-4" />
+                Join as Doctor
+              </Button>
+            </Link>
             <div className="pt-2 border-t border-border space-y-2">
               {user ? (
                 <>

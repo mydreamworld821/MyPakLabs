@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import useCities from "@/hooks/useCities";
 import {
   Search,
   MapPin,
@@ -28,7 +29,7 @@ import {
 interface SearchResult {
   id: string;
   name: string;
-  type: "doctor" | "specialization" | "surgery" | "test" | "lab" | "hospital";
+  type: "doctor" | "specialization" | "surgery" | "test" | "lab" | "hospital" | "city";
   slug?: string;
   subtitle?: string;
 }
@@ -39,6 +40,7 @@ interface GlobalSearchProps {
 
 const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const navigate = useNavigate();
+  const { cities: dbCities, provinces, loading: citiesLoading } = useCities();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -48,17 +50,6 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const cities = [
-    "Karachi",
-    "Lahore",
-    "Islamabad",
-    "Rawalpindi",
-    "Faisalabad",
-    "Multan",
-    "Peshawar",
-    "Quetta",
-  ];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -116,6 +107,20 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     try {
       const searchTerm = `%${query}%`;
       const allResults: SearchResult[] = [];
+
+      // Search cities from local state (already fetched)
+      const matchingCities = dbCities.filter(city => 
+        city.name.toLowerCase().includes(query.toLowerCase())
+      );
+      matchingCities.slice(0, 3).forEach(city => {
+        const province = provinces.find(p => p.id === city.province_id);
+        allResults.push({
+          id: city.id,
+          name: city.name,
+          type: "city",
+          subtitle: province?.name || "City",
+        });
+      });
 
       // Search doctors
       const { data: doctors } = await supabase
@@ -254,6 +259,9 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     setSearchQuery("");
 
     switch (result.type) {
+      case "city":
+        navigate(`/find-doctors?city=${result.name}`);
+        break;
       case "doctor":
         navigate(`/doctor/${result.id}`);
         break;
@@ -277,6 +285,8 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
   const getIcon = (type: SearchResult["type"]) => {
     switch (type) {
+      case "city":
+        return <MapPin className="w-4 h-4" />;
       case "doctor":
         return <User className="w-4 h-4" />;
       case "specialization":
@@ -293,7 +303,8 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   };
 
   const getTypeBadge = (type: SearchResult["type"]) => {
-    const badges = {
+    const badges: Record<SearchResult["type"], { label: string; color: string }> = {
+      city: { label: "City", color: "bg-teal-100 text-teal-700" },
       doctor: { label: "Doctor", color: "bg-blue-100 text-blue-700" },
       specialization: { label: "Specialty", color: "bg-purple-100 text-purple-700" },
       surgery: { label: "Surgery", color: "bg-green-100 text-green-700" },
@@ -328,14 +339,25 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
           <MapPin className="w-5 h-5 text-primary" />
           <Select value={selectedCity} onValueChange={setSelectedCity}>
             <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[120px] h-10 focus:ring-0 text-gray-700 font-medium">
-              <SelectValue placeholder="Select City" />
+              <SelectValue placeholder={citiesLoading ? "Loading..." : "Select City"} />
             </SelectTrigger>
             <SelectContent>
-              {cities.map((city) => (
-                <SelectItem key={city} value={city}>
-                  {city}
-                </SelectItem>
-              ))}
+              {provinces.map((province) => {
+                const provinceCities = dbCities.filter(c => c.province_id === province.id);
+                if (provinceCities.length === 0) return null;
+                return (
+                  <div key={province.id}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                      {province.name}
+                    </div>
+                    {provinceCities.map((city) => (
+                      <SelectItem key={city.id} value={city.name}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </div>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

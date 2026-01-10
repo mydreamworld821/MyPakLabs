@@ -25,6 +25,7 @@ import {
   Star,
   Scissors,
   MessageSquare,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ const navItems = [
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
   { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
+  { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

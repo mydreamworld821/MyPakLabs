@@ -162,7 +162,7 @@ const Index = () => {
           <div className="absolute bottom-10 right-10 w-32 h-32 rounded-full bg-white/20" />
         </div>
 
-        <div className="container md:py-16 relative z-10 text-center flex-row flex items-center justify-center gap-0 mx-0 my-0 px-[16px] py-[20px]">
+        <div className="container md:py-16 relative z-10 text-center gap-0 mx-0 my-0 px-[16px] py-[60px] items-center justify-start flex flex-col">
           {/* Greeting */}
           <div className="flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-full bg-black/10 backdrop-blur-sm flex items-center justify-center text-black font-semibold text-lg border border-black/20">

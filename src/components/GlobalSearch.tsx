@@ -690,7 +690,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       // 1. Check for explicit keywords in query
       if (queryLower.includes('nurse') || queryLower.includes('nursing') || queryLower.includes('home care') || queryLower.includes('caregiver')) {
         navigate(`/find-nurses?search=${encodeURIComponent(searchQuery)}`);
-      } else if (queryLower.includes('doctor') || queryLower.includes('dr.') || queryLower.includes('dr ') || queryLower.includes('physician')) {
+      } else if (queryLower.includes('doctor') || queryLower.includes('dr.') || queryLower.includes('dr ') || queryLower === 'dr' || queryLower.startsWith('dr ') || queryLower.includes('physician')) {
         navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
       } else if (queryLower.includes('hospital') || queryLower.includes('clinic') || queryLower.includes('medical center')) {
         navigate(`/hospitals?search=${encodeURIComponent(searchQuery)}`);

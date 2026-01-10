@@ -164,7 +164,7 @@ const Index = () => {
 
         <div className="container md:py-16 relative z-10 text-center gap-0 mx-0 my-0 px-[16px] py-[60px] items-center justify-start flex flex-col">
           {/* Greeting */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="mb-4 flex-row flex items-center justify-center gap-[10px] my-0 mx-0">
             <div className="w-10 h-10 rounded-full bg-black/10 backdrop-blur-sm flex items-center justify-center text-black font-semibold text-lg border border-black/20">
               {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "G"}
             </div>

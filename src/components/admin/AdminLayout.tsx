@@ -23,7 +23,8 @@ import {
   UserRound,
   LayoutGrid,
   Star,
-  Scissors
+  Scissors,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/admin/specializations", label: "Specializations", icon: Stethoscope },
   { href: "/admin/doctors", label: "Doctors", icon: UserRound },
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
+  { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
   { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
   { href: "/admin/users", label: "Users", icon: Users },
 ];

@@ -78,7 +78,7 @@ interface TestItem {
 }
 
 const LabDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { uploadPrescription, isUploading } = usePrescriptionUpload();
@@ -122,22 +122,44 @@ const LabDetail = () => {
     fetchUserProfile();
   }, [user]);
 
+  // Get the identifier (either id or slug)
+  const labIdentifier = id || slug;
+
   useEffect(() => {
-    if (id) {
+    if (labIdentifier) {
       fetchLabData();
     } else {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [labIdentifier]);
 
   const fetchLabData = async () => {
     try {
-      // Fetch lab details
-      const { data: labData, error: labError } = await supabase
-        .from("labs")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      // Fetch lab details - try by id first, then by slug
+      let labData = null;
+      let labError = null;
+
+      // Check if identifier looks like a UUID
+      const isUUID = labIdentifier && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(labIdentifier);
+
+      if (isUUID) {
+        const result = await supabase
+          .from("labs")
+          .select("*")
+          .eq("id", labIdentifier)
+          .maybeSingle();
+        labData = result.data;
+        labError = result.error;
+      } else {
+        // Try by slug
+        const result = await supabase
+          .from("labs")
+          .select("*")
+          .eq("slug", labIdentifier)
+          .maybeSingle();
+        labData = result.data;
+        labError = result.error;
+      }
 
       if (labError) throw labError;
       if (!labData) {
@@ -166,7 +188,7 @@ const LabDetail = () => {
             turnaround_time
           )
         `)
-        .eq("lab_id", id)
+        .eq("lab_id", labData.id)
         .eq("is_available", true);
 
       if (testsError) throw testsError;

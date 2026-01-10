@@ -22,6 +22,7 @@ export type Database = {
           cancelled_at: string | null
           completed_at: string | null
           confirmed_at: string | null
+          consultation_notes: string | null
           consultation_type: Database["public"]["Enums"]["consultation_type"]
           created_at: string
           doctor_id: string
@@ -29,6 +30,8 @@ export type Database = {
           id: string
           notes: string | null
           patient_id: string
+          prescription_uploaded_at: string | null
+          prescription_url: string | null
           status: Database["public"]["Enums"]["appointment_status"]
           updated_at: string
         }
@@ -39,6 +42,7 @@ export type Database = {
           cancelled_at?: string | null
           completed_at?: string | null
           confirmed_at?: string | null
+          consultation_notes?: string | null
           consultation_type?: Database["public"]["Enums"]["consultation_type"]
           created_at?: string
           doctor_id: string
@@ -46,6 +50,8 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id: string
+          prescription_uploaded_at?: string | null
+          prescription_url?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           updated_at?: string
         }
@@ -56,6 +62,7 @@ export type Database = {
           cancelled_at?: string | null
           completed_at?: string | null
           confirmed_at?: string | null
+          consultation_notes?: string | null
           consultation_type?: Database["public"]["Enums"]["consultation_type"]
           created_at?: string
           doctor_id?: string
@@ -63,6 +70,8 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id?: string
+          prescription_uploaded_at?: string | null
+          prescription_url?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           updated_at?: string
         }

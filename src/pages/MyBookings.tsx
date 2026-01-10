@@ -102,6 +102,9 @@ interface DoctorAppointment {
   status: string;
   fee: number;
   notes: string | null;
+  consultation_notes: string | null;
+  prescription_url: string | null;
+  prescription_uploaded_at: string | null;
   created_at: string;
   doctors: {
     id: string;
@@ -844,10 +847,18 @@ const MyBookings = () => {
                                       <span className="font-medium">Rs. {appointment.fee.toLocaleString()}</span>
                                     </TableCell>
                                     <TableCell>
-                                      <Badge className={config.color}>
-                                        <StatusIcon className="w-3 h-3 mr-1" />
-                                        {config.label}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge className={config.color}>
+                                          <StatusIcon className="w-3 h-3 mr-1" />
+                                          {config.label}
+                                        </Badge>
+                                        {appointment.prescription_url && (
+                                          <Badge className="bg-green-100 text-green-700 text-xs">
+                                            <FileText className="w-3 h-3 mr-1" />
+                                            Prescription
+                                          </Badge>
+                                        )}
+                                      </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <div className="flex items-center justify-end gap-1">
@@ -1328,10 +1339,63 @@ const MyBookings = () => {
               {selectedAppointment.notes && (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Notes</CardTitle>
+                    <CardTitle className="text-base">Your Notes</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{selectedAppointment.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedAppointment.consultation_notes && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Stethoscope className="w-4 h-4" />
+                      Doctor's Consultation Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">{selectedAppointment.consultation_notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedAppointment.prescription_url && (
+                <Card className="border-green-500/30 bg-green-500/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-6 h-6 text-green-600" />
+                        <div>
+                          <p className="font-semibold">Prescription Available</p>
+                          <p className="text-sm text-muted-foreground">
+                            Uploaded on {selectedAppointment.prescription_uploaded_at 
+                              ? format(new Date(selectedAppointment.prescription_uploaded_at), "dd MMM yyyy")
+                              : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const { data, error } = await supabase.storage
+                              .from("prescriptions")
+                              .createSignedUrl(selectedAppointment.prescription_url!, 60);
+                            
+                            if (error) throw error;
+                            window.open(data.signedUrl, '_blank');
+                          } catch (error) {
+                            console.error("Error getting prescription:", error);
+                            toast.error("Failed to download prescription");
+                          }
+                        }}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}

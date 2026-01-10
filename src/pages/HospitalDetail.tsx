@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
+  User,
 } from "lucide-react";
 
 interface Hospital {
@@ -53,6 +54,19 @@ interface Hospital {
   bed_count: number | null;
 }
 
+interface HospitalDoctor {
+  id: string;
+  is_primary: boolean;
+  department: string | null;
+  schedule: string | null;
+  doctors: {
+    id: string;
+    full_name: string;
+    photo_url: string | null;
+    qualification: string | null;
+  };
+}
+
 // Department icons mapping
 const departmentIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   OPD: Activity,
@@ -74,6 +88,7 @@ const departmentIcons: Record<string, React.ComponentType<{ className?: string }
 const HospitalDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [hospital, setHospital] = useState<Hospital | null>(null);
+  const [hospitalDoctors, setHospitalDoctors] = useState<HospitalDoctor[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,6 +106,29 @@ const HospitalDetail = () => {
 
       if (error) throw error;
       setHospital(data);
+      
+      // Fetch hospital doctors
+      if (data) {
+        const { data: doctorsData, error: doctorsError } = await supabase
+          .from("hospital_doctors")
+          .select(`
+            id,
+            is_primary,
+            department,
+            schedule,
+            doctors (
+              id,
+              full_name,
+              photo_url,
+              qualification
+            )
+          `)
+          .eq("hospital_id", data.id);
+
+        if (!doctorsError && doctorsData) {
+          setHospitalDoctors(doctorsData as any);
+        }
+      }
     } catch (error) {
       console.error("Error fetching hospital:", error);
     } finally {
@@ -310,6 +348,61 @@ const HospitalDetail = () => {
                           <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                           <span>{facility}</span>
                         </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Doctors */}
+              {hospitalDoctors.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5 text-primary" />
+                      Our Doctors ({hospitalDoctors.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {hospitalDoctors.map((hd) => (
+                        <Link
+                          key={hd.id}
+                          to={`/doctor/${hd.doctors.id}`}
+                          className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                            {hd.doctors.photo_url ? (
+                              <img
+                                src={hd.doctors.photo_url}
+                                alt={hd.doctors.full_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User className="w-7 h-7 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">{hd.doctors.full_name}</p>
+                              {hd.is_primary && (
+                                <Badge variant="secondary" className="text-xs shrink-0">
+                                  Primary
+                                </Badge>
+                              )}
+                            </div>
+                            {hd.doctors.qualification && (
+                              <p className="text-sm text-muted-foreground truncate">
+                                {hd.doctors.qualification}
+                              </p>
+                            )}
+                            {hd.department && (
+                              <p className="text-xs text-muted-foreground">
+                                {hd.department}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
                       ))}
                     </div>
                   </CardContent>

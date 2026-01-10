@@ -282,6 +282,54 @@ export type Database = {
           },
         ]
       }
+      hospital_doctors: {
+        Row: {
+          created_at: string
+          department: string | null
+          doctor_id: string
+          hospital_id: string
+          id: string
+          is_primary: boolean | null
+          schedule: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          doctor_id: string
+          hospital_id: string
+          id?: string
+          is_primary?: boolean | null
+          schedule?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          doctor_id?: string
+          hospital_id?: string
+          id?: string
+          is_primary?: boolean | null
+          schedule?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_doctors_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_doctors_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospitals: {
         Row: {
           address: string | null

@@ -156,6 +156,19 @@ interface RecentNurseBooking {
   created_at: string;
 }
 
+interface RecentAppointment {
+  id: string;
+  appointment_date: string;
+  appointment_time: string;
+  consultation_type: string;
+  status: string;
+  fee: number;
+  created_at: string;
+  doctors: {
+    full_name: string;
+  } | null;
+}
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalLabs: 0, activeLabs: 0, featuredLabs: 0, avgLabDiscount: 0,
@@ -178,6 +191,7 @@ const AdminDashboard = () => {
   const [recentSurgeryInquiries, setRecentSurgeryInquiries] = useState<RecentSurgeryInquiry[]>([]);
   const [recentEmergencyRequests, setRecentEmergencyRequests] = useState<RecentEmergencyRequest[]>([]);
   const [recentNurseBookings, setRecentNurseBookings] = useState<RecentNurseBooking[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -269,7 +283,8 @@ const AdminDashboard = () => {
         { data: recentPrescriptionsData },
         { data: recentSurgeryInquiriesData },
         { data: recentEmergencyRequestsData },
-        { data: recentNurseBookingsData }
+        { data: recentNurseBookingsData },
+        { data: recentAppointmentsData }
       ] = await Promise.all([
         // Labs
         supabase.from("labs").select("*", { count: "exact", head: true }),
@@ -349,7 +364,8 @@ const AdminDashboard = () => {
         supabase.from("prescriptions").select("id, unique_id, status, created_at").order("created_at", { ascending: false }).limit(5),
         supabase.from("surgery_inquiries").select("id, name, surgery_name, status, created_at").order("created_at", { ascending: false }).limit(5),
         supabase.from("emergency_nursing_requests").select("id, patient_name, city, urgency, status, created_at").order("created_at", { ascending: false }).limit(5),
-        supabase.from("nurse_bookings").select("id, patient_name, service_needed, status, created_at").order("created_at", { ascending: false }).limit(5)
+        supabase.from("nurse_bookings").select("id, patient_name, service_needed, status, created_at").order("created_at", { ascending: false }).limit(5),
+        supabase.from("appointments").select("id, appointment_date, appointment_time, consultation_type, status, fee, created_at, doctors:doctor_id(full_name)").order("created_at", { ascending: false }).limit(5)
       ]);
 
       // Calculate averages and totals
@@ -430,6 +446,7 @@ const AdminDashboard = () => {
       setRecentSurgeryInquiries(recentSurgeryInquiriesData as RecentSurgeryInquiry[] || []);
       setRecentEmergencyRequests(recentEmergencyRequestsData as RecentEmergencyRequest[] || []);
       setRecentNurseBookings(recentNurseBookingsData as RecentNurseBooking[] || []);
+      setRecentAppointments(recentAppointmentsData as RecentAppointment[] || []);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
@@ -998,6 +1015,73 @@ const AdminDashboard = () => {
         </div>
 
         {/* Inquiries Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Appointments */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-cyan-500" />
+                Doctor Appointments
+              </CardTitle>
+              <Link to="/admin/doctor-appointments">
+                <Button variant="ghost" size="sm">View All</Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {recentAppointments.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No appointments yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentAppointments.map((apt) => (
+                    <div key={apt.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{apt.doctors?.full_name || "Unknown Doctor"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(apt.appointment_date), 'MMM d')} at {apt.appointment_time}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-sm">Rs. {apt.fee}</p>
+                        {getStatusBadge(apt.status)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Nurse Bookings Quick View */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Heart className="w-4 h-4 text-rose-500" />
+                Recent Nurse Bookings
+              </CardTitle>
+              <Link to="/admin/nurse-bookings">
+                <Button variant="ghost" size="sm">View All</Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {recentNurseBookings.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No bookings yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentNurseBookings.map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{booking.patient_name}</p>
+                        <p className="text-xs text-muted-foreground">{booking.service_needed}</p>
+                      </div>
+                      {getStatusBadge(booking.status)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Surgery Inquiries */}
           <Card>
@@ -1076,7 +1160,7 @@ const AdminDashboard = () => {
                 <Heart className="w-4 h-4 text-rose-500" />
                 Nurse Bookings
               </CardTitle>
-              <Link to="/admin/nurses">
+              <Link to="/admin/nurse-bookings">
                 <Button variant="ghost" size="sm">View All</Button>
               </Link>
             </CardHeader>

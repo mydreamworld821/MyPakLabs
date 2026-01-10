@@ -28,6 +28,8 @@ import {
   MapPin,
   Heart,
   AlertTriangle,
+  Calendar,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,8 +47,10 @@ const navItems = [
   { href: "/admin/prescriptions", label: "Prescriptions", icon: FileText },
   { href: "/admin/specializations", label: "Specializations", icon: Stethoscope },
   { href: "/admin/doctors", label: "Doctors", icon: UserRound },
+  { href: "/admin/doctor-appointments", label: "Dr. Appointments", icon: Calendar },
   { href: "/admin/featured-doctors", label: "Featured Doctors", icon: Star },
   { href: "/admin/nurses", label: "Nurses", icon: Heart },
+  { href: "/admin/nurse-bookings", label: "Nurse Bookings", icon: ClipboardList },
   { href: "/admin/featured-nurses", label: "Featured Nurses", icon: Star },
   { href: "/admin/hospitals", label: "Hospitals", icon: Building2 },
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },

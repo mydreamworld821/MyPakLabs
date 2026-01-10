@@ -14,7 +14,6 @@ import {
   Video,
   Calendar,
   Zap,
-  Dumbbell,
   FlaskConical,
   Pill,
   Heart,
@@ -319,44 +318,26 @@ const Index = () => {
                 </Card>
               </Link>
 
-              {/* Middle column - stacked */}
-              <div className="flex flex-col gap-3">
-                <Link to={mainServices[1].link} className="block flex-1">
-                  <Card className={`h-full ${mainServices[1].bgColor} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group`}>
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-amber-700 text-sm mb-0.5">
-                          {mainServices[1].title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {mainServices[1].subtitle}
-                        </p>
+              {/* Middle column - In-Clinic Visit */}
+              <Link to={mainServices[1].link} className="block">
+                <Card className={`h-full ${mainServices[1].bgColor} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group`}>
+                  <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
+                    <div>
+                      <h3 className="font-semibold text-amber-700 text-base mb-0.5">
+                        {mainServices[1].title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {mainServices[1].subtitle}
+                      </p>
+                    </div>
+                    <div className="flex justify-center mt-2">
+                      <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Calendar className="w-7 h-7 text-amber-600" />
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Calendar className="w-5 h-5 text-amber-600" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <Link to={mainServices[3].link} className="block flex-1">
-                  <Card className={`h-full ${mainServices[3].bgColor} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group`}>
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-emerald-700 text-sm mb-0.5">
-                          {mainServices[3].title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {mainServices[3].subtitle}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Dumbbell className="w-5 h-5 text-emerald-600" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
 
               {/* Instant Doctor */}
               <Link to={mainServices[2].link} className="block">

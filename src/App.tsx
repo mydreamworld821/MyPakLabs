@@ -29,6 +29,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorDetail from "./pages/DoctorDetail";
 import VideoConsultation from "./pages/VideoConsultation";
 import InClinicVisit from "./pages/InClinicVisit";
+import InstantDoctor from "./pages/InstantDoctor";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLabs from "./pages/admin/Labs";
 import AdminTests from "./pages/admin/Tests";
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/doctor/:id" element={<DoctorDetail />} />
             <Route path="/video-consultation" element={<VideoConsultation />} />
             <Route path="/in-clinic-visit" element={<InClinicVisit />} />
+            <Route path="/instant-doctor" element={<InstantDoctor />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

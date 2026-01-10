@@ -42,6 +42,7 @@ const navItems = [
   { href: "/admin/prescriptions", label: "Prescriptions", icon: FileText },
   { href: "/admin/specializations", label: "Specializations", icon: Stethoscope },
   { href: "/admin/doctors", label: "Doctors", icon: UserRound },
+  { href: "/admin/hospitals", label: "Hospitals", icon: Building2 },
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
   { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },

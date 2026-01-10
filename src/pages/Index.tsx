@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import GlobalSearch from "@/components/GlobalSearch";
 import FeaturedDoctors from "@/components/home/FeaturedDoctors";
+import FeaturedNurses from "@/components/home/FeaturedNurses";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
@@ -312,6 +313,9 @@ const Index = () => {
 
           {/* Featured Doctors Section */}
           <FeaturedDoctors className="mb-8" />
+
+          {/* Featured Nurses Section */}
+          <FeaturedNurses className="mb-8" />
 
           {/* Popular Tests Section */}
           <div className="mb-8">

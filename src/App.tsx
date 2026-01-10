@@ -73,9 +73,9 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <NotificationPermissionBanner />
           <BrowserRouter>
             <ScrollToTop />
+            <NotificationPermissionBanner />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/labs" element={<Labs />} />

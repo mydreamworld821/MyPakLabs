@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,10 @@ import {
   Loader2,
   X,
   Heart,
+  Mic,
+  MicOff,
+  Clock,
+  Trash2,
 } from "lucide-react";
 import {
   Select,
@@ -35,9 +39,17 @@ interface SearchResult {
   subtitle?: string;
 }
 
+interface RecentSearch {
+  query: string;
+  timestamp: number;
+}
+
 interface GlobalSearchProps {
   className?: string;
 }
+
+const RECENT_SEARCHES_KEY = "mypaklabs_recent_searches";
+const MAX_RECENT_SEARCHES = 5;
 
 const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const navigate = useNavigate();
@@ -51,6 +63,129 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Voice search state
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+  
+  // Recent searches state
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const [showRecent, setShowRecent] = useState(false);
+
+  // Check for Web Speech API support
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      setVoiceSupported(true);
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((result: any) => result[0].transcript)
+          .join('');
+        setSearchQuery(transcript);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as RecentSearch[];
+        setRecentSearches(parsed);
+      }
+    } catch (error) {
+      console.error('Error loading recent searches:', error);
+    }
+  }, []);
+
+  // Save recent searches to localStorage
+  const saveRecentSearch = useCallback((query: string) => {
+    if (!query.trim()) return;
+    
+    const newSearch: RecentSearch = {
+      query: query.trim(),
+      timestamp: Date.now(),
+    };
+    
+    setRecentSearches(prev => {
+      // Remove duplicate if exists
+      const filtered = prev.filter(s => s.query.toLowerCase() !== query.toLowerCase());
+      // Add new search at the beginning
+      const updated = [newSearch, ...filtered].slice(0, MAX_RECENT_SEARCHES);
+      // Save to localStorage
+      try {
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      } catch (error) {
+        console.error('Error saving recent searches:', error);
+      }
+      return updated;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem(RECENT_SEARCHES_KEY);
+    } catch (error) {
+      console.error('Error clearing recent searches:', error);
+    }
+  }, []);
+
+  const removeRecentSearch = useCallback((query: string) => {
+    setRecentSearches(prev => {
+      const updated = prev.filter(s => s.query !== query);
+      try {
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      } catch (error) {
+        console.error('Error updating recent searches:', error);
+      }
+      return updated;
+    });
+  }, []);
+
+  // Toggle voice search
+  const toggleVoiceSearch = useCallback(() => {
+    if (!recognitionRef.current) return;
+    
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+      }
+    }
+  }, [isListening]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -58,7 +193,10 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       const target = event.target as Node;
       const inSearch = dropdownRef.current?.contains(target);
       const inMenu = dropdownMenuRef.current?.contains(target);
-      if (!inSearch && !inMenu) setShowDropdown(false);
+      if (!inSearch && !inMenu) {
+        setShowDropdown(false);
+        setShowRecent(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -78,7 +216,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       });
     };
 
-    if (showDropdown) {
+    if (showDropdown || showRecent) {
       updatePos();
       window.addEventListener("scroll", updatePos, true);
       window.addEventListener("resize", updatePos);
@@ -87,13 +225,14 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         window.removeEventListener("resize", updatePos);
       };
     }
-  }, [showDropdown, results.length, searchQuery]);
+  }, [showDropdown, showRecent, results.length, searchQuery]);
 
   // Debounced search - also trigger when city changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
         performSearch(searchQuery.trim());
+        setShowRecent(false);
       } else {
         setResults([]);
         setShowDropdown(false);
@@ -300,7 +439,11 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   };
 
   const handleResultClick = (result: SearchResult) => {
+    // Save to recent searches
+    saveRecentSearch(result.name);
+    
     setShowDropdown(false);
+    setShowRecent(false);
     setSearchQuery("");
 
     switch (result.type) {
@@ -329,6 +472,12 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         navigate(`/nurse/${result.id}`);
         break;
     }
+  };
+
+  const handleRecentSearchClick = (query: string) => {
+    setSearchQuery(query);
+    setShowRecent(false);
+    inputRef.current?.focus();
   };
 
   const getIcon = (type: SearchResult["type"]) => {
@@ -368,8 +517,10 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
+      saveRecentSearch(searchQuery.trim());
       navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
       setShowDropdown(false);
+      setShowRecent(false);
     }
   };
 
@@ -379,8 +530,20 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     }
     if (e.key === "Escape") {
       setShowDropdown(false);
+      setShowRecent(false);
     }
   };
+
+  const handleInputFocus = () => {
+    if (results.length > 0) {
+      setShowDropdown(true);
+    } else if (searchQuery.trim().length < 2 && recentSearches.length > 0) {
+      setShowRecent(true);
+    }
+  };
+
+  const shouldShowDropdown = showDropdown && results.length > 0 && dropdownPos;
+  const shouldShowRecent = showRecent && recentSearches.length > 0 && !showDropdown && dropdownPos;
 
   return (
     <div className={`relative z-[100] ${className}`} ref={dropdownRef}>
@@ -417,9 +580,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyPress}
-            onFocus={() => {
-              if (results.length > 0) setShowDropdown(true);
-            }}
+            onFocus={handleInputFocus}
             className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-10 text-base"
           />
           {searchQuery && (
@@ -436,6 +597,24 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
               <X className="w-4 h-4" />
             </Button>
           )}
+          
+          {/* Voice Search Button */}
+          {voiceSupported && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 shrink-0 transition-colors ${isListening ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'hover:bg-muted'}`}
+              onClick={toggleVoiceSearch}
+              title={isListening ? "Stop listening" : "Voice search"}
+            >
+              {isListening ? (
+                <MicOff className="w-4 h-4 animate-pulse" />
+              ) : (
+                <Mic className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+          
           <Button onClick={handleSearch} size="lg" className="shrink-0 px-6 rounded-lg">
             <Search className="w-4 h-4 mr-2" />
             Search
@@ -444,7 +623,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       </div>
 
       {/* Search Results Dropdown */}
-      {showDropdown && results.length > 0 && dropdownPos
+      {shouldShowDropdown
         ? createPortal(
             <div
               ref={dropdownMenuRef}
@@ -482,6 +661,63 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
                     </button>
                   );
                 })}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {/* Recent Searches Dropdown */}
+      {shouldShowRecent
+        ? createPortal(
+            <div
+              ref={dropdownMenuRef}
+              className="fixed bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[9999]"
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+            >
+              <div className="p-2">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" />
+                    Recent Searches
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-muted-foreground hover:text-destructive"
+                    onClick={clearRecentSearches}
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Clear
+                  </Button>
+                </div>
+                {recentSearches.map((recent) => (
+                  <div
+                    key={recent.timestamp}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 rounded-lg transition-colors group"
+                  >
+                    <button
+                      onClick={() => handleRecentSearchClick(recent.query)}
+                      className="flex-1 flex items-center gap-3 text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium text-sm truncate">{recent.query}</span>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRecentSearch(recent.query);
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>,
             document.body,

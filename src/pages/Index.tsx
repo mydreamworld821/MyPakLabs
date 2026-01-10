@@ -92,15 +92,27 @@ const Index = () => {
           setProfile(data);
         }
 
-        // Fetch featured labs (top rated)
+        // Fetch featured labs (prioritize is_featured, then by order)
         const { data: labsData } = await supabase
           .from("labs")
-          .select("id, name, slug, logo_url, rating, review_count, discount_percentage, cities")
+          .select("id, name, slug, logo_url, rating, review_count, discount_percentage, cities, is_featured, featured_order")
           .eq("is_active", true)
-          .order("rating", { ascending: false })
+          .eq("is_featured", true)
+          .order("featured_order", { ascending: true })
           .limit(6);
         
-        if (labsData) setFeaturedLabs(labsData);
+        // If no featured labs, fallback to top rated
+        if (labsData && labsData.length > 0) {
+          setFeaturedLabs(labsData);
+        } else {
+          const { data: fallbackLabs } = await supabase
+            .from("labs")
+            .select("id, name, slug, logo_url, rating, review_count, discount_percentage, cities")
+            .eq("is_active", true)
+            .order("rating", { ascending: false })
+            .limit(6);
+          if (fallbackLabs) setFeaturedLabs(fallbackLabs);
+        }
 
         // Fetch popular tests
         const { data: testsData } = await supabase

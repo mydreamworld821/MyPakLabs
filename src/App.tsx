@@ -26,6 +26,7 @@ import HealthHub from "./pages/HealthHub";
 import JoinAsDoctor from "./pages/JoinAsDoctor";
 import DoctorRegister from "./pages/DoctorRegister";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import DoctorDetail from "./pages/DoctorDetail";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLabs from "./pages/admin/Labs";
 import AdminTests from "./pages/admin/Tests";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
             <Route path="/doctor-register" element={<DoctorRegister />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+            <Route path="/doctor/:id" element={<DoctorDetail />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

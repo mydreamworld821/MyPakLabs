@@ -184,7 +184,11 @@ const FindDoctors = () => {
             ) : (
               <div className="grid gap-3">
                 {doctors.map((doctor) => (
-                  <Card key={doctor.id} className="hover:shadow-md transition-shadow">
+                  <Card 
+                    key={doctor.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/doctor/${doctor.id}`)}
+                  >
                     <CardContent className="p-3">
                       <div className="flex gap-3">
                         {doctor.photo_url ? (
@@ -239,7 +243,14 @@ const FindDoctors = () => {
                             <span className="text-xs font-semibold text-primary">
                               Rs. {doctor.consultation_fee}
                             </span>
-                            <Button size="sm" className="text-xs h-7">
+                            <Button 
+                              size="sm" 
+                              className="text-xs h-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/doctor/${doctor.id}`);
+                              }}
+                            >
                               Book Appointment
                             </Button>
                           </div>

@@ -1,0 +1,566 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  Star,
+  MapPin,
+  Clock,
+  Phone,
+  Video,
+  Building2,
+  GraduationCap,
+  Briefcase,
+  Languages,
+  Calendar as CalendarIcon,
+  CheckCircle,
+  UserRound,
+  Loader2,
+  MessageCircle,
+} from "lucide-react";
+
+interface Doctor {
+  id: string;
+  full_name: string;
+  photo_url: string | null;
+  qualification: string | null;
+  experience_years: number | null;
+  consultation_fee: number | null;
+  online_consultation_fee: number | null;
+  followup_fee: number | null;
+  city: string | null;
+  clinic_name: string | null;
+  clinic_address: string | null;
+  hospital_name: string | null;
+  availability: string | null;
+  available_days: string[] | null;
+  available_time_start: string | null;
+  available_time_end: string | null;
+  rating: number | null;
+  review_count: number | null;
+  bio: string | null;
+  about: string | null;
+  phone: string | null;
+  email: string | null;
+  pmc_number: string;
+  sub_specialty: string | null;
+  languages_spoken: string[] | null;
+  areas_of_expertise: string[] | null;
+  services_offered: string[] | null;
+  video_consultation: boolean | null;
+  consultation_type: string | null;
+  emergency_available: boolean | null;
+  appointment_duration: number | null;
+  specialization?: { name: string; slug: string } | null;
+}
+
+const DoctorDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [consultationType, setConsultationType] = useState<"physical" | "online">("physical");
+
+  useEffect(() => {
+    if (id) {
+      fetchDoctor();
+    }
+  }, [id]);
+
+  const fetchDoctor = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("doctors")
+        .select("*, specialization:doctor_specializations(name, slug)")
+        .eq("id", id)
+        .eq("status", "approved")
+        .single();
+
+      if (error) throw error;
+      setDoctor(data);
+    } catch (error) {
+      console.error("Error fetching doctor:", error);
+      toast({
+        title: "Error",
+        description: "Doctor not found",
+        variant: "destructive",
+      });
+      navigate("/find-doctors");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateTimeSlots = () => {
+    if (!doctor?.available_time_start || !doctor?.available_time_end) {
+      return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+    }
+    
+    const slots: string[] = [];
+    const duration = doctor.appointment_duration || 15;
+    const startHour = parseInt(doctor.available_time_start.split(":")[0]);
+    const endHour = parseInt(doctor.available_time_end.split(":")[0]);
+    
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let min = 0; min < 60; min += duration) {
+        const period = hour >= 12 ? "PM" : "AM";
+        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        const time = `${displayHour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")} ${period}`;
+        slots.push(time);
+      }
+    }
+    return slots;
+  };
+
+  const isDateAvailable = (date: Date) => {
+    if (!doctor?.available_days || doctor.available_days.length === 0) return true;
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayName = dayNames[date.getDay()];
+    return doctor.available_days.includes(dayName);
+  };
+
+  const handleBookAppointment = () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to book an appointment",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    if (!selectedDate || !selectedTime) {
+      toast({
+        title: "Select Date & Time",
+        description: "Please select a date and time slot",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For now, show success message - booking logic can be expanded
+    toast({
+      title: "Appointment Request Sent!",
+      description: `Your ${consultationType} appointment request with Dr. ${doctor?.full_name} has been submitted.`,
+    });
+  };
+
+  const getFee = () => {
+    if (consultationType === "online") {
+      return doctor?.online_consultation_fee || doctor?.consultation_fee || 0;
+    }
+    return doctor?.consultation_fee || 0;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!doctor) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center py-24">
+          <p>Doctor not found</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const timeSlots = generateTimeSlots();
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="pt-16 pb-8">
+        {/* Header */}
+        <div className="bg-primary text-primary-foreground py-4">
+          <div className="container mx-auto px-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-primary-foreground/80 hover:text-primary-foreground mb-2"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back
+            </Button>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Doctor Profile */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Profile Card */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {doctor.photo_url ? (
+                      <img
+                        src={doctor.photo_url}
+                        alt={doctor.full_name}
+                        className="w-32 h-32 rounded-xl object-cover mx-auto sm:mx-0"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-xl bg-primary/10 flex items-center justify-center mx-auto sm:mx-0">
+                        <UserRound className="w-16 h-16 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 text-center sm:text-left">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+                        <h1 className="text-xl font-bold text-foreground">
+                          {doctor.full_name}
+                        </h1>
+                        <Badge variant="secondary" className="text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          PMC Verified
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-primary font-medium mb-1">
+                        {doctor.specialization?.name}
+                        {doctor.sub_specialty && ` - ${doctor.sub_specialty}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        {doctor.qualification}
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-muted-foreground">
+                        {doctor.experience_years && (
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3" />
+                            {doctor.experience_years} Years Experience
+                          </span>
+                        )}
+                        {doctor.rating && doctor.rating > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            {doctor.rating} ({doctor.review_count || 0} Reviews)
+                          </span>
+                        )}
+                      </div>
+                      {doctor.city && (
+                        <p className="text-xs text-muted-foreground mt-2 flex items-center justify-center sm:justify-start gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {doctor.clinic_name && `${doctor.clinic_name}, `}{doctor.city}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Info */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t">
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <p className="text-lg font-bold text-primary">Rs. {doctor.consultation_fee || "N/A"}</p>
+                      <p className="text-xs text-muted-foreground">Consultation Fee</p>
+                    </div>
+                    {doctor.online_consultation_fee && (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-lg font-bold text-primary">Rs. {doctor.online_consultation_fee}</p>
+                        <p className="text-xs text-muted-foreground">Online Fee</p>
+                      </div>
+                    )}
+                    {doctor.followup_fee && (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-lg font-bold text-primary">Rs. {doctor.followup_fee}</p>
+                        <p className="text-xs text-muted-foreground">Follow-up Fee</p>
+                      </div>
+                    )}
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <p className="text-lg font-bold text-primary">{doctor.appointment_duration || 15} min</p>
+                      <p className="text-xs text-muted-foreground">Appointment</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Details Tabs */}
+              <Tabs defaultValue="about" className="w-full">
+                <TabsList className="w-full grid grid-cols-4">
+                  <TabsTrigger value="about" className="text-xs">About</TabsTrigger>
+                  <TabsTrigger value="services" className="text-xs">Services</TabsTrigger>
+                  <TabsTrigger value="location" className="text-xs">Location</TabsTrigger>
+                  <TabsTrigger value="reviews" className="text-xs">Reviews</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="about" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4 space-y-4">
+                      {doctor.about && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">About Doctor</h3>
+                          <p className="text-xs text-muted-foreground">{doctor.about}</p>
+                        </div>
+                      )}
+                      {doctor.bio && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">Bio</h3>
+                          <p className="text-xs text-muted-foreground">{doctor.bio}</p>
+                        </div>
+                      )}
+                      {doctor.areas_of_expertise && doctor.areas_of_expertise.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">Areas of Expertise</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {doctor.areas_of_expertise.map((area, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {area}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {doctor.languages_spoken && doctor.languages_spoken.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                            <Languages className="w-4 h-4" /> Languages
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {doctor.languages_spoken.join(", ")}
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                          <GraduationCap className="w-4 h-4" /> Qualification
+                        </h3>
+                        <p className="text-xs text-muted-foreground">{doctor.qualification}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PMC Registration: {doctor.pmc_number}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="services" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4 space-y-4">
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">Consultation Types</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {(doctor.consultation_type === "both" || doctor.consultation_type === "physical") && (
+                            <Badge className="text-xs flex items-center gap-1">
+                              <Building2 className="w-3 h-3" /> In-Clinic Visit
+                            </Badge>
+                          )}
+                          {(doctor.consultation_type === "both" || doctor.consultation_type === "online" || doctor.video_consultation) && (
+                            <Badge className="text-xs flex items-center gap-1" variant="secondary">
+                              <Video className="w-3 h-3" /> Video Consultation
+                            </Badge>
+                          )}
+                          {doctor.emergency_available && (
+                            <Badge className="text-xs" variant="destructive">
+                              Emergency Available
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {doctor.services_offered && doctor.services_offered.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3">Services Offered</h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {doctor.services_offered.map((service, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <CheckCircle className="w-3 h-3 text-primary" />
+                                {service}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="location" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4 space-y-4">
+                      {doctor.clinic_name && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                            <Building2 className="w-4 h-4" /> Clinic
+                          </h3>
+                          <p className="text-xs text-muted-foreground">{doctor.clinic_name}</p>
+                        </div>
+                      )}
+                      {doctor.hospital_name && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">Hospital</h3>
+                          <p className="text-xs text-muted-foreground">{doctor.hospital_name}</p>
+                        </div>
+                      )}
+                      {doctor.clinic_address && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                            <MapPin className="w-4 h-4" /> Address
+                          </h3>
+                          <p className="text-xs text-muted-foreground">{doctor.clinic_address}</p>
+                          {doctor.city && <p className="text-xs text-muted-foreground">{doctor.city}</p>}
+                        </div>
+                      )}
+                      {doctor.available_days && doctor.available_days.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                            <Clock className="w-4 h-4" /> Availability
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {doctor.available_days.join(", ")}
+                          </p>
+                          {doctor.available_time_start && doctor.available_time_end && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {doctor.available_time_start} - {doctor.available_time_end}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="reviews" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center py-8">
+                        <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">No reviews yet</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Be the first to review Dr. {doctor.full_name}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Booking Card */}
+            <div className="lg:col-span-1">
+              <Card className="sticky top-20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4" />
+                    Book Appointment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Consultation Type */}
+                  <div>
+                    <p className="text-xs font-medium mb-2">Consultation Type</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant={consultationType === "physical" ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs h-9"
+                        onClick={() => setConsultationType("physical")}
+                        disabled={doctor.consultation_type === "online"}
+                      >
+                        <Building2 className="w-3 h-3 mr-1" /> In-Clinic
+                      </Button>
+                      <Button
+                        variant={consultationType === "online" ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs h-9"
+                        onClick={() => setConsultationType("online")}
+                        disabled={!doctor.video_consultation && doctor.consultation_type !== "both" && doctor.consultation_type !== "online"}
+                      >
+                        <Video className="w-3 h-3 mr-1" /> Online
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Calendar */}
+                  <div>
+                    <p className="text-xs font-medium mb-2">Select Date</p>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => 
+                        date < new Date() || 
+                        date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ||
+                        !isDateAvailable(date)
+                      }
+                      className="rounded-md border w-full"
+                    />
+                  </div>
+
+                  {/* Time Slots */}
+                  {selectedDate && (
+                    <div>
+                      <p className="text-xs font-medium mb-2">Select Time</p>
+                      <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                        {timeSlots.map((time) => (
+                          <Button
+                            key={time}
+                            variant={selectedTime === time ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs h-8"
+                            onClick={() => setSelectedTime(time)}
+                          >
+                            {time}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fee & Book */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs text-muted-foreground">Consultation Fee</span>
+                      <span className="text-lg font-bold text-primary">Rs. {getFee()}</span>
+                    </div>
+                    <Button 
+                      className="w-full text-sm"
+                      onClick={handleBookAppointment}
+                      disabled={!selectedDate || !selectedTime}
+                    >
+                      Book Appointment
+                    </Button>
+                  </div>
+
+                  {/* Contact */}
+                  {doctor.phone && (
+                    <div className="pt-4 border-t">
+                      <a 
+                        href={`tel:${doctor.phone}`}
+                        className="flex items-center justify-center gap-2 text-xs text-primary hover:underline"
+                      >
+                        <Phone className="w-3 h-3" />
+                        Call: {doctor.phone}
+                      </a>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default DoctorDetail;

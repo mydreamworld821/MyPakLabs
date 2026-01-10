@@ -14,6 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
+      doctor_specializations: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      doctors: {
+        Row: {
+          about: string | null
+          admin_notes: string | null
+          availability: string | null
+          city: string | null
+          clinic_address: string | null
+          clinic_name: string | null
+          consultation_fee: number | null
+          created_at: string
+          email: string | null
+          experience_years: number | null
+          full_name: string
+          id: string
+          is_featured: boolean | null
+          phone: string | null
+          photo_url: string | null
+          pmc_number: string
+          qualification: string | null
+          rating: number | null
+          review_count: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          specialization_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          about?: string | null
+          admin_notes?: string | null
+          availability?: string | null
+          city?: string | null
+          clinic_address?: string | null
+          clinic_name?: string | null
+          consultation_fee?: number | null
+          created_at?: string
+          email?: string | null
+          experience_years?: number | null
+          full_name: string
+          id?: string
+          is_featured?: boolean | null
+          phone?: string | null
+          photo_url?: string | null
+          pmc_number: string
+          qualification?: string | null
+          rating?: number | null
+          review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialization_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          about?: string | null
+          admin_notes?: string | null
+          availability?: string | null
+          city?: string | null
+          clinic_address?: string | null
+          clinic_name?: string | null
+          consultation_fee?: number | null
+          created_at?: string
+          email?: string | null
+          experience_years?: number | null
+          full_name?: string
+          id?: string
+          is_featured?: boolean | null
+          phone?: string | null
+          photo_url?: string | null
+          pmc_number?: string
+          qualification?: string | null
+          rating?: number | null
+          review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialization_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_specialization_id_fkey"
+            columns: ["specialization_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_specializations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lab_tests: {
         Row: {
           created_at: string

@@ -18,7 +18,9 @@ import {
   Menu,
   X,
   ChevronRight,
-  Bell
+  Bell,
+  Stethoscope,
+  UserRound
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +35,8 @@ const navItems = [
   { href: "/admin/lab-tests", label: "Lab Pricing", icon: FlaskConical },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/prescriptions", label: "Prescriptions", icon: FileText },
+  { href: "/admin/specializations", label: "Specializations", icon: Stethoscope },
+  { href: "/admin/doctors", label: "Doctors", icon: UserRound },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

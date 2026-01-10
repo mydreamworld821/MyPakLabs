@@ -31,6 +31,8 @@ import AdminLabTests from "./pages/admin/LabTests";
 import AdminOrders from "./pages/admin/Orders";
 import AdminPrescriptions from "./pages/admin/Prescriptions";
 import AdminUsers from "./pages/admin/Users";
+import AdminSpecializations from "./pages/admin/Specializations";
+import AdminDoctors from "./pages/admin/Doctors";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 
 const queryClient = new QueryClient();
@@ -70,6 +72,8 @@ const App = () => (
             <Route path="/admin/lab-tests" element={<ProtectedRoute requireAdmin><AdminLabTests /></ProtectedRoute>} />
             <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrders /></ProtectedRoute>} />
             <Route path="/admin/prescriptions" element={<ProtectedRoute requireAdmin><AdminPrescriptions /></ProtectedRoute>} />
+            <Route path="/admin/specializations" element={<ProtectedRoute requireAdmin><AdminSpecializations /></ProtectedRoute>} />
+            <Route path="/admin/doctors" element={<ProtectedRoute requireAdmin><AdminDoctors /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
             
             {/* Moderator Routes */}

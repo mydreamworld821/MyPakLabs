@@ -201,18 +201,18 @@ const Index = () => {
         <div className="container mx-auto px-4 py-10 md:py-16 relative z-10 flex flex-col items-center text-center">
           {/* Greeting */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-semibold text-lg border border-white/30">
+            <div className="w-10 h-10 rounded-full bg-black/10 backdrop-blur-sm flex items-center justify-center text-black font-semibold text-lg border border-black/20">
               {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "G"}
             </div>
-            <span className="text-white/90 text-sm">
+            <span className="text-black/80 text-sm">
               Hello, {profile?.full_name || (user ? "User" : "Guest")}!
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight text-white">
-            <span className="text-white text-3xl md:text-4xl lg:text-5xl font-extrabold">MyPakLabs</span> Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight text-black">
+            <span className="text-black text-3xl md:text-4xl lg:text-5xl font-extrabold">MyPakLabs</span> Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free
           </h1>
-          <p className="text-white/90 text-sm md:text-base mb-8 max-w-lg">
+          <p className="text-black/80 text-sm md:text-base mb-8 max-w-lg">
             Book tests from ISO certified labs with priority processing
           </p>
 
@@ -221,17 +221,17 @@ const Index = () => {
 
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-8">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-              <Shield className="w-4 h-4 text-white" />
-              <span className="text-sm text-white font-medium">ISO Certified</span>
+            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
+              <Shield className="w-4 h-4 text-black" />
+              <span className="text-sm text-black font-medium">ISO Certified</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-              <Clock className="w-4 h-4 text-white" />
-              <span className="text-sm text-white font-medium">Quick Results</span>
+            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
+              <Clock className="w-4 h-4 text-black" />
+              <span className="text-sm text-black font-medium">Quick Results</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-              <TrendingDown className="w-4 h-4 text-white" />
-              <span className="text-sm text-white font-medium">Best Prices</span>
+            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
+              <TrendingDown className="w-4 h-4 text-black" />
+              <span className="text-sm text-black font-medium">Best Prices</span>
             </div>
           </div>
         </div>

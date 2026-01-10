@@ -341,8 +341,10 @@ export type Database = {
           created_at: string
           description: string | null
           discount_percentage: number | null
+          featured_order: number | null
           id: string
           is_active: boolean | null
+          is_featured: boolean | null
           logo_url: string | null
           name: string
           opening_time: string | null
@@ -362,8 +364,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
+          featured_order?: number | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
           logo_url?: string | null
           name: string
           opening_time?: string | null
@@ -383,8 +387,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
+          featured_order?: number | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
           logo_url?: string | null
           name?: string
           opening_time?: string | null

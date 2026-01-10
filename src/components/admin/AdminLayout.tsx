@@ -21,7 +21,8 @@ import {
   Bell,
   Stethoscope,
   UserRound,
-  LayoutGrid
+  LayoutGrid,
+  Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ interface AdminLayoutProps {
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/labs", label: "Labs", icon: Building2 },
+  { href: "/admin/featured-labs", label: "Featured Labs", icon: Star },
   { href: "/admin/tests", label: "Tests", icon: TestTube },
   { href: "/admin/lab-tests", label: "Lab Pricing", icon: FlaskConical },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },

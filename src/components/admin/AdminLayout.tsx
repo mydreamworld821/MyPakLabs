@@ -27,6 +27,7 @@ import {
   MessageSquare,
   MapPin,
   Heart,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,7 @@ const navItems = [
   { href: "/admin/hospitals", label: "Hospitals", icon: Building2 },
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
+  { href: "/admin/emergency-requests", label: "Emergency Requests", icon: AlertTriangle },
   { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
   { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/users", label: "Users", icon: Users },

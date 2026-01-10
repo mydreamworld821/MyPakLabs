@@ -23,7 +23,8 @@ import {
   ArrowRight,
   Star,
   MapPin,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -415,6 +416,12 @@ const Navbar = () => {
                         <Link to="/nurse-dashboard" className="flex items-center gap-2 cursor-pointer text-xs">
                           <Heart className="w-3.5 h-3.5" />
                           Nurse Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/nurse-emergency-feed" className="flex items-center gap-2 cursor-pointer text-xs text-red-600">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          Emergency Requests
                         </Link>
                       </DropdownMenuItem>
                     </>

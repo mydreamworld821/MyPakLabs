@@ -58,6 +58,8 @@ import AdminLocations from "./pages/admin/Locations";
 import AdminNurses from "./pages/admin/Nurses";
 import AdminFeaturedNurses from "./pages/admin/FeaturedNurses";
 import AdminEmergencyRequests from "./pages/admin/EmergencyRequests";
+import AdminDoctorAppointments from "./pages/admin/DoctorAppointments";
+import AdminNurseBookings from "./pages/admin/NurseBookings";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 import EmergencyNursingRequest from "./pages/EmergencyNursingRequest";
 import EmergencyRequestStatus from "./pages/EmergencyRequestStatus";
@@ -133,6 +135,8 @@ const App = () => (
               <Route path="/admin/nurses" element={<ProtectedRoute requireAdmin><AdminNurses /></ProtectedRoute>} />
               <Route path="/admin/featured-nurses" element={<ProtectedRoute requireAdmin><AdminFeaturedNurses /></ProtectedRoute>} />
               <Route path="/admin/emergency-requests" element={<ProtectedRoute requireAdmin><AdminEmergencyRequests /></ProtectedRoute>} />
+              <Route path="/admin/doctor-appointments" element={<ProtectedRoute requireAdmin><AdminDoctorAppointments /></ProtectedRoute>} />
+              <Route path="/admin/nurse-bookings" element={<ProtectedRoute requireAdmin><AdminNurseBookings /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

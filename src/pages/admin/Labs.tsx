@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -24,10 +25,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Building2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Building2, Loader2, MapPin } from "lucide-react";
 import LabsCsvUpload from "@/components/admin/LabsCsvUpload";
 import LabTestsCsvUpload from "@/components/admin/LabTestsCsvUpload";
 import ImageUpload from "@/components/admin/ImageUpload";
+import BranchManager, { Branch } from "@/components/admin/BranchManager";
 
 interface Lab {
   id: string;
@@ -40,6 +42,7 @@ interface Lab {
   rating: number | null;
   review_count: number | null;
   cities: string[] | null;
+  branches: Branch[] | null;
   is_active: boolean | null;
   created_at: string;
   opening_time: string | null;
@@ -65,13 +68,14 @@ const AdminLabs = () => {
     logo_url: "",
     cover_image_url: "",
     discount_percentage: 0,
-    cities: "",
     is_active: true,
     opening_time: "7:00 AM",
     closing_time: "10:00 PM",
     contact_phone: "",
     contact_email: ""
   });
+  
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   // CSV file for new lab
   const [pendingCsvFile, setPendingCsvFile] = useState<File | null>(null);
@@ -89,7 +93,14 @@ const AdminLabs = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setLabs(data || []);
+      
+      // Transform data to match Lab interface
+      const transformedLabs = (data || []).map(lab => ({
+        ...lab,
+        branches: Array.isArray(lab.branches) ? (lab.branches as unknown as Branch[]) : []
+      }));
+      
+      setLabs(transformedLabs);
 
       // Fetch test counts for each lab
       if (data && data.length > 0) {
@@ -123,13 +134,13 @@ const AdminLabs = () => {
         logo_url: lab.logo_url || "",
         cover_image_url: lab.cover_image_url || "",
         discount_percentage: lab.discount_percentage || 0,
-        cities: lab.cities?.join(", ") || "",
         is_active: lab.is_active ?? true,
         opening_time: lab.opening_time || "7:00 AM",
         closing_time: lab.closing_time || "10:00 PM",
         contact_phone: lab.contact_phone || "",
         contact_email: lab.contact_email || ""
       });
+      setBranches(lab.branches || []);
     } else {
       setEditingLab(null);
       setFormData({
@@ -139,13 +150,13 @@ const AdminLabs = () => {
         logo_url: "",
         cover_image_url: "",
         discount_percentage: 0,
-        cities: "",
         is_active: true,
         opening_time: "7:00 AM",
         closing_time: "10:00 PM",
         contact_phone: "",
         contact_email: ""
       });
+      setBranches([]);
       setPendingCsvFile(null);
       if (csvInputRef.current) csvInputRef.current.value = "";
     }
@@ -228,6 +239,9 @@ const AdminLabs = () => {
     setIsSaving(true);
 
     try {
+      // Extract unique cities from branches
+      const uniqueCities = [...new Set(branches.map(b => b.city))];
+      
       const labData = {
         name: formData.name,
         slug: formData.slug,
@@ -235,7 +249,8 @@ const AdminLabs = () => {
         logo_url: formData.logo_url || null,
         cover_image_url: formData.cover_image_url || null,
         discount_percentage: formData.discount_percentage,
-        cities: formData.cities.split(",").map(c => c.trim()).filter(Boolean),
+        cities: uniqueCities,
+        branches: branches as unknown as any,
         is_active: formData.is_active,
         opening_time: formData.opening_time || null,
         closing_time: formData.closing_time || null,
@@ -393,13 +408,11 @@ const AdminLabs = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="cities">Cities (comma-separated)</Label>
-                  <Input
-                    id="cities"
-                    value={formData.cities}
-                    onChange={(e) => setFormData({ ...formData, cities: e.target.value })}
-                    placeholder="Lahore, Karachi, Islamabad"
+                {/* Branch Manager - replaces cities input */}
+                <div className="border-t pt-4 mt-4">
+                  <BranchManager
+                    branches={branches}
+                    onChange={setBranches}
                   />
                 </div>
 

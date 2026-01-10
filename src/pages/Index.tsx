@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 import {
   Search,
   MapPin,
@@ -231,8 +232,9 @@ const Index = () => {
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight">
-            <span className="text-black text-3xl md:text-4xl lg:text-5xl">MyPakLabs</span> Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight flex flex-wrap items-center justify-center gap-3">
+            <img src={myPakLabsLogo} alt="MyPakLabs" className="h-14 md:h-16 lg:h-20 w-auto object-contain bg-white rounded-xl p-1.5 shadow-lg" />
+            <span>Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free</span>
           </h1>
           <p className="text-white/90 text-sm md:text-base mb-8 max-w-lg">
             Book tests from ISO certified labs with priority processing

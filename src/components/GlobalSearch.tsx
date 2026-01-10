@@ -220,26 +220,25 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       }
 
-      // Search hospitals (ready for when hospitals table is created)
-      // Uncomment when hospitals table exists:
-      // const { data: hospitals } = await supabase
-      //   .from("hospitals")
-      //   .select("id, name, slug, city")
-      //   .eq("is_active", true)
-      //   .ilike("name", searchTerm)
-      //   .limit(5);
-      //
-      // if (hospitals) {
-      //   hospitals.forEach((hospital) => {
-      //     allResults.push({
-      //       id: hospital.id,
-      //       name: hospital.name,
-      //       type: "hospital",
-      //       slug: hospital.slug,
-      //       subtitle: hospital.city || "Hospital",
-      //     });
-      //   });
-      // }
+      // Search hospitals
+      const { data: hospitals } = await supabase
+        .from("hospitals")
+        .select("id, name, slug, city")
+        .eq("is_active", true)
+        .ilike("name", searchTerm)
+        .limit(5);
+
+      if (hospitals) {
+        hospitals.forEach((hospital) => {
+          allResults.push({
+            id: hospital.id,
+            name: hospital.name,
+            type: "hospital",
+            slug: hospital.slug,
+            subtitle: hospital.city || "Hospital",
+          });
+        });
+      }
 
       setResults(allResults);
       setShowDropdown(allResults.length > 0);

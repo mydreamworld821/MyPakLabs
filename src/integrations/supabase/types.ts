@@ -282,6 +282,81 @@ export type Database = {
           },
         ]
       }
+      hospitals: {
+        Row: {
+          address: string | null
+          city: string | null
+          closing_time: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          featured_order: number | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          logo_url: string | null
+          name: string
+          opening_time: string | null
+          rating: number | null
+          review_count: number | null
+          slug: string
+          specialties: string[] | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          closing_time?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          featured_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          logo_url?: string | null
+          name: string
+          opening_time?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug: string
+          specialties?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          closing_time?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          featured_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          logo_url?: string | null
+          name?: string
+          opening_time?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string
+          specialties?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       lab_tests: {
         Row: {
           created_at: string

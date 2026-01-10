@@ -21,6 +21,7 @@ import PartnerTerms from "./pages/PartnerTerms";
 import Privacy from "./pages/Privacy";
 import FindDoctors from "./pages/FindDoctors";
 import Hospitals from "./pages/Hospitals";
+import HospitalDetail from "./pages/HospitalDetail";
 import Surgeries from "./pages/Surgeries";
 import SurgeryDetail from "./pages/SurgeryDetail";
 import HealthHub from "./pages/HealthHub";
@@ -44,6 +45,7 @@ import AdminServiceCards from "./pages/admin/ServiceCards";
 import AdminFeaturedLabs from "./pages/admin/FeaturedLabs";
 import AdminSurgeries from "./pages/admin/Surgeries";
 import AdminSurgeryInquiries from "./pages/admin/SurgeryInquiries";
+import AdminHospitals from "./pages/admin/Hospitals";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 
 const queryClient = new QueryClient();
@@ -72,6 +74,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/find-doctors" element={<FindDoctors />} />
             <Route path="/hospitals" element={<Hospitals />} />
+            <Route path="/hospital/:slug" element={<HospitalDetail />} />
             <Route path="/surgeries" element={<Surgeries />} />
             <Route path="/surgery/:slug" element={<SurgeryDetail />} />
             <Route path="/health-hub" element={<HealthHub />} />
@@ -97,6 +100,7 @@ const App = () => (
             <Route path="/admin/featured-labs" element={<ProtectedRoute requireAdmin><AdminFeaturedLabs /></ProtectedRoute>} />
             <Route path="/admin/surgeries" element={<ProtectedRoute requireAdmin><AdminSurgeries /></ProtectedRoute>} />
             <Route path="/admin/surgery-inquiries" element={<ProtectedRoute requireAdmin><AdminSurgeryInquiries /></ProtectedRoute>} />
+            <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><AdminHospitals /></ProtectedRoute>} />
             
             {/* Moderator Routes */}
             <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

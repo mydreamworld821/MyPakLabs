@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import {
   ArrowLeft,
   Star,
@@ -72,6 +73,7 @@ const DoctorDetail = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [consultationType, setConsultationType] = useState<"physical" | "online">("physical");
+  const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -131,7 +133,7 @@ const DoctorDetail = () => {
     return doctor.available_days.includes(dayName);
   };
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
     if (!user) {
       toast({
         title: "Login Required",
@@ -151,11 +153,49 @@ const DoctorDetail = () => {
       return;
     }
 
-    // For now, show success message - booking logic can be expanded
-    toast({
-      title: "Appointment Request Sent!",
-      description: `Your ${consultationType} appointment request with Dr. ${doctor?.full_name} has been submitted.`,
-    });
+    if (!doctor) return;
+
+    setIsBooking(true);
+    
+    try {
+      const fee = getFee();
+      const appointmentDate = format(selectedDate, "yyyy-MM-dd");
+      
+      const { error } = await supabase
+        .from("appointments")
+        .insert({
+          doctor_id: doctor.id,
+          patient_id: user.id,
+          appointment_date: appointmentDate,
+          appointment_time: selectedTime,
+          consultation_type: consultationType,
+          fee: fee,
+          status: "pending",
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Appointment Booked!",
+        description: `Your ${consultationType} appointment with Dr. ${doctor.full_name} on ${format(selectedDate, "dd MMM yyyy")} at ${selectedTime} has been booked successfully.`,
+      });
+      
+      // Reset selection
+      setSelectedDate(undefined);
+      setSelectedTime(null);
+      
+      // Navigate to bookings page
+      navigate("/my-bookings");
+    } catch (error: any) {
+      console.error("Error booking appointment:", error);
+      toast({
+        title: "Booking Failed",
+        description: error.message || "Failed to book appointment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   const getFee = () => {
@@ -544,9 +584,16 @@ const DoctorDetail = () => {
                     <Button 
                       className="w-full text-sm"
                       onClick={handleBookAppointment}
-                      disabled={!selectedDate || !selectedTime}
+                      disabled={!selectedDate || !selectedTime || isBooking}
                     >
-                      Book Appointment
+                      {isBooking ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Booking...
+                        </>
+                      ) : (
+                        "Book Appointment"
+                      )}
                     </Button>
                   </div>
 

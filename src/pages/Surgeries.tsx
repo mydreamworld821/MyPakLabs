@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Scissors, Phone, ImageIcon } from "lucide-react";
+import { Search, Scissors, Phone } from "lucide-react";
+import defaultSurgeryImage from "@/assets/default-surgery.jpg";
 
 interface Surgery {
   id: string;
@@ -126,22 +127,19 @@ const Surgeries = () => {
                   key={surgery.id}
                   className="overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  {/* Image Section - Compact */}
-                  <div className="relative h-24 bg-gradient-to-br from-muted to-muted/50">
-                    {surgery.image_url ? (
-                      <img
-                        src={surgery.image_url}
-                        alt={surgery.name}
-                        className="w-full h-full object-cover"
-                        style={{
-                          objectPosition: `${surgery.image_position_x}% ${surgery.image_position_y}%`,
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
-                      </div>
-                    )}
+                  {/* Image Section */}
+                  <div className="relative h-32 bg-gradient-to-br from-muted to-muted/50">
+                    <img
+                      src={surgery.image_url || defaultSurgeryImage}
+                      alt={surgery.name}
+                      className="w-full h-full object-cover"
+                      style={{
+                        objectPosition: `${surgery.image_position_x}% ${surgery.image_position_y}%`,
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = defaultSurgeryImage;
+                      }}
+                    />
                     
                     {/* Logo Overlay */}
                     <div className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-1">

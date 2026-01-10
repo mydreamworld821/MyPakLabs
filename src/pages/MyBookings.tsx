@@ -47,6 +47,11 @@ import {
   Phone,
   AlertTriangle,
   Ban,
+  Store,
+  Pill,
+  Truck,
+  Package,
+  FileText,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import {
@@ -133,6 +138,35 @@ interface NurseBooking {
   };
 }
 
+interface MedicineOrderItem {
+  name: string;
+  quantity: number;
+  notes?: string;
+}
+
+interface MedicineOrder {
+  id: string;
+  unique_id: string;
+  store_id: string;
+  prescription_url: string | null;
+  medicines: MedicineOrderItem[];
+  delivery_address: string;
+  notes: string | null;
+  status: string;
+  estimated_price: number | null;
+  final_price: number | null;
+  pharmacy_notes: string | null;
+  created_at: string;
+  medical_stores: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    phone: string;
+    city: string;
+    area: string;
+  };
+}
+
 const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
   pending: {
     icon: Clock,
@@ -174,6 +208,26 @@ const statusConfig: Record<string, { icon: any; color: string; label: string }> 
     color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20",
     label: "In Progress"
   },
+  preparing: {
+    icon: Package,
+    color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20",
+    label: "Preparing"
+  },
+  out_for_delivery: {
+    icon: Truck,
+    color: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+    label: "Out for Delivery"
+  },
+  delivered: {
+    icon: CheckCircle,
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+    label: "Delivered"
+  },
+  rejected: {
+    icon: XCircle,
+    color: "bg-red-500/10 text-red-600 border-red-500/20",
+    label: "Rejected"
+  },
 };
 
 interface UserProfile {
@@ -190,12 +244,14 @@ const MyBookings = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const [nurseBookings, setNurseBookings] = useState<NurseBooking[]>([]);
+  const [medicineOrders, setMedicineOrders] = useState<MedicineOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<DoctorAppointment | null>(null);
   const [selectedNurseBooking, setSelectedNurseBooking] = useState<NurseBooking | null>(null);
+  const [selectedMedicineOrder, setSelectedMedicineOrder] = useState<MedicineOrder | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<'order' | 'appointment' | 'nurse'>('order');
+  const [dialogType, setDialogType] = useState<'order' | 'appointment' | 'nurse' | 'medicine'>('order');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState("lab-tests");
   
@@ -230,7 +286,7 @@ const MyBookings = () => {
 
   const fetchAllBookings = async () => {
     setIsLoading(true);
-    await Promise.all([fetchOrders(), fetchAppointments(), fetchNurseBookings()]);
+    await Promise.all([fetchOrders(), fetchAppointments(), fetchNurseBookings(), fetchMedicineOrders()]);
     setIsLoading(false);
   };
 
@@ -313,6 +369,37 @@ const MyBookings = () => {
     }
   };
 
+  const fetchMedicineOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("medicine_orders")
+        .select(`
+          *,
+          medical_stores:store_id (
+            id,
+            name,
+            logo_url,
+            phone,
+            city,
+            area
+          )
+        `)
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      const parsedData = (data || []).map(o => ({
+        ...o,
+        medicines: Array.isArray(o.medicines) ? o.medicines as unknown as MedicineOrderItem[] : []
+      }));
+      
+      setMedicineOrders(parsedData);
+    } catch (error) {
+      console.error("Error fetching medicine orders:", error);
+    }
+  };
+
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setDialogType('order');
@@ -328,6 +415,12 @@ const MyBookings = () => {
   const handleViewNurseBooking = (booking: NurseBooking) => {
     setSelectedNurseBooking(booking);
     setDialogType('nurse');
+    setIsDialogOpen(true);
+  };
+
+  const handleViewMedicineOrder = (order: MedicineOrder) => {
+    setSelectedMedicineOrder(order);
+    setDialogType('medicine');
     setIsDialogOpen(true);
   };
 
@@ -422,15 +515,17 @@ const MyBookings = () => {
     }
   };
 
-  const totalBookings = orders.length + appointments.length + nurseBookings.length;
+  const totalBookings = orders.length + appointments.length + nurseBookings.length + medicineOrders.length;
   const completedBookings = 
     orders.filter(o => o.status === "completed").length +
     appointments.filter(a => a.status === "completed").length +
-    nurseBookings.filter(n => n.status === "completed").length;
+    nurseBookings.filter(n => n.status === "completed").length +
+    medicineOrders.filter(m => m.status === "delivered").length;
   const pendingBookings = 
     orders.filter(o => o.status === "pending").length +
     appointments.filter(a => a.status === "pending").length +
-    nurseBookings.filter(n => n.status === "pending").length;
+    nurseBookings.filter(n => n.status === "pending").length +
+    medicineOrders.filter(m => m.status === "pending").length;
 
   if (authLoading) {
     return (
@@ -531,7 +626,8 @@ const MyBookings = () => {
                       <p className="text-2xl font-bold">
                         {orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth()).length +
                          appointments.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).length +
-                         nurseBookings.filter(n => new Date(n.created_at).getMonth() === new Date().getMonth()).length}
+                         nurseBookings.filter(n => new Date(n.created_at).getMonth() === new Date().getMonth()).length +
+                         medicineOrders.filter(m => new Date(m.created_at).getMonth() === new Date().getMonth()).length}
                       </p>
                     </div>
                   </CardContent>
@@ -540,21 +636,26 @@ const MyBookings = () => {
 
               {/* Tabs for Different Booking Types */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="lab-tests" className="flex items-center gap-2">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="lab-tests" className="flex items-center gap-1 text-xs sm:text-sm">
                     <TestTube className="w-4 h-4" />
-                    <span className="hidden sm:inline">Lab Tests</span>
-                    <Badge variant="secondary" className="ml-1">{orders.length}</Badge>
+                    <span className="hidden sm:inline">Labs</span>
+                    <Badge variant="secondary" className="ml-1 text-xs">{orders.length}</Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="doctor" className="flex items-center gap-2">
+                  <TabsTrigger value="doctor" className="flex items-center gap-1 text-xs sm:text-sm">
                     <Stethoscope className="w-4 h-4" />
                     <span className="hidden sm:inline">Doctors</span>
-                    <Badge variant="secondary" className="ml-1">{appointments.length}</Badge>
+                    <Badge variant="secondary" className="ml-1 text-xs">{appointments.length}</Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="nursing" className="flex items-center gap-2">
+                  <TabsTrigger value="nursing" className="flex items-center gap-1 text-xs sm:text-sm">
                     <UserRound className="w-4 h-4" />
                     <span className="hidden sm:inline">Nursing</span>
-                    <Badge variant="secondary" className="ml-1">{nurseBookings.length}</Badge>
+                    <Badge variant="secondary" className="ml-1 text-xs">{nurseBookings.length}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="medicine" className="flex items-center gap-1 text-xs sm:text-sm">
+                    <Pill className="w-4 h-4" />
+                    <span className="hidden sm:inline">Medicine</span>
+                    <Badge variant="secondary" className="ml-1 text-xs">{medicineOrders.length}</Badge>
                   </TabsTrigger>
                 </TabsList>
 
@@ -868,6 +969,95 @@ const MyBookings = () => {
                     </Card>
                   )}
                 </TabsContent>
+
+                {/* Medicine Orders Tab */}
+                <TabsContent value="medicine" className="mt-6">
+                  {medicineOrders.length === 0 ? (
+                    <Card className="text-center p-8">
+                      <Pill className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No medicine orders yet</p>
+                      <Button className="mt-4" onClick={() => navigate("/pharmacies")}>Find Pharmacies</Button>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Medicine Orders</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Order ID</TableHead>
+                                <TableHead>Pharmacy</TableHead>
+                                <TableHead>Items</TableHead>
+                                <TableHead>Delivery Address</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {medicineOrders.map((order) => {
+                                const config = statusConfig[order.status] || statusConfig.pending;
+                                const StatusIcon = config.icon;
+                                return (
+                                  <TableRow key={order.id}>
+                                    <TableCell>
+                                      <span className="font-mono font-medium text-sm">{order.unique_id}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-2">
+                                        {order.medical_stores?.logo_url ? (
+                                          <img src={order.medical_stores.logo_url} alt={order.medical_stores.name} className="w-8 h-8 rounded object-cover" />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded bg-emerald-100 flex items-center justify-center">
+                                            <Store className="w-4 h-4 text-emerald-600" />
+                                          </div>
+                                        )}
+                                        <div>
+                                          <p className="font-medium">{order.medical_stores?.name || "Unknown"}</p>
+                                          <p className="text-xs text-muted-foreground">{order.medical_stores?.area}</p>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {order.prescription_url ? (
+                                        <Badge variant="outline" className="gap-1">
+                                          <FileText className="w-3 h-3" />
+                                          Prescription
+                                        </Badge>
+                                      ) : (
+                                        <span className="text-sm">{order.medicines.length} medicine(s)</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <span className="text-sm truncate max-w-[150px] block">{order.delivery_address}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge className={config.color}>
+                                        <StatusIcon className="w-3 h-3 mr-1" />
+                                        {config.label}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <span className="text-sm">{format(new Date(order.created_at), "dd MMM yyyy")}</span>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <Button variant="ghost" size="icon" onClick={() => handleViewMedicineOrder(order)}>
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
               </Tabs>
             </div>
           )}
@@ -884,6 +1074,7 @@ const MyBookings = () => {
               {dialogType === 'order' && 'Lab Test Booking Details'}
               {dialogType === 'appointment' && 'Doctor Appointment Details'}
               {dialogType === 'nurse' && 'Nursing Booking Details'}
+              {dialogType === 'medicine' && 'Medicine Order Details'}
             </DialogTitle>
           </DialogHeader>
 
@@ -1263,6 +1454,89 @@ const MyBookings = () => {
                   </Button>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Medicine Order Details */}
+          {dialogType === 'medicine' && selectedMedicineOrder && (
+            <div className="space-y-6 mt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Order ID</p>
+                  <p className="font-mono font-bold text-lg">{selectedMedicineOrder.unique_id}</p>
+                </div>
+                <Badge className={statusConfig[selectedMedicineOrder.status]?.color || ""}>
+                  {statusConfig[selectedMedicineOrder.status]?.label || selectedMedicineOrder.status}
+                </Badge>
+              </div>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    {selectedMedicineOrder.medical_stores?.logo_url ? (
+                      <img src={selectedMedicineOrder.medical_stores.logo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <Store className="w-6 h-6 text-emerald-600" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold">{selectedMedicineOrder.medical_stores?.name}</p>
+                      <p className="text-sm text-muted-foreground">{selectedMedicineOrder.medical_stores?.area}, {selectedMedicineOrder.medical_stores?.city}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Order Items</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedMedicineOrder.prescription_url ? (
+                    <a href={selectedMedicineOrder.prescription_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+                      <FileText className="w-4 h-4" />
+                      View Prescription
+                    </a>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedMedicineOrder.medicines.map((med, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                          <span className="font-medium">{med.name}</span>
+                          <Badge variant="secondary">Qty: {med.quantity}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Delivery Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">{selectedMedicineOrder.delivery_address}</p>
+                </CardContent>
+              </Card>
+
+              {selectedMedicineOrder.final_price && (
+                <Card className="bg-primary/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Total Amount</span>
+                      <span className="text-2xl font-bold">Rs. {selectedMedicineOrder.final_price.toLocaleString()}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Button className="w-full" onClick={() => navigate(`/pharmacy/${selectedMedicineOrder.medical_stores?.id}`)}>
+                View Pharmacy
+              </Button>
             </div>
           )}
         </DialogContent>

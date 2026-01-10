@@ -31,6 +31,7 @@ import {
   Calendar,
   ClipboardList,
   Store,
+  Pill,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/prescriptions", label: "Prescriptions", icon: FileText },
   { href: "/admin/medical-stores", label: "Medical Stores", icon: Store },
+  { href: "/admin/medicine-orders", label: "Medicine Orders", icon: Pill },
   { href: "/admin/specializations", label: "Specializations", icon: Stethoscope },
   { href: "/admin/doctors", label: "Doctors", icon: UserRound },
   { href: "/admin/doctor-appointments", label: "Dr. Appointments", icon: Calendar },

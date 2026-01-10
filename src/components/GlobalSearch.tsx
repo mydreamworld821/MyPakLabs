@@ -22,6 +22,8 @@ import {
   MicOff,
   Clock,
   Trash2,
+  TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import {
   Select,
@@ -51,6 +53,26 @@ interface GlobalSearchProps {
 const RECENT_SEARCHES_KEY = "mypaklabs_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
 
+// Popular/trending search suggestions
+const TRENDING_SUGGESTIONS = [
+  { text: "Blood Test", type: "test" as const },
+  { text: "Cardiologist", type: "specialization" as const },
+  { text: "COVID Test", type: "test" as const },
+  { text: "Home Nursing", type: "nurse" as const },
+  { text: "X-Ray", type: "test" as const },
+  { text: "General Physician", type: "specialization" as const },
+  { text: "Diabetes Test", type: "test" as const },
+  { text: "Dentist", type: "specialization" as const },
+];
+
+const POPULAR_CATEGORIES = [
+  { text: "Doctors", icon: "doctor", route: "/find-doctors" },
+  { text: "Nurses", icon: "nurse", route: "/find-nurses" },
+  { text: "Lab Tests", icon: "test", route: "/labs" },
+  { text: "Hospitals", icon: "hospital", route: "/hospitals" },
+  { text: "Surgeries", icon: "surgery", route: "/surgeries" },
+];
+
 const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const navigate = useNavigate();
   const { cities: dbCities, provinces, loading: citiesLoading } = useCities();
@@ -73,6 +95,9 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   // Recent searches state
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [showRecent, setShowRecent] = useState(false);
+  
+  // Autocomplete suggestions state
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -227,32 +252,84 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     }
   }, [showDropdown, showRecent, results.length, searchQuery]);
 
+  // Generate autocomplete suggestions based on query
+  const generateAutocompleteSuggestions = useCallback((query: string) => {
+    if (!query.trim()) {
+      setAutocompleteSuggestions([]);
+      return;
+    }
+    
+    const queryLower = query.toLowerCase();
+    const suggestions: string[] = [];
+    
+    // Match from trending suggestions
+    TRENDING_SUGGESTIONS.forEach(item => {
+      if (item.text.toLowerCase().includes(queryLower)) {
+        suggestions.push(item.text);
+      }
+    });
+    
+    // Match from recent searches
+    recentSearches.forEach(recent => {
+      if (recent.query.toLowerCase().includes(queryLower) && !suggestions.includes(recent.query)) {
+        suggestions.push(recent.query);
+      }
+    });
+    
+    // Add common medical terms that match
+    const commonTerms = [
+      "Blood Test", "CBC Test", "Thyroid Test", "Liver Function Test", "Kidney Function Test",
+      "Sugar Test", "Cholesterol Test", "Vitamin D Test", "HbA1c Test", "Urine Test",
+      "General Physician", "Cardiologist", "Dermatologist", "Gynecologist", "Pediatrician",
+      "Orthopedic", "Neurologist", "Psychiatrist", "ENT Specialist", "Ophthalmologist",
+      "Home Nursing", "ICU Nurse", "Elder Care", "Post Surgery Care", "Wound Care",
+      "X-Ray", "MRI Scan", "CT Scan", "Ultrasound", "ECG",
+    ];
+    
+    commonTerms.forEach(term => {
+      if (term.toLowerCase().includes(queryLower) && !suggestions.includes(term)) {
+        suggestions.push(term);
+      }
+    });
+    
+    setAutocompleteSuggestions(suggestions.slice(0, 5));
+  }, [recentSearches]);
+
   // Debounced search - also trigger when city changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
         performSearch(searchQuery.trim());
+        generateAutocompleteSuggestions(searchQuery.trim());
         setShowRecent(false);
+      } else if (searchQuery.trim().length === 1) {
+        generateAutocompleteSuggestions(searchQuery.trim());
+        setResults([]);
+        setShowDropdown(false);
       } else {
         setResults([]);
+        setAutocompleteSuggestions([]);
         setShowDropdown(false);
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedCity]);
+  }, [searchQuery, selectedCity, generateAutocompleteSuggestions]);
 
   const performSearch = async (query: string) => {
     setLoading(true);
     try {
+      // Split query into words for flexible matching (e.g., "aqib" matches "Muhammad Aqib")
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
       const searchTerm = `%${query}%`;
       const allResults: SearchResult[] = [];
       const cityFilter = selectedCity && selectedCity !== "all" ? selectedCity : null;
 
       // Search cities from local state (already fetched)
-      const matchingCities = dbCities.filter(city => 
-        city.name.toLowerCase().includes(query.toLowerCase())
-      );
+      const matchingCities = dbCities.filter(city => {
+        const cityLower = city.name.toLowerCase();
+        return queryWords.some(word => cityLower.includes(word));
+      });
       matchingCities.slice(0, 3).forEach(city => {
         const province = provinces.find(p => p.id === city.province_id);
         allResults.push({
@@ -263,7 +340,8 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       });
 
-      // Search doctors (with optional city filter)
+      // Search doctors - use OR for each word to match partial names
+      // e.g., "aqib" will match "Muhammad Aqib"
       let doctorsQuery = supabase
         .from("doctors")
         .select("id, full_name, qualification, city")
@@ -276,15 +354,51 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       }
       
       const { data: doctors } = await doctorsQuery;
+      
+      // Also search with individual words for better matching
+      const additionalDoctorIds = new Set<string>();
+      if (queryWords.length > 0) {
+        for (const word of queryWords) {
+          if (word.length >= 2) {
+            let wordQuery = supabase
+              .from("doctors")
+              .select("id, full_name, qualification, city")
+              .eq("status", "approved")
+              .ilike("full_name", `%${word}%`)
+              .limit(5);
+            
+            if (cityFilter) {
+              wordQuery = wordQuery.eq("city", cityFilter);
+            }
+            
+            const { data: wordDoctors } = await wordQuery;
+            if (wordDoctors) {
+              wordDoctors.forEach(doc => {
+                if (!doctors?.find(d => d.id === doc.id)) {
+                  additionalDoctorIds.add(doc.id);
+                  allResults.push({
+                    id: doc.id,
+                    name: doc.full_name,
+                    type: "doctor",
+                    subtitle: `${doc.qualification || "Doctor"}${doc.city ? ` • ${doc.city}` : ""}`,
+                  });
+                }
+              });
+            }
+          }
+        }
+      }
 
       if (doctors) {
         doctors.forEach((doc) => {
-          allResults.push({
-            id: doc.id,
-            name: doc.full_name,
-            type: "doctor",
-            subtitle: `${doc.qualification || "Doctor"}${doc.city ? ` • ${doc.city}` : ""}`,
-          });
+          if (!additionalDoctorIds.has(doc.id)) {
+            allResults.push({
+              id: doc.id,
+              name: doc.full_name,
+              type: "doctor",
+              subtitle: `${doc.qualification || "Doctor"}${doc.city ? ` • ${doc.city}` : ""}`,
+            });
+          }
         });
       }
 
@@ -404,7 +518,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       }
 
-      // Search nurses (with optional city filter)
+      // Search nurses - use flexible word matching like doctors
       let nursesQuery = supabase
         .from("nurses")
         .select("id, full_name, qualification, city, services_offered")
@@ -417,15 +531,51 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       }
       
       const { data: nurses } = await nursesQuery;
+      
+      // Also search with individual words for better nurse matching
+      const additionalNurseIds = new Set<string>();
+      if (queryWords.length > 0) {
+        for (const word of queryWords) {
+          if (word.length >= 2) {
+            let wordQuery = supabase
+              .from("nurses")
+              .select("id, full_name, qualification, city, services_offered")
+              .eq("status", "approved")
+              .ilike("full_name", `%${word}%`)
+              .limit(5);
+            
+            if (cityFilter) {
+              wordQuery = wordQuery.eq("city", cityFilter);
+            }
+            
+            const { data: wordNurses } = await wordQuery;
+            if (wordNurses) {
+              wordNurses.forEach(nurse => {
+                if (!nurses?.find(n => n.id === nurse.id)) {
+                  additionalNurseIds.add(nurse.id);
+                  allResults.push({
+                    id: nurse.id,
+                    name: nurse.full_name,
+                    type: "nurse",
+                    subtitle: `${nurse.qualification || "Nurse"}${nurse.city ? ` • ${nurse.city}` : ""}`,
+                  });
+                }
+              });
+            }
+          }
+        }
+      }
 
       if (nurses) {
         nurses.forEach((nurse) => {
-          allResults.push({
-            id: nurse.id,
-            name: nurse.full_name,
-            type: "nurse",
-            subtitle: `${nurse.qualification || "Nurse"}${nurse.city ? ` • ${nurse.city}` : ""}`,
-          });
+          if (!additionalNurseIds.has(nurse.id)) {
+            allResults.push({
+              id: nurse.id,
+              name: nurse.full_name,
+              type: "nurse",
+              subtitle: `${nurse.qualification || "Nurse"}${nurse.city ? ` • ${nurse.city}` : ""}`,
+            });
+          }
         });
       }
 
@@ -587,8 +737,37 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     }
   };
 
+  const handleAutocompleteSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setAutocompleteSuggestions([]);
+    inputRef.current?.focus();
+  };
+
+  const handleTrendingClick = (suggestion: { text: string; type: string }) => {
+    setSearchQuery(suggestion.text);
+    setShowRecent(false);
+    inputRef.current?.focus();
+  };
+
+  const handleCategoryClick = (category: { route: string }) => {
+    navigate(category.route);
+    setShowRecent(false);
+  };
+
+  const getIconForCategory = (icon: string) => {
+    switch (icon) {
+      case "doctor": return <User className="w-4 h-4" />;
+      case "nurse": return <Heart className="w-4 h-4" />;
+      case "test": return <TestTube className="w-4 h-4" />;
+      case "hospital": return <Building2 className="w-4 h-4" />;
+      case "surgery": return <Scissors className="w-4 h-4" />;
+      default: return <Search className="w-4 h-4" />;
+    }
+  };
+
   const shouldShowDropdown = showDropdown && results.length > 0 && dropdownPos;
-  const shouldShowRecent = showRecent && recentSearches.length > 0 && !showDropdown && dropdownPos;
+  const shouldShowRecent = showRecent && !showDropdown && dropdownPos;
+  const hasAutocompleteSuggestions = autocompleteSuggestions.length > 0 && searchQuery.trim().length >= 1 && !showDropdown;
 
   return (
     <div className={`relative z-[100] ${className}`} ref={dropdownRef}>
@@ -712,8 +891,8 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
           )
         : null}
 
-      {/* Recent Searches Dropdown */}
-      {shouldShowRecent
+      {/* Autocomplete Suggestions Dropdown */}
+      {hasAutocompleteSuggestions && dropdownPos
         ? createPortal(
             <div
               ref={dropdownMenuRef}
@@ -721,48 +900,124 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
               style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
             >
               <div className="p-2">
-                <div className="flex items-center justify-between px-3 py-2">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="w-3 h-3" />
-                    Recent Searches
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs text-muted-foreground hover:text-destructive"
-                    onClick={clearRecentSearches}
+                <p className="text-xs text-muted-foreground px-3 py-2 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" />
+                  Suggestions
+                </p>
+                {autocompleteSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAutocompleteSuggestionClick(suggestion)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 rounded-lg transition-colors text-left"
                   >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    Clear
-                  </Button>
-                </div>
-                {recentSearches.map((recent) => (
-                  <div
-                    key={recent.timestamp}
-                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 rounded-lg transition-colors group"
-                  >
-                    <button
-                      onClick={() => handleRecentSearchClick(recent.query)}
-                      className="flex-1 flex items-center gap-3 text-left"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <span className="font-medium text-sm truncate">{recent.query}</span>
-                    </button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeRecentSearch(recent.query);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Search className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="font-medium text-sm">{suggestion}</span>
+                  </button>
                 ))}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {/* Recent Searches & Trending Dropdown */}
+      {shouldShowRecent
+        ? createPortal(
+            <div
+              ref={dropdownMenuRef}
+              className="fixed bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] max-h-[500px] overflow-y-auto"
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+            >
+              <div className="p-2">
+                {/* Recent Searches Section */}
+                {recentSearches.length > 0 && (
+                  <>
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Clock className="w-3 h-3" />
+                        Recent Searches
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs text-muted-foreground hover:text-destructive"
+                        onClick={clearRecentSearches}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Clear
+                      </Button>
+                    </div>
+                    {recentSearches.map((recent) => (
+                      <div
+                        key={recent.timestamp}
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 rounded-lg transition-colors group"
+                      >
+                        <button
+                          onClick={() => handleRecentSearchClick(recent.query)}
+                          className="flex-1 flex items-center gap-3 text-left"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <span className="font-medium text-sm truncate">{recent.query}</span>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentSearch(recent.query);
+                          }}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="border-t border-gray-100 my-2" />
+                  </>
+                )}
+
+                {/* Trending Searches Section */}
+                <div className="px-3 py-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-2">
+                    <TrendingUp className="w-3 h-3" />
+                    Trending Searches
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {TRENDING_SUGGESTIONS.map((suggestion, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-primary/20 transition-colors"
+                        onClick={() => handleTrendingClick(suggestion)}
+                      >
+                        {suggestion.text}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 my-2" />
+
+                {/* Quick Categories Section */}
+                <div className="px-3 py-2">
+                  <p className="text-xs text-muted-foreground mb-2">Browse Categories</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {POPULAR_CATEGORIES.map((category, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleCategoryClick(category)}
+                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-primary/10 transition-colors text-sm font-medium"
+                      >
+                        {getIconForCategory(category.icon)}
+                        {category.text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>,
             document.body,

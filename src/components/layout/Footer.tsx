@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { FlaskConical, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 
 const Footer = () => {
   return (
@@ -9,9 +10,11 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 gradient-hero rounded-xl flex items-center justify-center">
-                <FlaskConical className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img 
+                src={myPakLabsLogo} 
+                alt="MyPakLabs Logo" 
+                className="h-12 w-auto object-contain bg-white rounded-lg p-1"
+              />
               <span className="text-xl font-bold">MyPakLabs</span>
             </Link>
             <p className="text-muted-foreground text-sm">

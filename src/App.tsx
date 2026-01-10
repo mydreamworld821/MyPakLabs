@@ -22,6 +22,7 @@ import Privacy from "./pages/Privacy";
 import FindDoctors from "./pages/FindDoctors";
 import Hospitals from "./pages/Hospitals";
 import Surgeries from "./pages/Surgeries";
+import SurgeryDetail from "./pages/SurgeryDetail";
 import HealthHub from "./pages/HealthHub";
 import JoinAsDoctor from "./pages/JoinAsDoctor";
 import DoctorRegister from "./pages/DoctorRegister";
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/find-doctors" element={<FindDoctors />} />
             <Route path="/hospitals" element={<Hospitals />} />
             <Route path="/surgeries" element={<Surgeries />} />
+            <Route path="/surgery/:slug" element={<SurgeryDetail />} />
             <Route path="/health-hub" element={<HealthHub />} />
             <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
             <Route path="/doctor-register" element={<DoctorRegister />} />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, parseISO, isToday, isFuture, isPast } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +19,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Loader2,
   Calendar,
   Clock,
@@ -27,6 +37,8 @@ import {
   AlertTriangle,
   Video,
   MapPin,
+  Upload,
+  FileText,
 } from "lucide-react";
 
 interface Appointment {
@@ -37,6 +49,8 @@ interface Appointment {
   status: "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
   fee: number;
   notes: string | null;
+  consultation_notes: string | null;
+  prescription_url: string | null;
   patient_id: string;
   created_at: string;
   patient?: {
@@ -65,8 +79,18 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     appointmentId: string;
-    action: "confirm" | "complete" | "no_show" | "cancel";
+    action: "confirm" | "no_show" | "cancel";
   } | null>(null);
+  
+  // Complete appointment dialog state
+  const [completeDialog, setCompleteDialog] = useState<{
+    open: boolean;
+    appointmentId: string;
+  } | null>(null);
+  const [consultationNotes, setConsultationNotes] = useState("");
+  const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (doctorId) {
@@ -136,7 +160,7 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
     }
   };
 
-  const handleAction = async (appointmentId: string, action: "confirm" | "complete" | "no_show" | "cancel") => {
+  const handleAction = async (appointmentId: string, action: "confirm" | "no_show" | "cancel") => {
     setActionLoading(appointmentId);
     
     try {
@@ -146,10 +170,6 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
         case "confirm":
           updateData.status = "confirmed";
           updateData.confirmed_at = new Date().toISOString();
-          break;
-        case "complete":
-          updateData.status = "completed";
-          updateData.completed_at = new Date().toISOString();
           break;
         case "no_show":
           updateData.status = "no_show";
@@ -178,8 +198,70 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
     }
   };
 
-  const openConfirmDialog = (appointmentId: string, action: "confirm" | "complete" | "no_show" | "cancel") => {
+  const handleCompleteAppointment = async () => {
+    if (!completeDialog) return;
+    
+    setIsUploading(true);
+    
+    try {
+      let prescriptionUrl: string | null = null;
+      
+      // Upload prescription if provided
+      if (prescriptionFile) {
+        const fileExt = prescriptionFile.name.split(".").pop();
+        const fileName = `${completeDialog.appointmentId}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("prescriptions")
+          .upload(fileName, prescriptionFile);
+        
+        if (uploadError) throw uploadError;
+        
+        // Get the file path (not public URL since it's private bucket)
+        prescriptionUrl = fileName;
+      }
+      
+      // Update appointment with completion data
+      const updateData: Record<string, any> = {
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        consultation_notes: consultationNotes || null,
+      };
+      
+      if (prescriptionUrl) {
+        updateData.prescription_url = prescriptionUrl;
+        updateData.prescription_uploaded_at = new Date().toISOString();
+      }
+      
+      const { error } = await supabase
+        .from("appointments")
+        .update(updateData)
+        .eq("id", completeDialog.appointmentId);
+      
+      if (error) throw error;
+      
+      toast.success("Appointment completed successfully! Prescription sent to patient.");
+      fetchAppointments();
+      
+      // Reset dialog state
+      setCompleteDialog(null);
+      setConsultationNotes("");
+      setPrescriptionFile(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to complete appointment");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const openConfirmDialog = (appointmentId: string, action: "confirm" | "no_show" | "cancel") => {
     setConfirmDialog({ open: true, appointmentId, action });
+  };
+
+  const openCompleteDialog = (appointmentId: string) => {
+    setCompleteDialog({ open: true, appointmentId });
+    setConsultationNotes("");
+    setPrescriptionFile(null);
   };
 
   const getActionDialogContent = () => {
@@ -190,11 +272,6 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
         return {
           title: "Confirm Appointment",
           description: "Are you sure you want to confirm this appointment? The patient will be notified.",
-        };
-      case "complete":
-        return {
-          title: "Complete Appointment",
-          description: "Mark this appointment as completed? This action cannot be undone.",
         };
       case "no_show":
         return {
@@ -212,7 +289,6 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
   };
 
   // Filter appointments
-  const today = new Date();
   const upcomingAppointments = appointments.filter(
     (apt) => 
       (isFuture(parseISO(apt.appointment_date)) || isToday(parseISO(apt.appointment_date))) &&
@@ -277,6 +353,20 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
                 </p>
               )}
               
+              {appointment.consultation_notes && (
+                <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                  <span className="font-medium">Consultation Notes: </span>
+                  {appointment.consultation_notes}
+                </div>
+              )}
+              
+              {appointment.prescription_url && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
+                  <FileText className="w-3 h-3" />
+                  <span>Prescription uploaded</span>
+                </div>
+              )}
+              
               <div className="mt-2 text-xs font-medium text-primary">
                 Fee: Rs. {appointment.fee.toLocaleString()}
               </div>
@@ -308,7 +398,7 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
                       size="sm"
                       variant="outline"
                       className="text-xs h-8 text-green-600 border-green-200 hover:bg-green-50"
-                      onClick={() => openConfirmDialog(appointment.id, "complete")}
+                      onClick={() => openCompleteDialog(appointment.id)}
                       disabled={actionLoading === appointment.id}
                     >
                       <CheckCircle className="w-3 h-3 mr-1" /> Complete
@@ -411,7 +501,7 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
         </TabsContent>
       </Tabs>
 
-      {/* Confirmation Dialog */}
+      {/* Simple Confirmation Dialog */}
       <AlertDialog
         open={confirmDialog?.open}
         onOpenChange={(open) => !open && setConfirmDialog(null)}
@@ -442,6 +532,121 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Complete Appointment Dialog with Notes & Prescription */}
+      <Dialog
+        open={completeDialog?.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompleteDialog(null);
+            setConsultationNotes("");
+            setPrescriptionFile(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Complete Appointment</DialogTitle>
+            <DialogDescription>
+              Add consultation notes and upload prescription for the patient.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="consultation-notes" className="text-sm">
+                Consultation Notes (Optional)
+              </Label>
+              <Textarea
+                id="consultation-notes"
+                placeholder="Enter consultation notes, diagnosis, recommendations..."
+                value={consultationNotes}
+                onChange={(e) => setConsultationNotes(e.target.value)}
+                className="min-h-[100px] text-sm"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm">Upload Prescription (Optional)</Label>
+              <div 
+                className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {prescriptionFile ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <FileText className="w-5 h-5 text-green-600" />
+                    <span className="text-sm font-medium">{prescriptionFile.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs text-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPrescriptionFile(null);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Click to upload prescription
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, JPG, PNG (max 5MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error("File size must be less than 5MB");
+                      return;
+                    }
+                    setPrescriptionFile(file);
+                  }
+                }}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCompleteDialog(null)}
+              disabled={isUploading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCompleteAppointment}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Completing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Complete Appointment
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

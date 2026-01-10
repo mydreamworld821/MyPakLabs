@@ -45,6 +45,8 @@ import {
   Bed,
   Ambulance,
 } from "lucide-react";
+import ImageUpload from "@/components/admin/ImageUpload";
+import HospitalDoctorManager from "@/components/admin/HospitalDoctorManager";
 
 // Predefined cities in Pakistan
 const PAKISTAN_CITIES = [
@@ -151,18 +153,14 @@ interface Hospital {
   featured_order: number | null;
 }
 
-interface Doctor {
-  id: string;
-  full_name: string;
-  hospital_name: string | null;
-  specialization_id: string | null;
-  photo_url: string | null;
-  status: string;
+interface HospitalDoctorCount {
+  hospital_id: string;
+  count: number;
 }
 
 const AdminHospitals = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctorCounts, setDoctorCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -198,7 +196,7 @@ const AdminHospitals = () => {
 
   useEffect(() => {
     fetchHospitals();
-    fetchDoctors();
+    fetchDoctorCounts();
   }, []);
 
   const fetchHospitals = async () => {
@@ -218,25 +216,23 @@ const AdminHospitals = () => {
     }
   };
 
-  const fetchDoctors = async () => {
+  const fetchDoctorCounts = async () => {
     try {
       const { data, error } = await supabase
-        .from("doctors")
-        .select("id, full_name, hospital_name, specialization_id, photo_url, status")
-        .eq("status", "approved");
+        .from("hospital_doctors")
+        .select("hospital_id");
 
       if (error) throw error;
-      setDoctors(data || []);
+      
+      // Count doctors per hospital
+      const counts: Record<string, number> = {};
+      (data || []).forEach(item => {
+        counts[item.hospital_id] = (counts[item.hospital_id] || 0) + 1;
+      });
+      setDoctorCounts(counts);
     } catch (error) {
-      console.error("Error fetching doctors:", error);
+      console.error("Error fetching doctor counts:", error);
     }
-  };
-
-  // Get doctors for a specific hospital
-  const getHospitalDoctors = (hospitalName: string) => {
-    return doctors.filter(
-      (d) => d.hospital_name?.toLowerCase() === hospitalName.toLowerCase()
-    );
   };
 
   const generateSlug = (name: string) => {
@@ -611,23 +607,24 @@ const AdminHospitals = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="logo_url">Logo URL</Label>
-                    <Input
-                      id="logo_url"
-                      value={formData.logo_url}
-                      onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cover_image_url">Cover Image URL</Label>
-                    <Input
-                      id="cover_image_url"
-                      value={formData.cover_image_url}
-                      onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                    />
-                  </div>
+                {/* Image Uploads */}
+                <div className="grid grid-cols-2 gap-6">
+                  <ImageUpload
+                    label="Hospital Logo"
+                    bucket="hospital-images"
+                    folder="logos"
+                    currentUrl={formData.logo_url}
+                    onUpload={(url) => setFormData({ ...formData, logo_url: url })}
+                    aspectRatio="square"
+                  />
+                  <ImageUpload
+                    label="Cover Image"
+                    bucket="hospital-images"
+                    folder="banners"
+                    currentUrl={formData.cover_image_url}
+                    onUpload={(url) => setFormData({ ...formData, cover_image_url: url })}
+                    aspectRatio="banner"
+                  />
                 </div>
 
                 {/* Departments Section */}
@@ -878,7 +875,7 @@ const AdminHospitals = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredHospitals.map((hospital) => {
-                    const hospitalDoctors = getHospitalDoctors(hospital.name);
+                    const doctorCount = doctorCounts[hospital.id] || 0;
                     return (
                     <TableRow key={hospital.id}>
                       <TableCell>
@@ -932,11 +929,18 @@ const AdminHospitals = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className={hospitalDoctors.length > 0 ? "text-primary font-medium" : ""}>
-                            {hospitalDoctors.length}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className={doctorCount > 0 ? "text-primary font-medium" : ""}>
+                              {doctorCount}
+                            </span>
+                          </div>
+                          <HospitalDoctorManager
+                            hospitalId={hospital.id}
+                            hospitalName={hospital.name}
+                            departments={hospital.departments || []}
+                          />
                         </div>
                       </TableCell>
                       <TableCell>

@@ -17,6 +17,17 @@ import {
   ArrowLeft,
   Loader2,
   Stethoscope,
+  Activity,
+  Bed,
+  HeartPulse,
+  Syringe,
+  Microscope,
+  Scan,
+  Pill,
+  Ambulance,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 interface Hospital {
@@ -26,6 +37,8 @@ interface Hospital {
   city: string | null;
   address: string | null;
   specialties: string[] | null;
+  departments: string[] | null;
+  facilities: string[] | null;
   contact_phone: string | null;
   contact_email: string | null;
   website: string | null;
@@ -36,7 +49,27 @@ interface Hospital {
   review_count: number | null;
   opening_time: string | null;
   closing_time: string | null;
+  emergency_available: boolean | null;
+  bed_count: number | null;
 }
+
+// Department icons mapping
+const departmentIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  OPD: Activity,
+  IPD: Bed,
+  ICU: HeartPulse,
+  CCU: HeartPulse,
+  NICU: HeartPulse,
+  Emergency: Ambulance,
+  Laboratory: Microscope,
+  Radiology: Scan,
+  Pharmacy: Pill,
+  "Blood Bank": Syringe,
+  Dialysis: Activity,
+  MRI: Scan,
+  "CT Scan": Scan,
+  "Cath Lab": HeartPulse,
+};
 
 const HospitalDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -119,11 +152,19 @@ const HospitalDetail = () => {
 
           {/* Back Button */}
           <Link
-            to="/hospitals"
+            to={hospital.city ? `/hospitals?city=${hospital.city}` : "/hospitals"}
             className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
+
+          {/* Emergency Badge */}
+          {hospital.emergency_available && (
+            <Badge className="absolute top-4 right-4 bg-red-500 text-white text-sm px-3 py-1">
+              <Ambulance className="w-4 h-4 mr-1" />
+              24/7 Emergency
+            </Badge>
+          )}
         </div>
 
         <div className="container mx-auto px-4 -mt-20 relative z-10 pb-8">
@@ -157,7 +198,7 @@ const HospitalDetail = () => {
                           <span>{hospital.address}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-wrap">
                         {hospital.rating && hospital.rating > 0 && (
                           <div className="flex items-center gap-1">
                             <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -167,6 +208,12 @@ const HospitalDetail = () => {
                                 ({hospital.review_count} reviews)
                               </span>
                             )}
+                          </div>
+                        )}
+                        {hospital.opening_time && (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>{hospital.opening_time} - {hospital.closing_time}</span>
                           </div>
                         )}
                       </div>
@@ -189,13 +236,43 @@ const HospitalDetail = () => {
                 </Card>
               )}
 
+              {/* Departments */}
+              {hospital.departments && hospital.departments.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-primary" />
+                      Departments & Services
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {hospital.departments.map((dept) => {
+                        const IconComponent = departmentIcons[dept] || Activity;
+                        return (
+                          <div
+                            key={dept}
+                            className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <IconComponent className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="text-sm font-medium">{dept}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Specialties */}
               {hospital.specialties && hospital.specialties.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Stethoscope className="w-5 h-5" />
-                      Specialties & Departments
+                      <Stethoscope className="w-5 h-5 text-primary" />
+                      Medical Specialties
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -208,6 +285,31 @@ const HospitalDetail = () => {
                         >
                           {specialty}
                         </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Facilities */}
+              {hospital.facilities && hospital.facilities.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-primary" />
+                      Facilities & Amenities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {hospital.facilities.map((facility) => (
+                        <div
+                          key={facility}
+                          className="flex items-center gap-2 text-sm"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                          <span>{facility}</span>
+                        </div>
                       ))}
                     </div>
                   </CardContent>
@@ -298,6 +400,23 @@ const HospitalDetail = () => {
                 </CardContent>
               </Card>
 
+              {/* Emergency Notice */}
+              {hospital.emergency_available && (
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <Ambulance className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-red-700">Emergency Services</h3>
+                        <p className="text-sm text-red-600">Available 24/7</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* CTA */}
               <Card className="bg-primary text-primary-foreground">
                 <CardContent className="p-4 text-center">
@@ -315,6 +434,16 @@ const HospitalDetail = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Back to City */}
+              {hospital.city && (
+                <Link to={`/hospitals?city=${hospital.city}`}>
+                  <Button variant="outline" className="w-full">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    More Hospitals in {hospital.city}
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

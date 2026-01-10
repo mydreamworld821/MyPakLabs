@@ -285,14 +285,18 @@ export type Database = {
       hospitals: {
         Row: {
           address: string | null
+          bed_count: number | null
           city: string | null
           closing_time: string | null
           contact_email: string | null
           contact_phone: string | null
           cover_image_url: string | null
           created_at: string
+          departments: string[] | null
           description: string | null
           display_order: number | null
+          emergency_available: boolean | null
+          facilities: string[] | null
           featured_order: number | null
           id: string
           is_active: boolean | null
@@ -309,14 +313,18 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          bed_count?: number | null
           city?: string | null
           closing_time?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
+          departments?: string[] | null
           description?: string | null
           display_order?: number | null
+          emergency_available?: boolean | null
+          facilities?: string[] | null
           featured_order?: number | null
           id?: string
           is_active?: boolean | null
@@ -333,14 +341,18 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          bed_count?: number | null
           city?: string | null
           closing_time?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
+          departments?: string[] | null
           description?: string | null
           display_order?: number | null
+          emergency_available?: boolean | null
+          facilities?: string[] | null
           featured_order?: number | null
           id?: string
           is_active?: boolean | null

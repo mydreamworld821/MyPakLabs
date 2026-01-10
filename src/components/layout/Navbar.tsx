@@ -24,7 +24,8 @@ import {
   Star,
   MapPin,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  Store
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -64,6 +65,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isApprovedDoctor, setIsApprovedDoctor] = useState(false);
   const [isApprovedNurse, setIsApprovedNurse] = useState(false);
+  const [isApprovedPharmacy, setIsApprovedPharmacy] = useState(false);
   const [labs, setLabs] = useState<Lab[]>([]);
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const location = useLocation();
@@ -96,12 +98,13 @@ const Navbar = () => {
     fetchPreviewData();
   }, []);
 
-  // Check if user is an approved doctor or nurse
+  // Check if user is an approved doctor, nurse, or pharmacy
   useEffect(() => {
     const checkProviderStatus = async () => {
       if (!user) {
         setIsApprovedDoctor(false);
         setIsApprovedNurse(false);
+        setIsApprovedPharmacy(false);
         return;
       }
       
@@ -124,6 +127,16 @@ const Navbar = () => {
         .maybeSingle();
       
       setIsApprovedNurse(!!nurseData);
+
+      // Check pharmacy status
+      const { data: pharmacyData } = await supabase
+        .from("medical_stores")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .maybeSingle();
+      
+      setIsApprovedPharmacy(!!pharmacyData);
     };
 
     checkProviderStatus();
@@ -336,6 +349,16 @@ const Navbar = () => {
                 Nurses
               </Button>
             </Link>
+            <Link to="/pharmacies">
+              <Button
+                variant={isActive("/pharmacies") ? "soft" : "ghost"}
+                size="sm"
+                className="gap-1.5 text-xs px-2"
+              >
+                <Store className="w-3.5 h-3.5" />
+                Pharmacies
+              </Button>
+            </Link>
             <Link to="/health-hub">
               <Button
                 variant={isActive("/health-hub") ? "soft" : "ghost"}
@@ -356,6 +379,12 @@ const Navbar = () => {
               <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white">
                 <Heart className="w-3.5 h-3.5" />
                 Join as Nurse
+              </Button>
+            </Link>
+            <Link to="/join-as-pharmacy">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white">
+                <Store className="w-3.5 h-3.5" />
+                Join as Pharmacy
               </Button>
             </Link>
           </div>
@@ -422,6 +451,17 @@ const Navbar = () => {
                         <Link to="/nurse-emergency-feed" className="flex items-center gap-2 cursor-pointer text-xs text-red-600">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           Emergency Requests
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {isApprovedPharmacy && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/pharmacy-dashboard" className="flex items-center gap-2 cursor-pointer text-xs">
+                          <Store className="w-3.5 h-3.5" />
+                          Pharmacy Dashboard
                         </Link>
                       </DropdownMenuItem>
                     </>

@@ -52,6 +52,7 @@ import {
   Truck,
   Package,
   FileText,
+  ClipboardList,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import {
@@ -170,6 +171,30 @@ interface MedicineOrder {
   };
 }
 
+interface ApprovedTest {
+  test_id: string;
+  test_name: string;
+  price: number;
+  original_price: number;
+}
+
+interface Prescription {
+  id: string;
+  unique_id: string | null;
+  image_url: string;
+  status: string;
+  approved_tests: ApprovedTest[];
+  admin_notes: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  labs?: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    discount_percentage: number | null;
+  } | null;
+}
+
 const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
   pending: {
     icon: Clock,
@@ -231,6 +256,16 @@ const statusConfig: Record<string, { icon: any; color: string; label: string }> 
     color: "bg-red-500/10 text-red-600 border-red-500/20",
     label: "Rejected"
   },
+  pending_review: {
+    icon: Clock,
+    color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+    label: "Pending Review"
+  },
+  approved: {
+    icon: CheckCircle,
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+    label: "Approved"
+  },
 };
 
 interface UserProfile {
@@ -248,13 +283,15 @@ const MyBookings = () => {
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const [nurseBookings, setNurseBookings] = useState<NurseBooking[]>([]);
   const [medicineOrders, setMedicineOrders] = useState<MedicineOrder[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<DoctorAppointment | null>(null);
   const [selectedNurseBooking, setSelectedNurseBooking] = useState<NurseBooking | null>(null);
   const [selectedMedicineOrder, setSelectedMedicineOrder] = useState<MedicineOrder | null>(null);
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<'order' | 'appointment' | 'nurse' | 'medicine'>('order');
+  const [dialogType, setDialogType] = useState<'order' | 'appointment' | 'nurse' | 'medicine' | 'prescription'>('order');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState("lab-tests");
   
@@ -289,7 +326,7 @@ const MyBookings = () => {
 
   const fetchAllBookings = async () => {
     setIsLoading(true);
-    await Promise.all([fetchOrders(), fetchAppointments(), fetchNurseBookings(), fetchMedicineOrders()]);
+    await Promise.all([fetchOrders(), fetchAppointments(), fetchNurseBookings(), fetchMedicineOrders(), fetchPrescriptions()]);
     setIsLoading(false);
   };
 
@@ -401,6 +438,41 @@ const MyBookings = () => {
     } catch (error) {
       console.error("Error fetching medicine orders:", error);
     }
+  };
+
+  const fetchPrescriptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("prescriptions")
+        .select(`
+          *,
+          labs:lab_id (
+            id,
+            name,
+            logo_url,
+            discount_percentage
+          )
+        `)
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      const parsedData = (data || []).map(p => ({
+        ...p,
+        approved_tests: Array.isArray(p.approved_tests) ? p.approved_tests as unknown as ApprovedTest[] : []
+      }));
+      
+      setPrescriptions(parsedData);
+    } catch (error) {
+      console.error("Error fetching prescriptions:", error);
+    }
+  };
+
+  const handleViewPrescription = (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    setDialogType('prescription');
+    setIsDialogOpen(true);
   };
 
   const handleViewOrder = (order: Order) => {
@@ -518,17 +590,20 @@ const MyBookings = () => {
     }
   };
 
-  const totalBookings = orders.length + appointments.length + nurseBookings.length + medicineOrders.length;
+  const approvedPrescriptions = prescriptions.filter(p => p.status === 'approved');
+  const totalBookings = orders.length + appointments.length + nurseBookings.length + medicineOrders.length + approvedPrescriptions.length;
   const completedBookings = 
     orders.filter(o => o.status === "completed").length +
     appointments.filter(a => a.status === "completed").length +
     nurseBookings.filter(n => n.status === "completed").length +
-    medicineOrders.filter(m => m.status === "delivered").length;
+    medicineOrders.filter(m => m.status === "delivered").length +
+    approvedPrescriptions.length;
   const pendingBookings = 
     orders.filter(o => o.status === "pending").length +
     appointments.filter(a => a.status === "pending").length +
     nurseBookings.filter(n => n.status === "pending").length +
-    medicineOrders.filter(m => m.status === "pending").length;
+    medicineOrders.filter(m => m.status === "pending").length +
+    prescriptions.filter(p => p.status === "pending_review").length;
 
   if (authLoading) {
     return (
@@ -639,11 +714,16 @@ const MyBookings = () => {
 
               {/* Tabs for Different Booking Types */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="lab-tests" className="flex items-center gap-1 text-xs sm:text-sm">
                     <TestTube className="w-4 h-4" />
                     <span className="hidden sm:inline">Labs</span>
                     <Badge variant="secondary" className="ml-1 text-xs">{orders.length}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="prescriptions" className="flex items-center gap-1 text-xs sm:text-sm">
+                    <ClipboardList className="w-4 h-4" />
+                    <span className="hidden sm:inline">Rx Slips</span>
+                    <Badge variant="secondary" className="ml-1 text-xs">{approvedPrescriptions.length}</Badge>
                   </TabsTrigger>
                   <TabsTrigger value="doctor" className="flex items-center gap-1 text-xs sm:text-sm">
                     <Stethoscope className="w-4 h-4" />
@@ -767,6 +847,92 @@ const MyBookings = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <Button variant="ghost" size="icon" onClick={() => handleViewOrder(order)}>
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                {/* Prescriptions Tab */}
+                <TabsContent value="prescriptions" className="mt-6">
+                  {approvedPrescriptions.length === 0 ? (
+                    <Card className="text-center p-8">
+                      <ClipboardList className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No approved prescription slips yet</p>
+                      <p className="text-sm text-muted-foreground mt-2">Upload a prescription from any lab's detail page to get discounted test slips</p>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Approved Prescription Slips</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Slip ID</TableHead>
+                                <TableHead>Lab</TableHead>
+                                <TableHead>Tests</TableHead>
+                                <TableHead>Total Payable</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {approvedPrescriptions.map((prescription) => {
+                                const config = statusConfig[prescription.status] || statusConfig.pending;
+                                const StatusIcon = config.icon;
+                                const totalPayable = prescription.approved_tests.reduce((sum, t) => sum + (t.price || 0), 0);
+                                const totalOriginal = prescription.approved_tests.reduce((sum, t) => sum + (t.original_price || t.price || 0), 0);
+                                return (
+                                  <TableRow key={prescription.id}>
+                                    <TableCell>
+                                      <span className="font-mono font-medium text-sm">{prescription.unique_id || 'Pending'}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-2">
+                                        {prescription.labs?.logo_url ? (
+                                          <img src={prescription.labs.logo_url} alt={prescription.labs.name} className="w-8 h-8 rounded object-cover" />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
+                                            <Building2 className="w-4 h-4 text-primary" />
+                                          </div>
+                                        )}
+                                        <span className="font-medium">{prescription.labs?.name || "Lab Pending"}</span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <span className="text-sm">{prescription.approved_tests.length} test(s)</span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div>
+                                        <p className="font-medium">Rs. {totalPayable.toLocaleString()}</p>
+                                        {totalOriginal > totalPayable && (
+                                          <p className="text-xs text-green-600">Save Rs. {(totalOriginal - totalPayable).toLocaleString()}</p>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge className={config.color}>
+                                        <StatusIcon className="w-3 h-3 mr-1" />
+                                        {config.label}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <span className="text-sm">{format(new Date(prescription.created_at), "dd MMM yyyy")}</span>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <Button variant="ghost" size="icon" onClick={() => handleViewPrescription(prescription)}>
                                         <Eye className="w-4 h-4" />
                                       </Button>
                                     </TableCell>
@@ -1083,6 +1249,7 @@ const MyBookings = () => {
           <DialogHeader>
             <DialogTitle>
               {dialogType === 'order' && 'Lab Test Booking Details'}
+              {dialogType === 'prescription' && 'Prescription Slip Details'}
               {dialogType === 'appointment' && 'Doctor Appointment Details'}
               {dialogType === 'nurse' && 'Nursing Booking Details'}
               {dialogType === 'medicine' && 'Medicine Order Details'}
@@ -1248,6 +1415,137 @@ const MyBookings = () => {
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download PDF
+                </Button>
+                <Button variant="outline" onClick={() => window.print()}>
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Prescription Slip Details */}
+          {dialogType === 'prescription' && selectedPrescription && (
+            <div className="space-y-6 mt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Slip ID</p>
+                  <p className="font-mono font-bold text-lg">{selectedPrescription.unique_id || 'Pending Assignment'}</p>
+                </div>
+                <Badge className={statusConfig[selectedPrescription.status]?.color || ""}>
+                  {statusConfig[selectedPrescription.status]?.label}
+                </Badge>
+              </div>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    {selectedPrescription.labs?.logo_url ? (
+                      <img src={selectedPrescription.labs.logo_url} alt={selectedPrescription.labs.name} className="w-12 h-12 rounded object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-primary" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold">{selectedPrescription.labs?.name || 'Lab Pending'}</p>
+                      {selectedPrescription.labs?.discount_percentage && (
+                        <p className="text-sm text-green-600">{selectedPrescription.labs.discount_percentage}% Discount</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Approved Tests</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Test Name</TableHead>
+                        <TableHead className="text-right">Original</TableHead>
+                        <TableHead className="text-right">Payable</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedPrescription.approved_tests.map((test, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{test.test_name}</TableCell>
+                          <TableCell className="text-right text-muted-foreground line-through">
+                            Rs. {(test.original_price || test.price).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            Rs. {test.price.toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-500/5 border-green-500/20">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Savings</p>
+                      <p className="text-xl font-bold text-green-600">
+                        Rs. {(selectedPrescription.approved_tests.reduce((sum, t) => sum + ((t.original_price || t.price) - t.price), 0)).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Amount Payable</p>
+                      <p className="text-2xl font-bold">
+                        Rs. {(selectedPrescription.approved_tests.reduce((sum, t) => sum + t.price, 0)).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {selectedPrescription.admin_notes && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">{selectedPrescription.admin_notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="flex gap-3">
+                <Button 
+                  className="flex-1" 
+                  onClick={() => {
+                    const totalOriginal = selectedPrescription.approved_tests.reduce((sum, t) => sum + (t.original_price || t.price), 0);
+                    const totalDiscounted = selectedPrescription.approved_tests.reduce((sum, t) => sum + t.price, 0);
+                    generateBookingPDF({
+                      uniqueId: selectedPrescription.unique_id || 'PENDING',
+                      labName: selectedPrescription.labs?.name || 'Lab',
+                      patientName: userProfile?.full_name || undefined,
+                      patientPhone: userProfile?.phone || undefined,
+                      patientCity: userProfile?.city || undefined,
+                      patientAge: userProfile?.age || undefined,
+                      patientGender: userProfile?.gender || undefined,
+                      tests: selectedPrescription.approved_tests.map(t => ({
+                        name: t.test_name,
+                        originalPrice: t.original_price || t.price,
+                        discountedPrice: t.price
+                      })),
+                      totalOriginal: totalOriginal,
+                      totalDiscounted: totalDiscounted,
+                      totalSavings: totalOriginal - totalDiscounted,
+                      discountPercentage: selectedPrescription.labs?.discount_percentage || 0,
+                      bookingDate: format(new Date(selectedPrescription.created_at), 'dd/MM/yyyy'),
+                    });
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Slip
                 </Button>
                 <Button variant="outline" onClick={() => window.print()}>
                   <Printer className="w-4 h-4 mr-2" />

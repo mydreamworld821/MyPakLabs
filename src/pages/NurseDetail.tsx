@@ -431,11 +431,75 @@ const NurseDetail = () => {
                     )}
                   </div>
 
-                  {/* Service Area */}
-                  <div className="p-3 bg-muted rounded-lg">
-                    <div className="flex items-center gap-2 text-xs">
+                  {/* Service Area Visualization */}
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 text-xs font-medium mb-3">
                       <MapPin className="w-4 h-4 text-rose-600" />
-                      <span>Serves within {nurse.home_visit_radius || 10} km radius</span>
+                      <span>Service Coverage Area</span>
+                    </div>
+                    <div className="relative flex items-center justify-center">
+                      {/* Radius visualization */}
+                      <div className="relative w-40 h-40">
+                        {/* Outer ring - max coverage */}
+                        <div 
+                          className="absolute inset-0 rounded-full border-2 border-dashed border-rose-200 bg-rose-50/30"
+                          style={{
+                            animation: "pulse 3s ease-in-out infinite"
+                          }}
+                        />
+                        {/* Middle ring */}
+                        <div 
+                          className="absolute rounded-full border border-rose-300/50 bg-rose-100/40"
+                          style={{
+                            top: "15%",
+                            left: "15%",
+                            right: "15%",
+                            bottom: "15%"
+                          }}
+                        />
+                        {/* Inner ring - core area */}
+                        <div 
+                          className="absolute rounded-full bg-rose-200/60"
+                          style={{
+                            top: "30%",
+                            left: "30%",
+                            right: "30%",
+                            bottom: "30%"
+                          }}
+                        />
+                        {/* Center point - nurse location */}
+                        <div 
+                          className="absolute rounded-full bg-rose-600 shadow-lg flex items-center justify-center"
+                          style={{
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            width: "36px",
+                            height: "36px"
+                          }}
+                        >
+                          <Heart className="w-4 h-4 text-white" />
+                        </div>
+                        {/* Radius label */}
+                        <div 
+                          className="absolute text-[10px] font-bold text-rose-600 bg-white px-1.5 py-0.5 rounded shadow-sm"
+                          style={{
+                            top: "4px",
+                            right: "4px"
+                          }}
+                        >
+                          {nurse.home_visit_radius || 10} km
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-center space-y-1">
+                      <p className="text-sm font-medium text-rose-700">
+                        {nurse.city}
+                        {nurse.area_of_service ? ` - ${nurse.area_of_service}` : ""}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Home visits available within {nurse.home_visit_radius || 10} km radius
+                      </p>
                     </div>
                   </div>
 

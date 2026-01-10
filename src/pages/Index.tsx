@@ -56,6 +56,17 @@ interface Test {
   slug: string;
 }
 
+interface ServiceCard {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+  icon_name: string | null;
+  bg_color: string | null;
+  link: string;
+  display_order: number | null;
+}
+
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -64,6 +75,7 @@ const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [featuredLabs, setFeaturedLabs] = useState<Lab[]>([]);
   const [popularTests, setPopularTests] = useState<Test[]>([]);
+  const [serviceCards, setServiceCards] = useState<ServiceCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -97,6 +109,15 @@ const Index = () => {
           .limit(8);
         
         if (testsData) setPopularTests(testsData);
+
+        // Fetch service cards
+        const { data: cardsData } = await supabase
+          .from("service_cards")
+          .select("*")
+          .eq("is_active", true)
+          .order("display_order", { ascending: true });
+        
+        if (cardsData) setServiceCards(cardsData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -119,36 +140,17 @@ const Index = () => {
     "Quetta",
   ];
 
-  // Main service cards (new features)
-  const mainServices = [
-    {
-      id: "video-consultation",
-      title: "Video Consultation",
-      subtitle: "PMC Verified Doctors",
-      icon: Video,
-      bgColor: "bg-sky-50",
-      iconColor: "text-primary",
-      link: "/video-consultation",
-    },
-    {
-      id: "in-clinic",
-      title: "In-clinic Visit",
-      subtitle: "Book Appointment",
-      icon: Calendar,
-      bgColor: "bg-amber-50",
-      iconColor: "text-amber-600",
-      link: "/in-clinic-visit",
-    },
-    {
-      id: "instant-doctor",
-      title: "INSTANT DOCTOR+",
-      subtitle: "Get Instant Relief in a Click",
-      icon: Zap,
-      bgColor: "bg-sky-50",
-      iconColor: "text-yellow-500",
-      link: "/instant-doctor",
-    },
-  ];
+  // Icon mapping for fallback
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    Video,
+    Calendar,
+    Zap,
+    FlaskConical,
+    Pill,
+    Heart,
+    Building2,
+    Stethoscope,
+  };
 
   // Quick access services
   const quickServices = [
@@ -297,74 +299,68 @@ const Index = () => {
 
             {/* Main Service Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              {/* Video Consultation */}
-              <Link to={mainServices[0].link} className="block">
-                <Card className={`h-full ${mainServices[0].bgColor} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden`}>
-                  <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
-                    <div>
-                      <h3 className="font-semibold text-primary text-base mb-0.5">
-                        {mainServices[0].title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {mainServices[0].subtitle}
-                      </p>
-                    </div>
-                    <div className="flex justify-center mt-2">
-                      <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Video className="w-7 h-7 text-primary" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              {/* Middle column - In-Clinic Visit */}
-              <Link to={mainServices[1].link} className="block">
-                <Card className={`h-full ${mainServices[1].bgColor} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group`}>
-                  <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
-                    <div>
-                      <h3 className="font-semibold text-amber-700 text-base mb-0.5">
-                        {mainServices[1].title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {mainServices[1].subtitle}
-                      </p>
-                    </div>
-                    <div className="flex justify-center mt-2">
-                      <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Calendar className="w-7 h-7 text-amber-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              {/* Instant Doctor */}
-              <Link to={mainServices[2].link} className="block">
-                <Card className={`h-full ${mainServices[2].bgColor} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden`}>
-                  <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
-                    <div className="flex items-start gap-1.5">
-                      <Zap className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                      <div>
-                        <h3 className="font-bold text-primary text-base tracking-tight">
-                          INSTANT
-                        </h3>
-                        <h3 className="font-bold text-primary text-base -mt-1">
-                          DOCTOR<span className="text-red-500">+</span>
-                        </h3>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {mainServices[2].subtitle}
-                    </p>
-                    <div className="flex justify-end mt-2">
-                      <div className="w-12 h-12 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Stethoscope className="w-6 h-6 text-primary" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              {serviceCards.length > 0 ? (
+                serviceCards.map((card) => {
+                  const IconComponent = card.icon_name ? iconMap[card.icon_name] : null;
+                  return (
+                    <Link key={card.id} to={card.link} className="block">
+                      <Card className={`h-full ${card.bg_color || 'bg-primary/10'} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden relative`}>
+                        {card.image_url ? (
+                          <>
+                            <img
+                              src={card.image_url}
+                              alt={card.title}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                            <CardContent className="p-4 h-full flex flex-col justify-end min-h-[160px] relative z-10">
+                              <div>
+                                <h3 className="font-bold text-white text-lg mb-0.5 drop-shadow-lg">
+                                  {card.title}
+                                </h3>
+                                {card.subtitle && (
+                                  <p className="text-sm text-white/90 drop-shadow">
+                                    {card.subtitle}
+                                  </p>
+                                )}
+                              </div>
+                            </CardContent>
+                          </>
+                        ) : (
+                          <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
+                            <div>
+                              <h3 className="font-semibold text-primary text-base mb-0.5">
+                                {card.title}
+                              </h3>
+                              {card.subtitle && (
+                                <p className="text-xs text-muted-foreground">
+                                  {card.subtitle}
+                                </p>
+                              )}
+                            </div>
+                            {IconComponent && (
+                              <div className="flex justify-center mt-2">
+                                <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                  <IconComponent className="w-7 h-7 text-primary" />
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        )}
+                      </Card>
+                    </Link>
+                  );
+                })
+              ) : (
+                // Fallback skeleton while loading
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="h-full bg-muted/50 border-0 animate-pulse">
+                      <CardContent className="p-4 h-full min-h-[140px]" />
+                    </Card>
+                  ))}
+                </>
+              )}
             </div>
 
             {/* Quick Access Services */}

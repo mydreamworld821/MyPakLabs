@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 import { 
   FlaskConical, 
   Menu, 
@@ -135,9 +136,11 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 gradient-hero rounded-xl flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-              <FlaskConical className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img 
+              src={myPakLabsLogo} 
+              alt="MyPakLabs Logo" 
+              className="h-10 w-auto object-contain group-hover:scale-105 transition-transform"
+            />
             <span className="text-lg font-bold text-foreground">MyPakLabs</span>
           </Link>
 

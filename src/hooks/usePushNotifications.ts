@@ -76,8 +76,10 @@ export const usePushNotifications = () => {
     }
   }, []);
 
-  // Show a notification
+  // Show a system notification (like WhatsApp notifications in status bar)
   const showNotification = useCallback(async (notificationData: NotificationData) => {
+    console.log('showNotification called, permission:', permission);
+    
     if (permission !== 'granted') {
       console.log('Notification permission not granted');
       return;
@@ -86,30 +88,41 @@ export const usePushNotifications = () => {
     // Play notification sound
     playNotificationSound();
 
-    // If service worker is ready, send message to it
-    if (swRegistration?.active) {
-      swRegistration.active.postMessage({
-        type: 'SHOW_NOTIFICATION',
-        ...notificationData
-      });
-    } else if ('Notification' in window) {
-      // Fallback to direct notification
-      const notification = new Notification(notificationData.title, {
-        body: notificationData.body,
-        icon: '/images/mypaklabs-logo.png',
-        badge: '/images/mypaklabs-logo.png',
-        tag: 'emergency-request',
-        requireInteraction: true,
-        vibrate: [200, 100, 200, 100, 200],
-      } as NotificationOptions);
+    try {
+      // Try service worker first for better mobile support
+      if (swRegistration?.active) {
+        console.log('Sending notification via service worker');
+        swRegistration.active.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          title: notificationData.title,
+          body: notificationData.body,
+          data: notificationData.data
+        });
+      }
+      
+      // Also show via Notification API directly for immediate display
+      // This ensures notification appears in system tray like WhatsApp
+      if ('Notification' in window) {
+        console.log('Creating direct notification');
+        const notification = new Notification(notificationData.title, {
+          body: notificationData.body,
+          icon: '/images/mypaklabs-logo.png',
+          badge: '/images/mypaklabs-logo.png',
+          tag: `emergency-${Date.now()}`, // Unique tag to prevent overwriting
+          requireInteraction: true, // Keep notification until user interacts
+          silent: false, // Allow system sound
+        } as NotificationOptions);
 
-      notification.onclick = () => {
-        window.focus();
-        if (notificationData.data?.url) {
-          window.location.href = notificationData.data.url as string;
-        }
-        notification.close();
-      };
+        notification.onclick = () => {
+          window.focus();
+          if (notificationData.data?.url) {
+            window.location.href = notificationData.data.url as string;
+          }
+          notification.close();
+        };
+      }
+    } catch (error) {
+      console.error('Error showing notification:', error);
     }
   }, [permission, swRegistration]);
 

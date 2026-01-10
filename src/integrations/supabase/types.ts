@@ -82,6 +82,7 @@ export type Database = {
           description: string | null
           display_order: number | null
           icon_name: string | null
+          icon_url: string | null
           id: string
           is_active: boolean | null
           name: string
@@ -93,6 +94,7 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           icon_name?: string | null
+          icon_url?: string | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -104,6 +106,7 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           icon_name?: string | null
+          icon_url?: string | null
           id?: string
           is_active?: boolean | null
           name?: string

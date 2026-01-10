@@ -617,6 +617,60 @@ export type Database = {
         }
         Relationships: []
       }
+      surgeries: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          display_order: number | null
+          doctor_discount_percentage: number | null
+          hospital_discount_percentage: number | null
+          id: string
+          image_position_x: number | null
+          image_position_y: number | null
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price_range: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          display_order?: number | null
+          doctor_discount_percentage?: number | null
+          hospital_discount_percentage?: number | null
+          id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price_range?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          display_order?: number | null
+          doctor_discount_percentage?: number | null
+          hospital_discount_percentage?: number | null
+          id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price_range?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tests: {
         Row: {
           category: string | null

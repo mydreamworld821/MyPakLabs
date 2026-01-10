@@ -41,6 +41,7 @@ import AdminSpecializations from "./pages/admin/Specializations";
 import AdminDoctors from "./pages/admin/Doctors";
 import AdminServiceCards from "./pages/admin/ServiceCards";
 import AdminFeaturedLabs from "./pages/admin/FeaturedLabs";
+import AdminSurgeries from "./pages/admin/Surgeries";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 
 const queryClient = new QueryClient();
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/service-cards" element={<ProtectedRoute requireAdmin><AdminServiceCards /></ProtectedRoute>} />
             <Route path="/admin/featured-labs" element={<ProtectedRoute requireAdmin><AdminFeaturedLabs /></ProtectedRoute>} />
+            <Route path="/admin/surgeries" element={<ProtectedRoute requireAdmin><AdminSurgeries /></ProtectedRoute>} />
             
             {/* Moderator Routes */}
             <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

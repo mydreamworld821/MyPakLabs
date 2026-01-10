@@ -51,6 +51,16 @@ interface Lab {
   contact_email: string | null;
 }
 
+// Helper function to generate slug from name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special chars except spaces and hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+};
+
 const AdminLabs = () => {
   const [labs, setLabs] = useState<Lab[]>([]);
   const [labTestCounts, setLabTestCounts] = useState<Record<string, number>>({});
@@ -351,17 +361,27 @@ const AdminLabs = () => {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setFormData({ 
+                        ...formData, 
+                        name,
+                        // Auto-generate slug from name if slug is empty or was auto-generated
+                        slug: formData.slug === "" || formData.slug === generateSlug(formData.name) 
+                          ? generateSlug(name) 
+                          : formData.slug
+                      });
+                    }}
                     placeholder="Chughtai Lab"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="slug">Slug *</Label>
+                  <Label htmlFor="slug">Slug * <span className="text-xs text-muted-foreground">(auto-generated from name)</span></Label>
                   <Input
                     id="slug"
                     value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, slug: generateSlug(e.target.value) })}
                     placeholder="chughtai-lab"
                   />
                 </div>

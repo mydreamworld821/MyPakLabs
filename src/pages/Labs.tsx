@@ -12,6 +12,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LabCard from "@/components/labs/LabCard";
+import LabListCard from "@/components/labs/LabListCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, SlidersHorizontal, MapPin, Building2, Loader2 } from "lucide-react";
 
@@ -163,9 +164,9 @@ const Labs = () => {
               <p className="text-sm text-muted-foreground mb-6">
                 Showing {filteredLabs.length} lab{filteredLabs.length !== 1 ? "s" : ""}
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+              <div className="space-y-4">
                 {filteredLabs.map((lab) => (
-                  <LabCard key={lab.id} lab={lab} />
+                  <LabListCard key={lab.id} lab={lab} />
                 ))}
               </div>
             </>

@@ -62,6 +62,7 @@ interface Specialization {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isApprovedDoctor, setIsApprovedDoctor] = useState(false);
+  const [isApprovedNurse, setIsApprovedNurse] = useState(false);
   const [labs, setLabs] = useState<Lab[]>([]);
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const location = useLocation();
@@ -94,25 +95,37 @@ const Navbar = () => {
     fetchPreviewData();
   }, []);
 
-  // Check if user is an approved doctor
+  // Check if user is an approved doctor or nurse
   useEffect(() => {
-    const checkDoctorStatus = async () => {
+    const checkProviderStatus = async () => {
       if (!user) {
         setIsApprovedDoctor(false);
+        setIsApprovedNurse(false);
         return;
       }
       
-      const { data } = await supabase
+      // Check doctor status
+      const { data: doctorData } = await supabase
         .from("doctors")
         .select("status")
         .eq("user_id", user.id)
         .eq("status", "approved")
         .maybeSingle();
       
-      setIsApprovedDoctor(!!data);
+      setIsApprovedDoctor(!!doctorData);
+
+      // Check nurse status
+      const { data: nurseData } = await supabase
+        .from("nurses")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .maybeSingle();
+      
+      setIsApprovedNurse(!!nurseData);
     };
 
-    checkDoctorStatus();
+    checkProviderStatus();
   }, [user]);
 
   const simpleNavLinks = [
@@ -395,6 +408,17 @@ const Navbar = () => {
                       </DropdownMenuItem>
                     </>
                   )}
+                  {isApprovedNurse && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/nurse-dashboard" className="flex items-center gap-2 cursor-pointer text-xs">
+                          <Heart className="w-3.5 h-3.5" />
+                          Nurse Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
@@ -513,6 +537,14 @@ const Navbar = () => {
                       <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
                         <LayoutDashboard className="w-3.5 h-3.5" />
                         Doctor Dashboard
+                      </Button>
+                    </Link>
+                  )}
+                  {isApprovedNurse && (
+                    <Link to="/nurse-dashboard" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
+                        <Heart className="w-3.5 h-3.5" />
+                        Nurse Dashboard
                       </Button>
                     </Link>
                   )}

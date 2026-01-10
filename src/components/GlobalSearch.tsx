@@ -342,22 +342,12 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
               <SelectValue placeholder={citiesLoading ? "Loading..." : "Select City"} />
             </SelectTrigger>
             <SelectContent>
-              {provinces.map((province) => {
-                const provinceCities = dbCities.filter(c => c.province_id === province.id);
-                if (provinceCities.length === 0) return null;
-                return (
-                  <div key={province.id}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
-                      {province.name}
-                    </div>
-                    {provinceCities.map((city) => (
-                      <SelectItem key={city.id} value={city.name}>
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </div>
-                );
-              })}
+              <SelectItem value="all">All Cities</SelectItem>
+              {dbCities.map((city) => (
+                <SelectItem key={city.id} value={city.name}>
+                  {city.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

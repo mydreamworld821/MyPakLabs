@@ -232,7 +232,7 @@ const Index = () => {
           </div>
 
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight">
-            Find the Right Doctor, Lab & Hospital — Trusted, Verified Healthcare with Transparent Prices, All in One Place.
+            MyPakLabs — Find Doctors, Labs & Hospitals Near You, Quickly and Hassle-Free
           </h1>
           <p className="text-white/90 text-sm md:text-base mb-8 max-w-lg">
             Book tests from ISO certified labs with priority processing

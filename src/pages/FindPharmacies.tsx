@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { CitySelect } from "@/components/ui/city-select";
+import NearbyPharmaciesMap from "@/components/pharmacy/NearbyPharmaciesMap";
 import { 
   Dialog,
   DialogContent,
@@ -24,7 +25,8 @@ import {
   Phone,
   Loader2,
   Pill,
-  X
+  X,
+  Navigation
 } from "lucide-react";
 
 interface MedicalStore {
@@ -173,6 +175,11 @@ const FindPharmacies = () => {
             <p className="text-muted-foreground text-sm">
               Order medicines from verified pharmacies near you
             </p>
+          </div>
+
+          {/* Nearby Pharmacies Map */}
+          <div className="max-w-2xl mx-auto mb-6">
+            <NearbyPharmaciesMap />
           </div>
 
           {/* Medicine Search Card */}

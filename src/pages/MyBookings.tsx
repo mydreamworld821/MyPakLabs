@@ -4,11 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -43,6 +46,7 @@ import {
   MapPin,
   Phone,
   AlertTriangle,
+  Ban,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import {
@@ -194,6 +198,13 @@ const MyBookings = () => {
   const [dialogType, setDialogType] = useState<'order' | 'appointment' | 'nurse'>('order');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState("lab-tests");
+  
+  // Cancel dialog states
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelType, setCancelType] = useState<'appointment' | 'nurse'>('appointment');
+  const [cancelItemId, setCancelItemId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -338,6 +349,76 @@ const MyBookings = () => {
     } catch (error) {
       console.error("Error confirming availed:", error);
       toast.error("Failed to confirm");
+    }
+  };
+
+  const openCancelDialog = (type: 'appointment' | 'nurse', id: string) => {
+    setCancelType(type);
+    setCancelItemId(id);
+    setCancelReason("");
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!cancelItemId) return;
+    
+    setIsCancelling(true);
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ 
+          status: 'cancelled',
+          cancellation_reason: cancelReason || null,
+          cancelled_at: new Date().toISOString()
+        })
+        .eq("id", cancelItemId);
+
+      if (error) throw error;
+      
+      toast.success("Appointment cancelled successfully");
+      fetchAppointments();
+      setCancelDialogOpen(false);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      toast.error("Failed to cancel appointment");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleCancelNurseBooking = async () => {
+    if (!cancelItemId) return;
+    
+    setIsCancelling(true);
+    try {
+      const { error } = await supabase
+        .from("nurse_bookings")
+        .update({ 
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString()
+        })
+        .eq("id", cancelItemId);
+
+      if (error) throw error;
+      
+      toast.success("Nursing booking cancelled successfully");
+      fetchNurseBookings();
+      setCancelDialogOpen(false);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error cancelling nurse booking:", error);
+      toast.error("Failed to cancel booking");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    if (cancelType === 'appointment') {
+      handleCancelAppointment();
+    } else {
+      handleCancelNurseBooking();
     }
   };
 
@@ -668,9 +749,21 @@ const MyBookings = () => {
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                      <Button variant="ghost" size="icon" onClick={() => handleViewAppointment(appointment)}>
-                                        <Eye className="w-4 h-4" />
-                                      </Button>
+                                      <div className="flex items-center justify-end gap-1">
+                                        {(appointment.status === 'pending' || appointment.status === 'confirmed') && (
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                            onClick={() => openCancelDialog('appointment', appointment.id)}
+                                          >
+                                            <Ban className="w-4 h-4" />
+                                          </Button>
+                                        )}
+                                        <Button variant="ghost" size="icon" onClick={() => handleViewAppointment(appointment)}>
+                                          <Eye className="w-4 h-4" />
+                                        </Button>
+                                      </div>
                                     </TableCell>
                                   </TableRow>
                                 );
@@ -749,9 +842,21 @@ const MyBookings = () => {
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                      <Button variant="ghost" size="icon" onClick={() => handleViewNurseBooking(booking)}>
-                                        <Eye className="w-4 h-4" />
-                                      </Button>
+                                      <div className="flex items-center justify-end gap-1">
+                                        {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                            onClick={() => openCancelDialog('nurse', booking.id)}
+                                          >
+                                            <Ban className="w-4 h-4" />
+                                          </Button>
+                                        )}
+                                        <Button variant="ghost" size="icon" onClick={() => handleViewNurseBooking(booking)}>
+                                          <Eye className="w-4 h-4" />
+                                        </Button>
+                                      </div>
                                     </TableCell>
                                   </TableRow>
                                 );
@@ -1040,9 +1145,20 @@ const MyBookings = () => {
                 </Card>
               )}
 
-              <Button className="w-full" onClick={() => navigate(`/doctor/${selectedAppointment.doctors?.id}`)}>
-                View Doctor Profile
-              </Button>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => navigate(`/doctor/${selectedAppointment.doctors?.id}`)}>
+                  View Doctor Profile
+                </Button>
+                {(selectedAppointment.status === 'pending' || selectedAppointment.status === 'confirmed') && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => openCancelDialog('appointment', selectedAppointment.id)}
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -1133,11 +1249,78 @@ const MyBookings = () => {
                 </Card>
               )}
 
-              <Button className="w-full" onClick={() => navigate(`/nurse/${selectedNurseBooking.nurses?.id}`)}>
-                View Nurse Profile
-              </Button>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => navigate(`/nurse/${selectedNurseBooking.nurses?.id}`)}>
+                  View Nurse Profile
+                </Button>
+                {(selectedNurseBooking.status === 'pending' || selectedNurseBooking.status === 'confirmed') && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => openCancelDialog('nurse', selectedNurseBooking.id)}
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Ban className="w-5 h-5" />
+              Cancel {cancelType === 'appointment' ? 'Appointment' : 'Booking'}
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this {cancelType === 'appointment' ? 'doctor appointment' : 'nursing booking'}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Reason for cancellation (optional)
+              </label>
+              <Textarea
+                placeholder="Please let us know why you're cancelling..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={isCancelling}
+            >
+              Keep Booking
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmCancel}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <Ban className="w-4 h-4 mr-2" />
+                  Yes, Cancel
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

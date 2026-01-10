@@ -232,9 +232,13 @@ const Index = () => {
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight flex flex-wrap items-center justify-center gap-3">
-            <img src={myPakLabsLogo} alt="MyPakLabs" className="h-14 md:h-16 lg:h-20 w-auto object-contain bg-white rounded-xl p-1.5 shadow-lg" />
-            <span>Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free</span>
+          {/* Logo */}
+          <div className="mb-4">
+            <img src={myPakLabsLogo} alt="MyPakLabs" className="h-16 md:h-20 lg:h-24 w-auto object-contain bg-white rounded-xl p-2 shadow-lg" />
+          </div>
+
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight">
+            Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free
           </h1>
           <p className="text-white/90 text-sm md:text-base mb-8 max-w-lg">
             Book tests from ISO certified labs with priority processing

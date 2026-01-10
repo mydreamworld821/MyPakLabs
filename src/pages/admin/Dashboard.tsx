@@ -35,7 +35,9 @@ import {
   Heart,
   Scissors,
   MessageSquare,
-  MapPin
+  MapPin,
+  Store,
+  Pill
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 
@@ -113,6 +115,15 @@ interface DashboardStats {
   totalNurses: number;
   approvedNurses: number;
   pendingNurses: number;
+  
+  // Pharmacies/Medical Stores
+  totalPharmacies: number;
+  approvedPharmacies: number;
+  pendingPharmacies: number;
+  
+  // Medicine Orders
+  totalMedicineOrders: number;
+  pendingMedicineOrders: number;
 }
 
 interface RecentOrder {
@@ -184,7 +195,9 @@ const AdminDashboard = () => {
     totalSurgeryInquiries: 0, pendingSurgeryInquiries: 0,
     totalEmergencyRequests: 0, liveEmergencyRequests: 0,
     totalNurseBookings: 0, pendingNurseBookings: 0,
-    totalNurses: 0, approvedNurses: 0, pendingNurses: 0
+    totalNurses: 0, approvedNurses: 0, pendingNurses: 0,
+    totalPharmacies: 0, approvedPharmacies: 0, pendingPharmacies: 0,
+    totalMedicineOrders: 0, pendingMedicineOrders: 0
   });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [recentPrescriptions, setRecentPrescriptions] = useState<RecentPrescription[]>([]);
@@ -278,6 +291,15 @@ const AdminDashboard = () => {
         { count: approvedNurses },
         { count: pendingNurses },
         
+        // Pharmacies
+        { count: totalPharmacies },
+        { count: approvedPharmacies },
+        { count: pendingPharmacies },
+        
+        // Medicine Orders
+        { count: totalMedicineOrders },
+        { count: pendingMedicineOrders },
+        
         // Recent data
         { data: recentOrdersData },
         { data: recentPrescriptionsData },
@@ -359,6 +381,15 @@ const AdminDashboard = () => {
         supabase.from("nurses").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("nurses").select("*", { count: "exact", head: true }).eq("status", "pending"),
         
+        // Pharmacies
+        supabase.from("medical_stores").select("*", { count: "exact", head: true }),
+        supabase.from("medical_stores").select("*", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("medical_stores").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        
+        // Medicine Orders
+        supabase.from("medicine_orders").select("*", { count: "exact", head: true }),
+        supabase.from("medicine_orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        
         // Recent data
         supabase.from("orders").select("id, unique_id, status, discounted_total, created_at, labs(name)").order("created_at", { ascending: false }).limit(5),
         supabase.from("prescriptions").select("id, unique_id, status, created_at").order("created_at", { ascending: false }).limit(5),
@@ -438,7 +469,14 @@ const AdminDashboard = () => {
         
         totalNurses: totalNurses || 0,
         approvedNurses: approvedNurses || 0,
-        pendingNurses: pendingNurses || 0
+        pendingNurses: pendingNurses || 0,
+        
+        totalPharmacies: totalPharmacies || 0,
+        approvedPharmacies: approvedPharmacies || 0,
+        pendingPharmacies: pendingPharmacies || 0,
+        
+        totalMedicineOrders: totalMedicineOrders || 0,
+        pendingMedicineOrders: pendingMedicineOrders || 0
       });
 
       setRecentOrders(recentOrdersData as RecentOrder[] || []);
@@ -555,7 +593,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Pending Actions - Alerts */}
-        {(stats.pendingOrders > 0 || stats.pendingPrescriptions > 0 || stats.pendingDoctors > 0 || stats.liveEmergencyRequests > 0 || stats.pendingSurgeryInquiries > 0 || stats.pendingNurseBookings > 0 || stats.pendingNurses > 0) && (
+        {(stats.pendingOrders > 0 || stats.pendingPrescriptions > 0 || stats.pendingDoctors > 0 || stats.liveEmergencyRequests > 0 || stats.pendingSurgeryInquiries > 0 || stats.pendingNurseBookings > 0 || stats.pendingNurses > 0 || stats.pendingPharmacies > 0 || stats.pendingMedicineOrders > 0) && (
           <div className="space-y-4">
             {/* Critical - Emergency & Live */}
             {(stats.liveEmergencyRequests > 0) && (
@@ -673,6 +711,40 @@ const AdminDashboard = () => {
                         <p className="text-sm text-rose-700">Pending confirmation</p>
                       </div>
                       <ArrowUpRight className="w-5 h-5 text-rose-600 ml-auto" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              )}
+              
+              {stats.pendingPharmacies > 0 && (
+                <Link to="/admin/medical-stores">
+                  <Card className="border-emerald-200 bg-emerald-50 hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Store className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-emerald-900">{stats.pendingPharmacies} Pending Pharmacies</p>
+                        <p className="text-sm text-emerald-700">Awaiting approval</p>
+                      </div>
+                      <ArrowUpRight className="w-5 h-5 text-emerald-600 ml-auto" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              )}
+              
+              {stats.pendingMedicineOrders > 0 && (
+                <Link to="/admin/medical-stores">
+                  <Card className="border-teal-200 bg-teal-50 hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
+                        <Pill className="w-6 h-6 text-teal-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-teal-900">{stats.pendingMedicineOrders} Medicine Orders</p>
+                        <p className="text-sm text-teal-700">Pending fulfillment</p>
+                      </div>
+                      <ArrowUpRight className="w-5 h-5 text-teal-600 ml-auto" />
                     </CardContent>
                   </Card>
                 </Link>
@@ -892,6 +964,65 @@ const AdminDashboard = () => {
               <Link to="/admin/prescriptions">
                 <Button variant="outline" size="sm" className="w-full">
                   Review Prescriptions <ArrowUpRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pharmacy Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Store className="w-5 h-5 text-emerald-500" />
+                Pharmacies Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold">{stats.totalPharmacies}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">{stats.approvedPharmacies}</p>
+                  <p className="text-xs text-muted-foreground">Approved</p>
+                </div>
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pendingPharmacies}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </div>
+              </div>
+              <Link to="/admin/medical-stores">
+                <Button variant="outline" size="sm" className="w-full">
+                  Manage Pharmacies <ArrowUpRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Pill className="w-5 h-5 text-teal-500" />
+                Medicine Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold">{stats.totalMedicineOrders}</p>
+                  <p className="text-xs text-muted-foreground">Total Orders</p>
+                </div>
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pendingMedicineOrders}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </div>
+              </div>
+              <Link to="/admin/medical-stores">
+                <Button variant="outline" size="sm" className="w-full">
+                  View Orders <ArrowUpRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
             </CardContent>

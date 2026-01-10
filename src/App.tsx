@@ -70,6 +70,7 @@ import PharmacyRegister from "./pages/PharmacyRegister";
 import FindPharmacies from "./pages/FindPharmacies";
 import PharmacyDetail from "./pages/PharmacyDetail";
 import PharmacyDashboard from "./pages/PharmacyDashboard";
+import OrderMedicine from "./pages/OrderMedicine";
 import NurseActiveJob from "./pages/NurseActiveJob";
 
 const queryClient = new QueryClient();
@@ -125,6 +126,7 @@ const App = () => (
               <Route path="/pharmacies" element={<FindPharmacies />} />
               <Route path="/pharmacy/:id" element={<PharmacyDetail />} />
               <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
+              <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

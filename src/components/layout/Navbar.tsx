@@ -148,7 +148,6 @@ const Navbar = () => {
     { href: "/hospitals", label: "Hospitals", icon: Hospital },
     { href: "/surgeries", label: "Surgeries", icon: Scissors },
     { href: "/find-nurses", label: "Home Nurses", icon: Heart },
-    { href: "/health-hub", label: "Health Hub", icon: Heart },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -359,16 +358,6 @@ const Navbar = () => {
                 Pharmacies
               </Button>
             </Link>
-            <Link to="/health-hub">
-              <Button
-                variant={isActive("/health-hub") ? "soft" : "ghost"}
-                size="sm"
-                className="gap-1.5 text-xs px-2"
-              >
-                <Heart className="w-3.5 h-3.5" />
-                Health Hub
-              </Button>
-            </Link>
             <Link to="/join-as-doctor">
               <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 ml-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
                 <UserPlus className="w-3.5 h-3.5" />
@@ -531,7 +520,7 @@ const Navbar = () => {
               { href: "/hospitals", label: "Hospitals", icon: Hospital },
               { href: "/surgeries", label: "Surgeries", icon: Scissors },
               { href: "/find-nurses", label: "Home Nurses", icon: Heart },
-              { href: "/health-hub", label: "Health Hub", icon: Heart },
+              { href: "/pharmacies", label: "Pharmacies", icon: Store },
             ].map((link) => (
               <Link
                 key={link.href}

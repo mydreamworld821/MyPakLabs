@@ -174,7 +174,7 @@ const Index = () => {
           </div>
 
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight text-black">
-            <span className="text-black text-3xl md:text-4xl lg:text-5xl font-extrabold">MyPakLabs</span> Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free
+            <span className="text-white text-3xl md:text-4xl lg:text-5xl font-extrabold">MyPakLabs</span> Find Doctors, Labs and Hospitals Near You, Quickly and Hassle-Free
           </h1>
           <p className="text-black/80 text-sm md:text-base mb-8 max-w-lg">
             Book tests from ISO certified labs with priority processing

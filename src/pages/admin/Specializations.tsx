@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2, Stethoscope } from "lucide-react";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 interface Specialization {
   id: string;
@@ -31,6 +32,7 @@ interface Specialization {
   slug: string;
   description: string | null;
   icon_name: string | null;
+  icon_url: string | null;
   is_active: boolean | null;
   display_order: number | null;
   doctor_count?: number;
@@ -45,6 +47,7 @@ const AdminSpecializations = () => {
     name: "",
     description: "",
     icon_name: "Stethoscope",
+    icon_url: "",
     display_order: 0,
     is_active: true,
   });
@@ -112,6 +115,7 @@ const AdminSpecializations = () => {
             slug,
             description: formData.description.trim() || null,
             icon_name: formData.icon_name,
+            icon_url: formData.icon_url || null,
             display_order: formData.display_order,
             is_active: formData.is_active,
           })
@@ -127,6 +131,7 @@ const AdminSpecializations = () => {
             slug,
             description: formData.description.trim() || null,
             icon_name: formData.icon_name,
+            icon_url: formData.icon_url || null,
             display_order: formData.display_order,
             is_active: formData.is_active,
           });
@@ -149,6 +154,7 @@ const AdminSpecializations = () => {
       name: spec.name,
       description: spec.description || "",
       icon_name: spec.icon_name || "Stethoscope",
+      icon_url: spec.icon_url || "",
       display_order: spec.display_order || 0,
       is_active: spec.is_active ?? true,
     });
@@ -178,6 +184,7 @@ const AdminSpecializations = () => {
       name: "",
       description: "",
       icon_name: "Stethoscope",
+      icon_url: "",
       display_order: 0,
       is_active: true,
     });
@@ -228,6 +235,14 @@ const AdminSpecializations = () => {
                     className="text-xs min-h-[60px]"
                   />
                 </div>
+                <ImageUpload
+                  label="Icon"
+                  bucket="lab-images"
+                  folder="specialization-icons"
+                  currentUrl={formData.icon_url}
+                  onUpload={(url) => setFormData({ ...formData, icon_url: url })}
+                  aspectRatio="square"
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Display Order</Label>
@@ -274,6 +289,7 @@ const AdminSpecializations = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="text-xs w-12">Icon</TableHead>
                     <TableHead className="text-xs">Name</TableHead>
                     <TableHead className="text-xs">Description</TableHead>
                     <TableHead className="text-xs">Doctors</TableHead>
@@ -284,6 +300,17 @@ const AdminSpecializations = () => {
                 <TableBody>
                   {specializations.map((spec) => (
                     <TableRow key={spec.id}>
+                      <TableCell>
+                        {spec.icon_url ? (
+                          <img 
+                            src={spec.icon_url} 
+                            alt={spec.name} 
+                            className="w-8 h-8 object-contain rounded"
+                          />
+                        ) : (
+                          <Stethoscope className="w-6 h-6 text-muted-foreground" />
+                        )}
+                      </TableCell>
                       <TableCell className="text-xs font-medium">{spec.name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                         {spec.description || "-"}

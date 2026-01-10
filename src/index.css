@@ -111,18 +111,18 @@
   }
 
   html {
-    font-size: 14px; /* Reduced base font size for mobile */
+    font-size: 13px; /* Compact base font for mobile */
   }
 
   @media (min-width: 640px) {
     html {
-      font-size: 15px;
+      font-size: 13.5px;
     }
   }
 
   @media (min-width: 768px) {
     html {
-      font-size: 16px; /* Default size for desktop */
+      font-size: 14px; /* Compact size for desktop */
     }
   }
 

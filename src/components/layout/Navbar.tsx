@@ -17,10 +17,12 @@ import {
   Hospital,
   Scissors,
   Heart,
-  UserPlus
+  UserPlus,
+  LayoutDashboard
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +33,30 @@ import {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isApprovedDoctor, setIsApprovedDoctor] = useState(false);
   const location = useLocation();
   const { user, isAdmin, isModerator, signOut } = useAuth();
+
+  // Check if user is an approved doctor
+  useEffect(() => {
+    const checkDoctorStatus = async () => {
+      if (!user) {
+        setIsApprovedDoctor(false);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from("doctors")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .maybeSingle();
+      
+      setIsApprovedDoctor(!!data);
+    };
+
+    checkDoctorStatus();
+  }, [user]);
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
@@ -123,6 +147,17 @@ const Navbar = () => {
                       My Prescriptions
                     </Link>
                   </DropdownMenuItem>
+                  {isApprovedDoctor && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/doctor-dashboard" className="flex items-center gap-2 cursor-pointer">
+                          <LayoutDashboard className="w-4 h-4" />
+                          Doctor Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
@@ -226,6 +261,14 @@ const Navbar = () => {
                       My Prescriptions
                     </Button>
                   </Link>
+                  {isApprovedDoctor && (
+                    <Link to="/doctor-dashboard" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full gap-2">
+                        <LayoutDashboard className="w-4 h-4" />
+                        Doctor Dashboard
+                      </Button>
+                    </Link>
+                  )}
                   {isAdmin && (
                     <Link to="/admin" onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full gap-2">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import {
   ArrowLeft,
   Star,
@@ -81,6 +81,11 @@ const DoctorDetail = () => {
     }
   }, [id]);
 
+  // Reset time when date changes
+  useEffect(() => {
+    setSelectedTime(null);
+  }, [selectedDate]);
+
   const fetchDoctor = async () => {
     try {
       const { data, error } = await supabase
@@ -91,12 +96,12 @@ const DoctorDetail = () => {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (!data) {
         setIsLoading(false);
         return;
       }
-      
+
       setDoctor(data);
     } catch (error) {
       console.error("Error fetching doctor:", error);
@@ -105,25 +110,20 @@ const DoctorDetail = () => {
     }
   };
 
-  const generateTimeSlots = () => {
-    if (!doctor?.available_time_start || !doctor?.available_time_end) {
-      return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
-    }
-    
-    const slots: string[] = [];
-    const duration = doctor.appointment_duration || 15;
-    const startHour = parseInt(doctor.available_time_start.split(":")[0]);
-    const endHour = parseInt(doctor.available_time_end.split(":")[0]);
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let min = 0; min < 60; min += duration) {
-        const period = hour >= 12 ? "PM" : "AM";
-        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-        const time = `${displayHour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")} ${period}`;
-        slots.push(time);
-      }
-    }
-    return slots;
+  const parseHmToMinutes = (value: string) => {
+    // Supports HH:mm or HH:mm:ss
+    const [h, m] = value.split(":");
+    const hh = Number.parseInt(h || "0", 10);
+    const mm = Number.parseInt(m || "0", 10);
+    return hh * 60 + mm;
+  };
+
+  const minutesToDisplay = (totalMinutes: number) => {
+    const hh24 = Math.floor(totalMinutes / 60) % 24;
+    const mm = totalMinutes % 60;
+    const period = hh24 >= 12 ? "PM" : "AM";
+    const hh12 = hh24 % 12 === 0 ? 12 : hh24 % 12;
+    return `${hh12.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")} ${period}`;
   };
 
   const isDateAvailable = (date: Date) => {
@@ -133,8 +133,58 @@ const DoctorDetail = () => {
     return doctor.available_days.includes(dayName);
   };
 
+  const timeSlots = useMemo(() => {
+    if (!doctor?.available_time_start || !doctor?.available_time_end) {
+      return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+    }
+
+    const duration = doctor.appointment_duration || 15;
+    const startMins = parseHmToMinutes(doctor.available_time_start);
+    const endMins = parseHmToMinutes(doctor.available_time_end);
+
+    const slots: string[] = [];
+    for (let mins = startMins; mins + duration <= endMins; mins += duration) {
+      slots.push(minutesToDisplay(mins));
+    }
+    return slots;
+  }, [doctor]);
+
+  const getFee = () => {
+    if (consultationType === "online") {
+      return doctor?.online_consultation_fee || doctor?.consultation_fee || 0;
+    }
+    return doctor?.consultation_fee || 0;
+  };
+
+  const isTimeSlotDisabled = (timeLabel: string) => {
+    if (!selectedDate) return false;
+
+    const todayStart = startOfDay(new Date());
+    const selectedStart = startOfDay(selectedDate);
+    if (selectedStart.getTime() !== todayStart.getTime()) return false;
+
+    // If booking for today, disable times that already passed
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+
+    const match = timeLabel.match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/i);
+    if (!match) return false;
+
+    let hh = Number(match[1]);
+    const mm = Number(match[2]);
+    const period = match[3].toUpperCase();
+    if (period === "PM" && hh !== 12) hh += 12;
+    if (period === "AM" && hh === 12) hh = 0;
+    const slotMins = hh * 60 + mm;
+
+    return slotMins < nowMins;
+  };
+
   const handleBookAppointment = async () => {
-    if (!user) {
+    // Ensure we have a fresh authenticated user (AuthContext can be briefly null on refresh)
+    const authUser = user ?? (await supabase.auth.getUser()).data.user;
+
+    if (!authUser) {
       toast({
         title: "Login Required",
         description: "Please login to book an appointment",
@@ -153,25 +203,56 @@ const DoctorDetail = () => {
       return;
     }
 
+    if (isTimeSlotDisabled(selectedTime)) {
+      toast({
+        title: "Time Slot Not Available",
+        description: "Please select a future time slot.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!doctor) return;
 
     setIsBooking(true);
-    
+
     try {
       const fee = getFee();
       const appointmentDate = format(selectedDate, "yyyy-MM-dd");
-      
+
+      // Prevent double booking for the same doctor/date/time (client-side check)
+      const { data: existing, error: existingError } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("doctor_id", doctor.id)
+        .eq("appointment_date", appointmentDate)
+        .eq("appointment_time", selectedTime)
+        .neq("status", "cancelled")
+        .limit(1);
+
+      if (existingError) throw existingError;
+      if (existing && existing.length > 0) {
+        toast({
+          title: "Slot Already Booked",
+          description: "This time slot is already booked. Please choose another time.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("appointments")
         .insert({
           doctor_id: doctor.id,
-          patient_id: user.id,
+          patient_id: authUser.id,
           appointment_date: appointmentDate,
           appointment_time: selectedTime,
           consultation_type: consultationType,
-          fee: fee,
+          fee,
           status: "pending",
-        });
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
 
@@ -179,30 +260,21 @@ const DoctorDetail = () => {
         title: "Appointment Booked!",
         description: `Your ${consultationType} appointment with Dr. ${doctor.full_name} on ${format(selectedDate, "dd MMM yyyy")} at ${selectedTime} has been booked successfully.`,
       });
-      
-      // Reset selection
+
       setSelectedDate(undefined);
       setSelectedTime(null);
-      
-      // Navigate to bookings page
+
       navigate("/my-bookings");
     } catch (error: any) {
       console.error("Error booking appointment:", error);
       toast({
         title: "Booking Failed",
-        description: error.message || "Failed to book appointment. Please try again.",
+        description: error?.message || "Failed to book appointment. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsBooking(false);
     }
-  };
-
-  const getFee = () => {
-    if (consultationType === "online") {
-      return doctor?.online_consultation_fee || doctor?.consultation_fee || 0;
-    }
-    return doctor?.consultation_fee || 0;
   };
 
   if (isLoading) {
@@ -238,8 +310,6 @@ const DoctorDetail = () => {
       </div>
     );
   }
-
-  const timeSlots = generateTimeSlots();
 
   return (
     <div className="min-h-screen bg-background">
@@ -546,8 +616,8 @@ const DoctorDetail = () => {
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
-                      disabled={(date) => 
-                        date < new Date() || 
+                      disabled={(date) =>
+                        startOfDay(date) < startOfDay(new Date()) ||
                         date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ||
                         !isDateAvailable(date)
                       }
@@ -567,6 +637,7 @@ const DoctorDetail = () => {
                             size="sm"
                             className="text-xs h-8"
                             onClick={() => setSelectedTime(time)}
+                            disabled={isTimeSlotDisabled(time)}
                           >
                             {time}
                           </Button>

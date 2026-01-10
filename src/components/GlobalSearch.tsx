@@ -668,13 +668,44 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const handleSearch = () => {
     if (searchQuery.trim()) {
       saveRecentSearch(searchQuery.trim());
+      const queryLower = searchQuery.toLowerCase().trim();
       
-      // Smart navigation based on results or first result type
-      if (results.length > 0) {
-        // Navigate based on the most common result type or first result
-        const firstResult = results[0];
-        switch (firstResult.type) {
+      // Count results by type to determine the best destination
+      const typeCounts: Record<string, number> = {};
+      results.forEach(r => {
+        typeCounts[r.type] = (typeCounts[r.type] || 0) + 1;
+      });
+      
+      // Find the dominant result type
+      let dominantType = '';
+      let maxCount = 0;
+      Object.entries(typeCounts).forEach(([type, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantType = type;
+        }
+      });
+      
+      // Navigation priority: keyword detection first, then results-based, then smart defaults
+      // 1. Check for explicit keywords in query
+      if (queryLower.includes('nurse') || queryLower.includes('nursing') || queryLower.includes('home care') || queryLower.includes('caregiver')) {
+        navigate(`/find-nurses?search=${encodeURIComponent(searchQuery)}`);
+      } else if (queryLower.includes('doctor') || queryLower.includes('dr.') || queryLower.includes('dr ') || queryLower.includes('physician')) {
+        navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
+      } else if (queryLower.includes('hospital') || queryLower.includes('clinic') || queryLower.includes('medical center')) {
+        navigate(`/hospitals?search=${encodeURIComponent(searchQuery)}`);
+      } else if (queryLower.includes('surgery') || queryLower.includes('operation') || queryLower.includes('surgical')) {
+        navigate(`/surgeries?search=${encodeURIComponent(searchQuery)}`);
+      } else if (queryLower.includes('lab') || queryLower.includes('laboratory') || queryLower.includes('diagnostic')) {
+        navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+      } else if (queryLower.includes('test') || queryLower.includes('blood') || queryLower.includes('urine') || queryLower.includes('x-ray') || queryLower.includes('mri') || queryLower.includes('ct scan') || queryLower.includes('ultrasound') || queryLower.includes('ecg') || queryLower.includes('cbc')) {
+        navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+      } 
+      // 2. Navigate based on dominant result type if results exist
+      else if (results.length > 0) {
+        switch (dominantType || results[0].type) {
           case "doctor":
+          case "specialization":
             navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
             break;
           case "nurse":
@@ -686,32 +717,23 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
           case "surgery":
             navigate(`/surgeries?search=${encodeURIComponent(searchQuery)}`);
             break;
-          case "specialization":
-            navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
-            break;
           case "city":
-            navigate(`/find-doctors?city=${firstResult.name}`);
+            navigate(`/find-doctors?city=${results[0].name}`);
             break;
           case "test":
+            navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+            break;
           case "lab":
+            navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+            break;
           default:
             navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
             break;
         }
-      } else {
-        // Default fallback - detect intent from query keywords
-        const queryLower = searchQuery.toLowerCase();
-        if (queryLower.includes('nurse') || queryLower.includes('nursing') || queryLower.includes('home care')) {
-          navigate(`/find-nurses?search=${encodeURIComponent(searchQuery)}`);
-        } else if (queryLower.includes('doctor') || queryLower.includes('dr.') || queryLower.includes('physician')) {
-          navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
-        } else if (queryLower.includes('hospital') || queryLower.includes('clinic')) {
-          navigate(`/hospitals?search=${encodeURIComponent(searchQuery)}`);
-        } else if (queryLower.includes('surgery') || queryLower.includes('operation')) {
-          navigate(`/surgeries?search=${encodeURIComponent(searchQuery)}`);
-        } else {
-          navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
-        }
+      } 
+      // 3. Default fallback - go to doctors as the most common search intent
+      else {
+        navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
       }
       
       setShowDropdown(false);

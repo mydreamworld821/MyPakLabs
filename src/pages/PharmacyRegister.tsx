@@ -52,6 +52,7 @@ const PharmacyRegister = () => {
     full_address: "",
     location_lat: "",
     location_lng: "",
+    google_maps_url: "",
     
     // Images
     logo_url: "",
@@ -170,6 +171,7 @@ const PharmacyRegister = () => {
         full_address: formData.full_address.trim(),
         location_lat: formData.location_lat ? parseFloat(formData.location_lat) : null,
         location_lng: formData.location_lng ? parseFloat(formData.location_lng) : null,
+        google_maps_url: formData.google_maps_url.trim() || null,
         logo_url: formData.logo_url || null,
         cover_image_url: formData.cover_image_url || null,
         delivery_available: formData.delivery_available,
@@ -396,9 +398,21 @@ const PharmacyRegister = () => {
                         rows={2}
                       />
                     </div>
+                    <div>
+                      <Label className="text-xs">Google Maps URL (Recommended)</Label>
+                      <Input
+                        value={formData.google_maps_url}
+                        onChange={(e) => handleInputChange("google_maps_url", e.target.value)}
+                        placeholder="https://maps.google.com/..."
+                        className="text-xs h-8"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Paste your pharmacy's Google Maps link for easy directions
+                      </p>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs">Latitude (Optional)</Label>
+                        <Label className="text-xs">Latitude (For nearby search)</Label>
                         <Input
                           type="number"
                           step="any"
@@ -409,7 +423,7 @@ const PharmacyRegister = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Longitude (Optional)</Label>
+                        <Label className="text-xs">Longitude (For nearby search)</Label>
                         <Input
                           type="number"
                           step="any"
@@ -420,9 +434,15 @@ const PharmacyRegister = () => {
                         />
                       </div>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      Tip: Get coordinates from Google Maps for accurate location
-                    </p>
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-[10px] text-blue-700 font-medium">How to get coordinates:</p>
+                      <ol className="text-[10px] text-blue-600 mt-1 list-decimal list-inside space-y-0.5">
+                        <li>Open Google Maps and find your pharmacy</li>
+                        <li>Right-click on the exact location</li>
+                        <li>Copy the coordinates (e.g., 31.5204, 74.3587)</li>
+                        <li>Enter latitude (first number) and longitude (second number)</li>
+                      </ol>
+                    </div>
                   </>
                 )}
 

@@ -38,6 +38,7 @@ interface MedicalStore {
   review_count: number;
   location_lat: number | null;
   location_lng: number | null;
+  google_maps_url: string | null;
 }
 
 const PharmacyDetail = () => {
@@ -74,8 +75,10 @@ const PharmacyDetail = () => {
   };
 
   const openGoogleMaps = () => {
-    if (store?.location_lat && store?.location_lng) {
-      window.open(`https://www.google.com/maps?q=${store.location_lat},${store.location_lng}`, "_blank");
+    if (store?.google_maps_url) {
+      window.open(store.google_maps_url, "_blank");
+    } else if (store?.location_lat && store?.location_lng) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${store.location_lat},${store.location_lng}`, "_blank");
     } else {
       window.open(`https://www.google.com/maps/search/${encodeURIComponent(store?.full_address || "")}`, "_blank");
     }

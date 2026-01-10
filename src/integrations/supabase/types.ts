@@ -681,6 +681,7 @@ export type Database = {
           email: string | null
           featured_order: number | null
           full_address: string
+          google_maps_url: string | null
           id: string
           is_24_hours: boolean | null
           is_active: boolean | null
@@ -713,6 +714,7 @@ export type Database = {
           email?: string | null
           featured_order?: number | null
           full_address: string
+          google_maps_url?: string | null
           id?: string
           is_24_hours?: boolean | null
           is_active?: boolean | null
@@ -745,6 +747,7 @@ export type Database = {
           email?: string | null
           featured_order?: number | null
           full_address?: string
+          google_maps_url?: string | null
           id?: string
           is_24_hours?: boolean | null
           is_active?: boolean | null

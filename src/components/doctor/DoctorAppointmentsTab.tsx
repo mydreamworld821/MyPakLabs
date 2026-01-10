@@ -123,38 +123,44 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
     try {
       const { data, error } = await supabase
         .from("appointments")
-        .select(`
-          *,
-          patient:profiles!appointments_patient_id_fkey(full_name, phone)
-        `)
+        // NOTE: appointments table doesn't have an explicit FK to profiles in our schema,
+        // so we fetch appointments first then resolve patient info separately.
+        .select("*")
         .eq("doctor_id", doctorId)
         .order("appointment_date", { ascending: true })
         .order("appointment_time", { ascending: true });
 
       if (error) throw error;
 
-      // Handle case where join might fail - fetch profile separately
-      const appointmentsData = data || [];
-      
-      // If patient data is null, try to fetch from profiles table
-      const appointmentsWithPatients = await Promise.all(
-        appointmentsData.map(async (apt) => {
-          if (!apt.patient) {
-            const { data: profileData } = await supabase
-              .from("profiles")
-              .select("full_name, phone")
-              .eq("user_id", apt.patient_id)
-              .maybeSingle();
-            return { ...apt, patient: profileData };
-          }
-          return apt;
-        })
+      const appointmentsData = (data || []) as Appointment[];
+      const patientIds = Array.from(
+        new Set(appointmentsData.map((a) => a.patient_id).filter(Boolean))
       );
 
-      setAppointments(appointmentsWithPatients as Appointment[]);
-    } catch (error) {
+      let patientMap = new Map<string, { full_name: string | null; phone: string | null }>();
+
+      if (patientIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, phone")
+          .in("user_id", patientIds);
+
+        if (profilesError) throw profilesError;
+
+        (profilesData || []).forEach((p) => {
+          patientMap.set(p.user_id, { full_name: p.full_name, phone: p.phone });
+        });
+      }
+
+      const withPatients = appointmentsData.map((apt) => ({
+        ...apt,
+        patient: patientMap.get(apt.patient_id) ?? null,
+      }));
+
+      setAppointments(withPatients);
+    } catch (error: any) {
       console.error("Error fetching appointments:", error);
-      toast.error("Failed to load appointments");
+      toast.error(error?.message || "Failed to load appointments");
     } finally {
       setIsLoading(false);
     }

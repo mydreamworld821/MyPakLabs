@@ -55,7 +55,12 @@ import AdminHospitals from "./pages/admin/Hospitals";
 import AdminLocations from "./pages/admin/Locations";
 import AdminNurses from "./pages/admin/Nurses";
 import AdminFeaturedNurses from "./pages/admin/FeaturedNurses";
+import AdminEmergencyRequests from "./pages/admin/EmergencyRequests";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
+import EmergencyNursingRequest from "./pages/EmergencyNursingRequest";
+import EmergencyRequestStatus from "./pages/EmergencyRequestStatus";
+import NurseEmergencyFeed from "./pages/NurseEmergencyFeed";
+import NurseActiveJob from "./pages/NurseActiveJob";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +98,10 @@ const App = () => (
             <Route path="/find-nurses" element={<FindNurses />} />
             <Route path="/nurse/:id" element={<NurseDetail />} />
             <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+            <Route path="/emergency-nursing-request" element={<EmergencyNursingRequest />} />
+            <Route path="/emergency-request/:id" element={<EmergencyRequestStatus />} />
+            <Route path="/nurse-emergency-feed" element={<NurseEmergencyFeed />} />
+            <Route path="/nurse-active-job/:id" element={<NurseActiveJob />} />
             <Route path="/doctor-register" element={<DoctorRegister />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/:id" element={<DoctorDetail />} />
@@ -119,6 +128,7 @@ const App = () => (
             <Route path="/admin/locations" element={<ProtectedRoute requireAdmin><AdminLocations /></ProtectedRoute>} />
             <Route path="/admin/nurses" element={<ProtectedRoute requireAdmin><AdminNurses /></ProtectedRoute>} />
             <Route path="/admin/featured-nurses" element={<ProtectedRoute requireAdmin><AdminFeaturedNurses /></ProtectedRoute>} />
+            <Route path="/admin/emergency-requests" element={<ProtectedRoute requireAdmin><AdminEmergencyRequests /></ProtectedRoute>} />
             
             {/* Moderator Routes */}
             <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

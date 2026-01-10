@@ -10,7 +10,8 @@ import FeaturedNurses from "@/components/home/FeaturedNurses";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
-import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Star, Shield, Clock, ChevronRight, TrendingDown, Award } from "lucide-react";
+import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Star, Shield, Clock, ChevronRight, TrendingDown, Award, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 interface Profile {
   full_name: string | null;
 }
@@ -200,6 +201,22 @@ const Index = () => {
               <span className="text-sm text-black font-medium">Best Prices</span>
             </div>
           </div>
+
+          {/* Emergency Nursing CTA */}
+          <Link to="/emergency-nursing-request" className="block mt-6">
+            <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-4 text-white flex items-center justify-between hover:from-red-700 hover:to-red-600 transition-all shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">🚨 Emergency Home Nursing</h3>
+                  <p className="text-sm text-white/90">Get a nurse at your doorstep in minutes</p>
+                </div>
+              </div>
+              <ChevronRight className="w-6 h-6" />
+            </div>
+          </Link>
         </div>
       </section>
 

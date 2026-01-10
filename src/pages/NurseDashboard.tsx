@@ -41,7 +41,8 @@ import {
   Loader2,
   ExternalLink,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -370,12 +371,22 @@ const NurseDashboard = () => {
                 </div>
               </div>
             </div>
-            <Link to={`/nurse/${nurse.id}`} target="_blank">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                View Public Profile
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              {nurse.status === "approved" && (
+                <Link to="/nurse-emergency-feed">
+                  <Button size="sm" className="gap-2 bg-red-600 hover:bg-red-700">
+                    <AlertTriangle className="w-4 h-4" />
+                    Emergency Requests
+                  </Button>
+                </Link>
+              )}
+              <Link to={`/nurse/${nurse.id}`} target="_blank">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <ExternalLink className="w-4 h-4" />
+                  View Public Profile
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats Cards */}

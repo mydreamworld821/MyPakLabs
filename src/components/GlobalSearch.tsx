@@ -294,7 +294,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative z-[100] ${className}`} ref={dropdownRef}>
       <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-2 shadow-2xl">
         {/* City Selector */}
         <div className="flex items-center gap-2 px-3 py-2 sm:border-r border-gray-200">
@@ -355,7 +355,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
       {/* Search Results Dropdown */}
       {showDropdown && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[110] max-h-[400px] overflow-y-auto">
           <div className="p-2">
             <p className="text-xs text-muted-foreground px-3 py-2">
               Found {results.length} result{results.length !== 1 ? "s" : ""}

@@ -237,8 +237,8 @@ const Index = () => {
         </div>
       </section>
 
-      <main className="py-6 md:py-8">
-        <div className="container mx-auto px-4">
+      <main className="py-6 md:py-8 relative z-0">
+        <div className="container mx-auto px-4 relative">
           {/* Services Section */}
           <div className="mb-8">
             <h2 className="text-base md:text-lg font-semibold text-foreground mb-4">

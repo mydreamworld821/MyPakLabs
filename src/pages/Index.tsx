@@ -191,7 +191,7 @@ const Index = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-20 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground relative overflow-hidden">
+      <section className="pt-20 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground relative z-10 overflow-visible">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-24 h-24 rounded-full bg-white/20" />

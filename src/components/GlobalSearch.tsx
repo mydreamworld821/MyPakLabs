@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,9 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const cities = [
@@ -60,14 +63,39 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
+      const target = event.target as Node;
+      const inSearch = dropdownRef.current?.contains(target);
+      const inMenu = dropdownMenuRef.current?.contains(target);
+      if (!inSearch && !inMenu) setShowDropdown(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Keep dropdown positioned above everything (fixed to viewport)
+  useEffect(() => {
+    const updatePos = () => {
+      const el = dropdownRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    if (showDropdown) {
+      updatePos();
+      window.addEventListener("scroll", updatePos, true);
+      window.addEventListener("resize", updatePos);
+      return () => {
+        window.removeEventListener("scroll", updatePos, true);
+        window.removeEventListener("resize", updatePos);
+      };
+    }
+  }, [showDropdown, results.length, searchQuery]);
 
   // Debounced search
   useEffect(() => {
@@ -354,44 +382,49 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       </div>
 
       {/* Search Results Dropdown */}
-      {showDropdown && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[110] max-h-[400px] overflow-y-auto">
-          <div className="p-2">
-            <p className="text-xs text-muted-foreground px-3 py-2">
-              Found {results.length} result{results.length !== 1 ? "s" : ""}
-            </p>
-            {results.map((result) => {
-              const badge = getTypeBadge(result.type);
-              return (
-                <button
-                  key={`${result.type}-${result.id}`}
-                  onClick={() => handleResultClick(result)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 rounded-lg transition-colors text-left"
-                >
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    {getIcon(result.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">
-                        {result.name}
-                      </span>
-                      <Badge className={`text-[10px] px-1.5 py-0 ${badge.color}`}>
-                        {badge.label}
-                      </Badge>
-                    </div>
-                    {result.subtitle && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {result.subtitle}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {showDropdown && results.length > 0 && dropdownPos
+        ? createPortal(
+            <div
+              ref={dropdownMenuRef}
+              className="fixed bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] max-h-[400px] overflow-y-auto"
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+            >
+              <div className="p-2">
+                <p className="text-xs text-muted-foreground px-3 py-2">
+                  Found {results.length} result{results.length !== 1 ? "s" : ""}
+                </p>
+                {results.map((result) => {
+                  const badge = getTypeBadge(result.type);
+                  return (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      onClick={() => handleResultClick(result)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 rounded-lg transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        {getIcon(result.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm truncate">{result.name}</span>
+                          <Badge className={`text-[10px] px-1.5 py-0 ${badge.color}`}>
+                            {badge.label}
+                          </Badge>
+                        </div>
+                        {result.subtitle && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {result.subtitle}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 };

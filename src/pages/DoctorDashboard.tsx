@@ -37,6 +37,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import DoctorAppointmentsTab from "@/components/doctor/DoctorAppointmentsTab";
 
 interface Specialization {
   id: string;
@@ -759,16 +760,10 @@ const DoctorDashboard = () => {
 
               {/* Appointments Tab */}
               <TabsContent value="appointments" className="mt-4">
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                    <h3 className="text-sm font-semibold mb-1">Appointment Management</h3>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Appointment booking and management feature coming soon!
-                    </p>
-                    <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                  </CardContent>
-                </Card>
+                <DoctorAppointmentsTab 
+                  doctorId={profile.id} 
+                  isApproved={profile.status === "approved"} 
+                />
               </TabsContent>
             </Tabs>
           </div>

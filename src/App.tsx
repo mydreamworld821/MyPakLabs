@@ -27,6 +27,9 @@ import SurgeryDetail from "./pages/SurgeryDetail";
 import HealthHub from "./pages/HealthHub";
 import JoinAsDoctor from "./pages/JoinAsDoctor";
 import JoinAsNurse from "./pages/JoinAsNurse";
+import NurseRegister from "./pages/NurseRegister";
+import FindNurses from "./pages/FindNurses";
+import NurseDetail from "./pages/NurseDetail";
 import DoctorRegister from "./pages/DoctorRegister";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorDetail from "./pages/DoctorDetail";
@@ -49,6 +52,7 @@ import AdminSurgeries from "./pages/admin/Surgeries";
 import AdminSurgeryInquiries from "./pages/admin/SurgeryInquiries";
 import AdminHospitals from "./pages/admin/Hospitals";
 import AdminLocations from "./pages/admin/Locations";
+import AdminNurses from "./pages/admin/Nurses";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 
 const queryClient = new QueryClient();
@@ -83,6 +87,9 @@ const App = () => (
             <Route path="/health-hub" element={<HealthHub />} />
             <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
             <Route path="/join-as-nurse" element={<JoinAsNurse />} />
+            <Route path="/nurse-register" element={<NurseRegister />} />
+            <Route path="/find-nurses" element={<FindNurses />} />
+            <Route path="/nurse/:id" element={<NurseDetail />} />
             <Route path="/doctor-register" element={<DoctorRegister />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/:id" element={<DoctorDetail />} />
@@ -107,6 +114,7 @@ const App = () => (
             <Route path="/admin/surgery-inquiries" element={<ProtectedRoute requireAdmin><AdminSurgeryInquiries /></ProtectedRoute>} />
             <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><AdminHospitals /></ProtectedRoute>} />
             <Route path="/admin/locations" element={<ProtectedRoute requireAdmin><AdminLocations /></ProtectedRoute>} />
+            <Route path="/admin/nurses" element={<ProtectedRoute requireAdmin><AdminNurses /></ProtectedRoute>} />
             
             {/* Moderator Routes */}
             <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

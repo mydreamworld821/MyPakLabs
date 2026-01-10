@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +26,7 @@ interface Surgery {
 }
 
 const Surgeries = () => {
+  const navigate = useNavigate();
   const [surgeries, setSurgeries] = useState<Surgery[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,6 +177,7 @@ const Surgeries = () => {
                       variant="outline" 
                       size="sm"
                       className="w-full text-xs h-7 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      onClick={() => navigate(`/surgery/${surgery.slug}`)}
                     >
                       Get Information
                     </Button>

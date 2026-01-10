@@ -17,6 +17,7 @@ import {
   Building2,
   Loader2,
   X,
+  Heart,
 } from "lucide-react";
 import {
   Select,
@@ -29,7 +30,7 @@ import {
 interface SearchResult {
   id: string;
   name: string;
-  type: "doctor" | "specialization" | "surgery" | "test" | "lab" | "hospital" | "city";
+  type: "doctor" | "specialization" | "surgery" | "test" | "lab" | "hospital" | "city" | "nurse";
   slug?: string;
   subtitle?: string;
 }
@@ -88,7 +89,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     }
   }, [showDropdown, results.length, searchQuery]);
 
-  // Debounced search
+  // Debounced search - also trigger when city changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
@@ -100,13 +101,14 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCity]);
 
   const performSearch = async (query: string) => {
     setLoading(true);
     try {
       const searchTerm = `%${query}%`;
       const allResults: SearchResult[] = [];
+      const cityFilter = selectedCity && selectedCity !== "all" ? selectedCity : null;
 
       // Search cities from local state (already fetched)
       const matchingCities = dbCities.filter(city => 
@@ -122,13 +124,19 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       });
 
-      // Search doctors
-      const { data: doctors } = await supabase
+      // Search doctors (with optional city filter)
+      let doctorsQuery = supabase
         .from("doctors")
         .select("id, full_name, qualification, city")
         .eq("status", "approved")
         .ilike("full_name", searchTerm)
         .limit(5);
+      
+      if (cityFilter) {
+        doctorsQuery = doctorsQuery.eq("city", cityFilter);
+      }
+      
+      const { data: doctors } = await doctorsQuery;
 
       if (doctors) {
         doctors.forEach((doc) => {
@@ -203,16 +211,22 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       }
 
-      // Search labs
-      const { data: labs } = await supabase
+      // Search labs (with optional city filter via cities array)
+      let labsQuery = supabase
         .from("labs")
-        .select("id, name, slug, discount_percentage")
+        .select("id, name, slug, discount_percentage, cities")
         .eq("is_active", true)
         .ilike("name", searchTerm)
         .limit(5);
+      
+      const { data: labs } = await labsQuery;
 
       if (labs) {
         labs.forEach((lab) => {
+          // Filter by city if selected
+          if (cityFilter && lab.cities && !lab.cities.includes(cityFilter)) {
+            return;
+          }
           allResults.push({
             id: lab.id,
             name: lab.name,
@@ -225,13 +239,19 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       }
 
-      // Search hospitals
-      const { data: hospitals } = await supabase
+      // Search hospitals (with optional city filter)
+      let hospitalsQuery = supabase
         .from("hospitals")
         .select("id, name, slug, city")
         .eq("is_active", true)
         .ilike("name", searchTerm)
         .limit(5);
+      
+      if (cityFilter) {
+        hospitalsQuery = hospitalsQuery.eq("city", cityFilter);
+      }
+      
+      const { data: hospitals } = await hospitalsQuery;
 
       if (hospitals) {
         hospitals.forEach((hospital) => {
@@ -241,6 +261,31 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
             type: "hospital",
             slug: hospital.slug,
             subtitle: hospital.city || "Hospital",
+          });
+        });
+      }
+
+      // Search nurses (with optional city filter)
+      let nursesQuery = supabase
+        .from("nurses")
+        .select("id, full_name, qualification, city, services_offered")
+        .eq("status", "approved")
+        .ilike("full_name", searchTerm)
+        .limit(5);
+      
+      if (cityFilter) {
+        nursesQuery = nursesQuery.eq("city", cityFilter);
+      }
+      
+      const { data: nurses } = await nursesQuery;
+
+      if (nurses) {
+        nurses.forEach((nurse) => {
+          allResults.push({
+            id: nurse.id,
+            name: nurse.full_name,
+            type: "nurse",
+            subtitle: `${nurse.qualification || "Nurse"}${nurse.city ? ` • ${nurse.city}` : ""}`,
           });
         });
       }
@@ -280,6 +325,9 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       case "hospital":
         navigate(`/hospital/${result.slug}`);
         break;
+      case "nurse":
+        navigate(`/nurse/${result.id}`);
+        break;
     }
   };
 
@@ -299,6 +347,8 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         return <FlaskConical className="w-4 h-4" />;
       case "hospital":
         return <Building2 className="w-4 h-4" />;
+      case "nurse":
+        return <Heart className="w-4 h-4" />;
     }
   };
 
@@ -311,6 +361,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       test: { label: "Test", color: "bg-orange-100 text-orange-700" },
       lab: { label: "Lab", color: "bg-primary/10 text-primary" },
       hospital: { label: "Hospital", color: "bg-red-100 text-red-700" },
+      nurse: { label: "Nurse", color: "bg-pink-100 text-pink-700" },
     };
     return badges[type];
   };
@@ -362,7 +413,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search doctors, surgeries, tests, labs..."
+            placeholder="Search doctors, nurses, surgeries, tests, labs, hospitals..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyPress}

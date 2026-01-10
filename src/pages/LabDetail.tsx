@@ -9,6 +9,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TestSelector from "@/components/labs/TestSelector";
 import PrescriptionUploader from "@/components/labs/PrescriptionUploader";
+import BranchesSection from "@/components/labs/BranchesSection";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,7 +34,10 @@ import {
   Mail,
   Building2,
   ChevronDown,
+  Search,
+  Map,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Accordion,
   AccordionContent,
@@ -813,81 +817,7 @@ const LabDetail = () => {
 
               {/* Branches Section */}
               {lab.branches && lab.branches.length > 0 && (
-                <Card>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-primary" />
-                      Our Locations
-                    </h3>
-                    <Accordion type="single" collapsible className="w-full">
-                      {[...new Set(lab.branches.map(b => b.city))].map((city) => {
-                        const cityBranches = lab.branches.filter(b => b.city === city);
-                        return (
-                          <AccordionItem key={city} value={city} className="border-b last:border-b-0">
-                            <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-primary" />
-                                <span>{city}</span>
-                                <Badge variant="secondary" className="ml-1 text-xs">
-                                  {cityBranches.length}
-                                </Badge>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-3">
-                              <div className="space-y-3">
-                                {cityBranches.map((branch) => (
-                                  <div key={branch.id} className="bg-muted/50 rounded-lg p-3 space-y-2">
-                                    <p className="font-medium text-sm">{branch.name}</p>
-                                    {branch.address && (
-                                      <p className="text-xs text-muted-foreground">{branch.address}</p>
-                                    )}
-                                    <div className="flex flex-wrap gap-2">
-                                      {branch.phone && (
-                                        <a
-                                          href={`tel:${branch.phone}`}
-                                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                                        >
-                                          <Phone className="w-3 h-3" />
-                                          {branch.phone}
-                                        </a>
-                                      )}
-                                      {branch.email && (
-                                        <a
-                                          href={`mailto:${branch.email}`}
-                                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                                        >
-                                          <Mail className="w-3 h-3" />
-                                          {branch.email}
-                                        </a>
-                                      )}
-                                    </div>
-                                    {branch.timing && (
-                                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {branch.timing}
-                                      </p>
-                                    )}
-                                    {branch.google_maps_url && (
-                                      <a
-                                        href={branch.google_maps_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                                      >
-                                        <ExternalLink className="w-3 h-3" />
-                                        View on Google Maps
-                                      </a>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
-                  </CardContent>
-                </Card>
+                <BranchesSection branches={lab.branches} labName={lab.name} />
               )}
             </div>
           </div>

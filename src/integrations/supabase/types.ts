@@ -54,83 +54,158 @@ export type Database = {
         Row: {
           about: string | null
           admin_notes: string | null
+          appointment_duration: number | null
+          areas_of_expertise: string[] | null
           availability: string | null
+          available_days: string[] | null
+          available_time_end: string | null
+          available_time_start: string | null
+          bio: string | null
           city: string | null
           clinic_address: string | null
           clinic_name: string | null
+          cnic_url: string | null
           consultation_fee: number | null
+          consultation_type: string | null
           created_at: string
+          date_of_birth: string | null
+          degree_certificate_url: string | null
           email: string | null
+          emergency_available: boolean | null
           experience_years: number | null
+          followup_fee: number | null
           full_name: string
+          gender: string | null
+          hospital_name: string | null
           id: string
           is_featured: boolean | null
+          languages_spoken: string[] | null
+          online_consultation_fee: number | null
           phone: string | null
           photo_url: string | null
+          pmc_certificate_url: string | null
           pmc_number: string
+          preferred_platform: string | null
+          privacy_accepted: boolean | null
           qualification: string | null
           rating: number | null
+          registration_council: string | null
           review_count: number | null
           reviewed_at: string | null
           reviewed_by: string | null
+          services_offered: string[] | null
           specialization_id: string | null
           status: string
+          sub_specialty: string | null
+          terms_accepted: boolean | null
           updated_at: string
           user_id: string | null
+          video_consultation: boolean | null
+          whatsapp_number: string | null
         }
         Insert: {
           about?: string | null
           admin_notes?: string | null
+          appointment_duration?: number | null
+          areas_of_expertise?: string[] | null
           availability?: string | null
+          available_days?: string[] | null
+          available_time_end?: string | null
+          available_time_start?: string | null
+          bio?: string | null
           city?: string | null
           clinic_address?: string | null
           clinic_name?: string | null
+          cnic_url?: string | null
           consultation_fee?: number | null
+          consultation_type?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          degree_certificate_url?: string | null
           email?: string | null
+          emergency_available?: boolean | null
           experience_years?: number | null
+          followup_fee?: number | null
           full_name: string
+          gender?: string | null
+          hospital_name?: string | null
           id?: string
           is_featured?: boolean | null
+          languages_spoken?: string[] | null
+          online_consultation_fee?: number | null
           phone?: string | null
           photo_url?: string | null
+          pmc_certificate_url?: string | null
           pmc_number: string
+          preferred_platform?: string | null
+          privacy_accepted?: boolean | null
           qualification?: string | null
           rating?: number | null
+          registration_council?: string | null
           review_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          services_offered?: string[] | null
           specialization_id?: string | null
           status?: string
+          sub_specialty?: string | null
+          terms_accepted?: boolean | null
           updated_at?: string
           user_id?: string | null
+          video_consultation?: boolean | null
+          whatsapp_number?: string | null
         }
         Update: {
           about?: string | null
           admin_notes?: string | null
+          appointment_duration?: number | null
+          areas_of_expertise?: string[] | null
           availability?: string | null
+          available_days?: string[] | null
+          available_time_end?: string | null
+          available_time_start?: string | null
+          bio?: string | null
           city?: string | null
           clinic_address?: string | null
           clinic_name?: string | null
+          cnic_url?: string | null
           consultation_fee?: number | null
+          consultation_type?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          degree_certificate_url?: string | null
           email?: string | null
+          emergency_available?: boolean | null
           experience_years?: number | null
+          followup_fee?: number | null
           full_name?: string
+          gender?: string | null
+          hospital_name?: string | null
           id?: string
           is_featured?: boolean | null
+          languages_spoken?: string[] | null
+          online_consultation_fee?: number | null
           phone?: string | null
           photo_url?: string | null
+          pmc_certificate_url?: string | null
           pmc_number?: string
+          preferred_platform?: string | null
+          privacy_accepted?: boolean | null
           qualification?: string | null
           rating?: number | null
+          registration_council?: string | null
           review_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          services_offered?: string[] | null
           specialization_id?: string | null
           status?: string
+          sub_specialty?: string | null
+          terms_accepted?: boolean | null
           updated_at?: string
           user_id?: string | null
+          video_consultation?: boolean | null
+          whatsapp_number?: string | null
         }
         Relationships: [
           {

@@ -27,27 +27,49 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Check, X, Loader2, UserRound, Star } from "lucide-react";
+import { Eye, Check, X, Loader2, UserRound, Star, ExternalLink, FileText } from "lucide-react";
 import { format } from "date-fns";
 
 interface Doctor {
   id: string;
   full_name: string;
+  gender: string | null;
+  date_of_birth: string | null;
   pmc_number: string;
   specialization_id: string | null;
+  sub_specialty: string | null;
   experience_years: number | null;
   qualification: string | null;
+  registration_council: string | null;
+  hospital_name: string | null;
   clinic_name: string | null;
   clinic_address: string | null;
   city: string | null;
+  consultation_type: string | null;
+  consultation_fee: number | null;
+  followup_fee: number | null;
+  available_days: string[] | null;
+  available_time_start: string | null;
+  available_time_end: string | null;
+  appointment_duration: number | null;
+  emergency_available: boolean | null;
   phone: string | null;
   email: string | null;
-  consultation_fee: number | null;
-  availability: string | null;
+  whatsapp_number: string | null;
+  video_consultation: boolean | null;
+  preferred_platform: string | null;
+  online_consultation_fee: number | null;
   photo_url: string | null;
-  about: string | null;
+  bio: string | null;
+  areas_of_expertise: string[] | null;
+  services_offered: string[] | null;
+  languages_spoken: string[] | null;
+  degree_certificate_url: string | null;
+  pmc_certificate_url: string | null;
+  cnic_url: string | null;
   status: string;
   is_featured: boolean | null;
   rating: number | null;
@@ -56,34 +78,25 @@ interface Doctor {
   specialization?: { name: string } | null;
 }
 
-interface Specialization {
-  id: string;
-  name: string;
-}
-
 const AdminDoctors = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
+  const [documentUrls, setDocumentUrls] = useState<{ [key: string]: string }>({});
 
   const fetchData = async () => {
     try {
-      const [{ data: doctorsData, error: doctorsError }, { data: specsData }] = await Promise.all([
-        supabase
-          .from("doctors")
-          .select("*, specialization:doctor_specializations(name)")
-          .order("created_at", { ascending: false }),
-        supabase.from("doctor_specializations").select("id, name").eq("is_active", true),
-      ]);
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from("doctors")
+        .select("*, specialization:doctor_specializations(name)")
+        .order("created_at", { ascending: false });
 
       if (doctorsError) throw doctorsError;
       setDoctors(doctorsData || []);
-      setSpecializations(specsData || []);
     } catch (error: any) {
       toast.error("Failed to fetch data");
       console.error(error);
@@ -95,6 +108,47 @@ const AdminDoctors = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const getSignedUrl = async (path: string) => {
+    if (!path) return "";
+    
+    // Check if it's already a full URL
+    if (path.startsWith("http")) return path;
+    
+    const { data, error } = await supabase.storage
+      .from("doctor-documents")
+      .createSignedUrl(path, 3600); // 1 hour expiry
+    
+    if (error) {
+      console.error("Error getting signed URL:", error);
+      return "";
+    }
+    return data.signedUrl;
+  };
+
+  const loadDocumentUrls = async (doctor: Doctor) => {
+    const urls: { [key: string]: string } = {};
+    
+    if (doctor.degree_certificate_url) {
+      urls.degree = await getSignedUrl(doctor.degree_certificate_url);
+    }
+    if (doctor.pmc_certificate_url) {
+      urls.pmc = await getSignedUrl(doctor.pmc_certificate_url);
+    }
+    if (doctor.cnic_url) {
+      urls.cnic = await getSignedUrl(doctor.cnic_url);
+    }
+    
+    setDocumentUrls(urls);
+  };
+
+  const handleViewDoctor = async (doctor: Doctor) => {
+    setSelectedDoctor(doctor);
+    setAdminNotes(doctor.admin_notes || "");
+    setDocumentUrls({});
+    setIsViewDialogOpen(true);
+    await loadDocumentUrls(doctor);
+  };
 
   const handleStatusUpdate = async (doctorId: string, newStatus: string) => {
     try {
@@ -151,6 +205,30 @@ const AdminDoctors = () => {
         return <Badge className="bg-yellow-100 text-yellow-700 text-xs">Pending</Badge>;
     }
   };
+
+  const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
+    <div className="grid grid-cols-2 gap-2 py-1 border-b border-muted last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium">{value || "-"}</span>
+    </div>
+  );
+
+  const DocumentLink = ({ url, label }: { url: string; label: string }) => (
+    url ? (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 text-xs text-primary hover:underline"
+      >
+        <FileText className="w-3 h-3" />
+        {label}
+        <ExternalLink className="w-3 h-3" />
+      </a>
+    ) : (
+      <span className="text-xs text-muted-foreground">Not uploaded</span>
+    )
+  );
 
   return (
     <AdminLayout>
@@ -253,11 +331,7 @@ const AdminDoctors = () => {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => {
-                            setSelectedDoctor(doctor);
-                            setAdminNotes(doctor.admin_notes || "");
-                            setIsViewDialogOpen(true);
-                          }}
+                          onClick={() => handleViewDoctor(doctor)}
                         >
                           <Eye className="w-3 h-3" />
                         </Button>
@@ -272,12 +346,13 @@ const AdminDoctors = () => {
 
         {/* Doctor Details Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-sm">Doctor Details</DialogTitle>
             </DialogHeader>
             {selectedDoctor && (
               <div className="space-y-4">
+                {/* Header */}
                 <div className="flex items-center gap-3">
                   {selectedDoctor.photo_url ? (
                     <img
@@ -297,54 +372,93 @@ const AdminDoctors = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <Label className="text-muted-foreground">PMC Number</Label>
-                    <p className="font-medium">{selectedDoctor.pmc_number}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Specialization</Label>
-                    <p className="font-medium">{selectedDoctor.specialization?.name || "-"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Experience</Label>
-                    <p className="font-medium">{selectedDoctor.experience_years} years</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Fee</Label>
-                    <p className="font-medium">Rs. {selectedDoctor.consultation_fee}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">City</Label>
-                    <p className="font-medium">{selectedDoctor.city || "-"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Phone</Label>
-                    <p className="font-medium">{selectedDoctor.phone || "-"}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-muted-foreground">Clinic</Label>
-                    <p className="font-medium">{selectedDoctor.clinic_name}</p>
-                    <p className="text-muted-foreground">{selectedDoctor.clinic_address}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-muted-foreground">Availability</Label>
-                    <p className="font-medium">{selectedDoctor.availability || "-"}</p>
-                  </div>
-                  {selectedDoctor.about && (
-                    <div className="col-span-2">
-                      <Label className="text-muted-foreground">About</Label>
-                      <p className="font-medium">{selectedDoctor.about}</p>
-                    </div>
-                  )}
-                  <div className="col-span-2">
-                    <Label className="text-muted-foreground">Registered</Label>
-                    <p className="font-medium">
-                      {format(new Date(selectedDoctor.created_at), "PPP")}
-                    </p>
-                  </div>
-                </div>
+                <Tabs defaultValue="personal" className="w-full">
+                  <TabsList className="grid grid-cols-5 h-8">
+                    <TabsTrigger value="personal" className="text-xs">Personal</TabsTrigger>
+                    <TabsTrigger value="professional" className="text-xs">Professional</TabsTrigger>
+                    <TabsTrigger value="practice" className="text-xs">Practice</TabsTrigger>
+                    <TabsTrigger value="schedule" className="text-xs">Schedule</TabsTrigger>
+                    <TabsTrigger value="documents" className="text-xs">Documents</TabsTrigger>
+                  </TabsList>
 
+                  <TabsContent value="personal" className="space-y-1 mt-3">
+                    <InfoRow label="Full Name" value={selectedDoctor.full_name} />
+                    <InfoRow label="Gender" value={selectedDoctor.gender} />
+                    <InfoRow 
+                      label="Date of Birth" 
+                      value={selectedDoctor.date_of_birth ? format(new Date(selectedDoctor.date_of_birth), "PPP") : null} 
+                    />
+                    <InfoRow label="Email" value={selectedDoctor.email} />
+                    <InfoRow label="Phone" value={selectedDoctor.phone} />
+                    <InfoRow label="WhatsApp" value={selectedDoctor.whatsapp_number} />
+                    <InfoRow label="Languages" value={selectedDoctor.languages_spoken?.join(", ")} />
+                  </TabsContent>
+
+                  <TabsContent value="professional" className="space-y-1 mt-3">
+                    <InfoRow label="Specialization" value={selectedDoctor.specialization?.name} />
+                    <InfoRow label="Sub-Specialty" value={selectedDoctor.sub_specialty} />
+                    <InfoRow label="Qualification" value={selectedDoctor.qualification} />
+                    <InfoRow label="Experience" value={`${selectedDoctor.experience_years} years`} />
+                    <InfoRow label="PMC Number" value={selectedDoctor.pmc_number} />
+                    <InfoRow label="Council" value={selectedDoctor.registration_council} />
+                    <InfoRow label="Bio" value={selectedDoctor.bio} />
+                    <InfoRow label="Expertise" value={selectedDoctor.areas_of_expertise?.join(", ")} />
+                    <InfoRow label="Services" value={selectedDoctor.services_offered?.join(", ")} />
+                  </TabsContent>
+
+                  <TabsContent value="practice" className="space-y-1 mt-3">
+                    <InfoRow label="Hospital" value={selectedDoctor.hospital_name} />
+                    <InfoRow label="Clinic" value={selectedDoctor.clinic_name} />
+                    <InfoRow label="Address" value={selectedDoctor.clinic_address} />
+                    <InfoRow label="City" value={selectedDoctor.city} />
+                    <InfoRow label="Consultation Type" value={selectedDoctor.consultation_type} />
+                    <InfoRow label="Consultation Fee" value={`Rs. ${selectedDoctor.consultation_fee}`} />
+                    <InfoRow label="Follow-up Fee" value={selectedDoctor.followup_fee ? `Rs. ${selectedDoctor.followup_fee}` : null} />
+                    <InfoRow label="Video Consultation" value={selectedDoctor.video_consultation ? "Yes" : "No"} />
+                    {selectedDoctor.video_consultation && (
+                      <>
+                        <InfoRow label="Platform" value={selectedDoctor.preferred_platform} />
+                        <InfoRow label="Online Fee" value={selectedDoctor.online_consultation_fee ? `Rs. ${selectedDoctor.online_consultation_fee}` : null} />
+                      </>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="schedule" className="space-y-1 mt-3">
+                    <InfoRow label="Available Days" value={selectedDoctor.available_days?.join(", ")} />
+                    <InfoRow 
+                      label="Timing" 
+                      value={`${selectedDoctor.available_time_start} - ${selectedDoctor.available_time_end}`} 
+                    />
+                    <InfoRow label="Appointment Duration" value={`${selectedDoctor.appointment_duration} minutes`} />
+                    <InfoRow label="Emergency Available" value={selectedDoctor.emergency_available ? "Yes" : "No"} />
+                    <InfoRow 
+                      label="Registered On" 
+                      value={format(new Date(selectedDoctor.created_at), "PPP")} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="documents" className="space-y-3 mt-3">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-xs font-medium mb-2">Verification Documents</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Degree Certificate</span>
+                          <DocumentLink url={documentUrls.degree || ""} label="View" />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">PMC Certificate</span>
+                          <DocumentLink url={documentUrls.pmc || ""} label="View" />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">CNIC</span>
+                          <DocumentLink url={documentUrls.cnic || ""} label="View" />
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                {/* Approval Actions */}
                 {selectedDoctor.status === "pending" && (
                   <div className="space-y-2 pt-2 border-t">
                     <div>

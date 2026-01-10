@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Star, MapPin, ArrowRight } from "lucide-react";
 
 interface Lab {
   id: string;
@@ -24,10 +25,11 @@ interface LabCardProps {
 const LabCard = ({ lab }: LabCardProps) => {
   const discount = lab.discount_percentage || 0;
   const cities = lab.cities || [];
+  const popularTests = lab.popular_tests || [];
 
   return (
     <Link to={`/labs/${lab.id}`} className="block">
-      <Card variant="interactive" className="overflow-hidden group cursor-pointer h-full">
+      <Card variant="interactive" className="overflow-hidden group cursor-pointer h-full relative">
         {/* Header with Logo/Discount - Compact */}
         <div className="relative h-20 gradient-hero flex items-center justify-center">
           {lab.logo_url ? (
@@ -83,6 +85,52 @@ const LabCard = ({ lab }: LabCardProps) => {
             )}
           </div>
         </CardContent>
+
+        {/* Hover Overlay */}
+        <div className="absolute inset-0 bg-background/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-3">
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground line-clamp-2">
+              {lab.name}
+            </h3>
+            
+            {/* Popular Tests */}
+            {popularTests.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[10px] text-muted-foreground font-medium">Popular Tests:</span>
+                <div className="flex flex-wrap gap-1">
+                  {popularTests.slice(0, 3).map((test) => (
+                    <Badge key={test} variant="secondary" className="text-[9px] px-1.5 py-0">
+                      {test}
+                    </Badge>
+                  ))}
+                  {popularTests.length > 3 && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                      +{popularTests.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Rating on hover */}
+            {lab.rating && (
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 fill-medical-orange text-medical-orange" />
+                <span className="text-xs font-medium">{lab.rating}</span>
+                {lab.review_count && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({lab.review_count.toLocaleString()} reviews)
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Button size="sm" className="w-full text-xs h-7 mt-2">
+            View Details
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
+        </div>
       </Card>
     </Link>
   );

@@ -93,42 +93,41 @@ const Surgeries = () => {
 
           {/* Surgeries Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, i) => (
                 <Card key={i}>
-                  <Skeleton className="h-48 rounded-t-lg" />
-                  <CardContent className="p-4 space-y-3">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-24 rounded-t-lg" />
+                  <CardContent className="p-3 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-8 w-full" />
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : filteredSurgeries.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Scissors className="w-10 h-10 text-primary" />
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Scissors className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">
+              <h2 className="text-lg font-semibold mb-2">
                 {searchQuery ? "No surgeries found" : "Coming Soon!"}
               </h2>
-              <p className="text-muted-foreground max-w-md mx-auto">
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 {searchQuery
                   ? "Try adjusting your search query"
                   : "Surgical procedures will be available here soon."}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredSurgeries.map((surgery) => (
                 <Card
                   key={surgery.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow"
+                  className="overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  {/* Image Section */}
-                  <div className="relative h-48 bg-gradient-to-br from-muted to-muted/50">
+                  {/* Image Section - Compact */}
+                  <div className="relative h-24 bg-gradient-to-br from-muted to-muted/50">
                     {surgery.image_url ? (
                       <img
                         src={surgery.image_url}
@@ -140,48 +139,45 @@ const Surgeries = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-muted-foreground/50" />
+                        <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
                       </div>
                     )}
                     
                     {/* Logo Overlay */}
-                    <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm px-2 py-1 rounded flex items-center gap-1">
+                    <div className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-1">
                       <img
                         src="/images/mypaklabs-logo.png"
                         alt="MyPakLabs"
-                        className="h-5 w-auto"
+                        className="h-3 w-auto"
                       />
                     </div>
                   </div>
 
-                  <CardContent className="p-4">
+                  <CardContent className="p-3">
                     {/* Surgery Name */}
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                    <h3 className="font-medium text-sm mb-1.5 line-clamp-2 leading-tight">
                       {surgery.name}
                     </h3>
 
                     {/* Discount Badge */}
                     {getTotalDiscount(surgery) > 0 && (
-                      <Badge className="bg-primary text-primary-foreground mb-3">
+                      <Badge className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 mb-2">
                         {getTotalDiscount(surgery)}% Discount
                       </Badge>
                     )}
 
-                    {/* Price Range if available */}
-                    {surgery.price_range && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {surgery.price_range}
-                      </p>
-                    )}
-
                     {/* Get Free Call */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <Phone className="w-4 h-4" />
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+                      <Phone className="w-3 h-3" />
                       Get free call
                     </div>
 
                     {/* CTA Button */}
-                    <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="w-full text-xs h-7 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                    >
                       Get Information
                     </Button>
                   </CardContent>

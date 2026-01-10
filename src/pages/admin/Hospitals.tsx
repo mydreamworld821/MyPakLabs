@@ -22,6 +22,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -34,7 +41,89 @@ import {
   Search,
   Loader2,
   X,
+  Users,
+  Bed,
+  Ambulance,
 } from "lucide-react";
+
+// Predefined cities in Pakistan
+const PAKISTAN_CITIES = [
+  "Lahore",
+  "Karachi",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Multan",
+  "Peshawar",
+  "Quetta",
+  "Gujranwala",
+  "Sialkot",
+  "Sargodha",
+  "Bahawalpur",
+  "Hyderabad",
+  "Sukkur",
+  "Larkana",
+  "Abbottabad",
+  "Mardan",
+  "Gujrat",
+  "Sahiwal",
+  "Sheikhupura",
+];
+
+// Predefined departments
+const HOSPITAL_DEPARTMENTS = [
+  "OPD (Outpatient)",
+  "IPD (Inpatient)",
+  "ICU (Intensive Care)",
+  "CCU (Cardiac Care)",
+  "NICU (Neonatal ICU)",
+  "Emergency",
+  "Radiology",
+  "Laboratory",
+  "Pharmacy",
+  "Physiotherapy",
+  "Dialysis",
+  "Operation Theater",
+  "Blood Bank",
+  "Dental",
+  "ENT",
+  "Ophthalmology",
+  "Dermatology",
+  "Psychiatry",
+  "Orthopedics",
+  "Gynecology",
+  "Pediatrics",
+  "Neurology",
+  "Cardiology",
+  "Oncology",
+  "Urology",
+  "Nephrology",
+  "Gastroenterology",
+  "Pulmonology",
+  "Endocrinology",
+];
+
+// Predefined facilities
+const HOSPITAL_FACILITIES = [
+  "Ambulance Service",
+  "24/7 Pharmacy",
+  "Parking",
+  "Cafeteria",
+  "ATM",
+  "Wheelchair Access",
+  "WiFi",
+  "Prayer Room",
+  "Waiting Lounge",
+  "CCTV Surveillance",
+  "Generator Backup",
+  "Air Conditioning",
+  "Private Rooms",
+  "VIP Suites",
+  "Online Appointments",
+  "Home Sample Collection",
+  "Insurance Accepted",
+  "Credit Card Payment",
+];
 
 interface Hospital {
   id: string;
@@ -43,6 +132,10 @@ interface Hospital {
   city: string | null;
   address: string | null;
   specialties: string[] | null;
+  departments: string[] | null;
+  facilities: string[] | null;
+  bed_count: number | null;
+  emergency_available: boolean | null;
   contact_phone: string | null;
   contact_email: string | null;
   website: string | null;
@@ -58,14 +151,26 @@ interface Hospital {
   featured_order: number | null;
 }
 
+interface Doctor {
+  id: string;
+  full_name: string;
+  hospital_name: string | null;
+  specialization_id: string | null;
+  photo_url: string | null;
+  status: string;
+}
+
 const AdminHospitals = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
   const [saving, setSaving] = useState(false);
   const [specialtyInput, setSpecialtyInput] = useState("");
+  const [customCityInput, setCustomCityInput] = useState("");
+  const [showCustomCity, setShowCustomCity] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -73,6 +178,10 @@ const AdminHospitals = () => {
     city: "",
     address: "",
     specialties: [] as string[],
+    departments: [] as string[],
+    facilities: [] as string[],
+    bed_count: 0,
+    emergency_available: true,
     contact_phone: "",
     contact_email: "",
     website: "",
@@ -89,6 +198,7 @@ const AdminHospitals = () => {
 
   useEffect(() => {
     fetchHospitals();
+    fetchDoctors();
   }, []);
 
   const fetchHospitals = async () => {
@@ -108,6 +218,27 @@ const AdminHospitals = () => {
     }
   };
 
+  const fetchDoctors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("doctors")
+        .select("id, full_name, hospital_name, specialization_id, photo_url, status")
+        .eq("status", "approved");
+
+      if (error) throw error;
+      setDoctors(data || []);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
+  };
+
+  // Get doctors for a specific hospital
+  const getHospitalDoctors = (hospitalName: string) => {
+    return doctors.filter(
+      (d) => d.hospital_name?.toLowerCase() === hospitalName.toLowerCase()
+    );
+  };
+
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
@@ -120,10 +251,13 @@ const AdminHospitals = () => {
     setSaving(true);
 
     try {
+      const finalCity = getFinalCity();
       const hospitalData = {
         ...formData,
+        city: finalCity,
         slug: formData.slug || generateSlug(formData.name),
         rating: formData.rating || null,
+        bed_count: formData.bed_count || null,
       };
 
       if (editingHospital) {
@@ -154,12 +288,20 @@ const AdminHospitals = () => {
 
   const handleEdit = (hospital: Hospital) => {
     setEditingHospital(hospital);
+    const cityInList = PAKISTAN_CITIES.includes(hospital.city || "");
+    setShowCustomCity(!cityInList && !!hospital.city);
+    setCustomCityInput(!cityInList ? hospital.city || "" : "");
+    
     setFormData({
       name: hospital.name,
       slug: hospital.slug,
-      city: hospital.city || "",
+      city: cityInList ? hospital.city || "" : "custom",
       address: hospital.address || "",
       specialties: hospital.specialties || [],
+      departments: hospital.departments || [],
+      facilities: hospital.facilities || [],
+      bed_count: hospital.bed_count || 0,
+      emergency_available: hospital.emergency_available ?? true,
       contact_phone: hospital.contact_phone || "",
       contact_email: hospital.contact_email || "",
       website: hospital.website || "",
@@ -225,12 +367,18 @@ const AdminHospitals = () => {
 
   const resetForm = () => {
     setEditingHospital(null);
+    setShowCustomCity(false);
+    setCustomCityInput("");
     setFormData({
       name: "",
       slug: "",
       city: "",
       address: "",
       specialties: [],
+      departments: [],
+      facilities: [],
+      bed_count: 0,
+      emergency_available: true,
       contact_phone: "",
       contact_email: "",
       website: "",
@@ -262,6 +410,52 @@ const AdminHospitals = () => {
       ...formData,
       specialties: formData.specialties.filter((s) => s !== specialty),
     });
+  };
+
+  const toggleDepartment = (dept: string) => {
+    if (formData.departments.includes(dept)) {
+      setFormData({
+        ...formData,
+        departments: formData.departments.filter((d) => d !== dept),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        departments: [...formData.departments, dept],
+      });
+    }
+  };
+
+  const toggleFacility = (facility: string) => {
+    if (formData.facilities.includes(facility)) {
+      setFormData({
+        ...formData,
+        facilities: formData.facilities.filter((f) => f !== facility),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        facilities: [...formData.facilities, facility],
+      });
+    }
+  };
+
+  const handleCityChange = (value: string) => {
+    if (value === "custom") {
+      setShowCustomCity(true);
+      setFormData({ ...formData, city: "custom" });
+    } else {
+      setShowCustomCity(false);
+      setCustomCityInput("");
+      setFormData({ ...formData, city: value });
+    }
+  };
+
+  const getFinalCity = () => {
+    if (showCustomCity && customCityInput.trim()) {
+      return customCityInput.trim();
+    }
+    return formData.city === "custom" ? "" : formData.city;
   };
 
   const filteredHospitals = hospitals.filter(
@@ -315,19 +509,36 @@ const AdminHospitals = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    />
+                    <Label>City *</Label>
+                    <Select value={formData.city} onValueChange={handleCityChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select city" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAKISTAN_CITIES.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">+ Add Custom City</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {showCustomCity && (
+                      <Input
+                        placeholder="Enter city name"
+                        value={customCityInput}
+                        onChange={(e) => setCustomCityInput(e.target.value)}
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">Full Address</Label>
                     <Input
                       id="address"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="e.g., Main Boulevard, DHA Phase 5"
                     />
                   </div>
                 </div>
@@ -416,6 +627,82 @@ const AdminHospitals = () => {
                       value={formData.cover_image_url}
                       onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
                     />
+                  </div>
+                </div>
+
+                {/* Departments Section */}
+                <div className="space-y-2">
+                  <Label>Departments</Label>
+                  <p className="text-xs text-muted-foreground">Select available departments</p>
+                  <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                    {HOSPITAL_DEPARTMENTS.map((dept) => (
+                      <label
+                        key={dept}
+                        className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.departments.includes(dept)}
+                          onChange={() => toggleDepartment(dept)}
+                          className="rounded"
+                        />
+                        <span className="truncate">{dept}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {formData.departments.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formData.departments.length} department(s) selected
+                    </p>
+                  )}
+                </div>
+
+                {/* Facilities Section */}
+                <div className="space-y-2">
+                  <Label>Facilities</Label>
+                  <p className="text-xs text-muted-foreground">Select available facilities</p>
+                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+                    {HOSPITAL_FACILITIES.map((facility) => (
+                      <label
+                        key={facility}
+                        className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.facilities.includes(facility)}
+                          onChange={() => toggleFacility(facility)}
+                          className="rounded"
+                        />
+                        <span className="truncate">{facility}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bed Count & Emergency */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bed_count">Bed Count</Label>
+                    <Input
+                      id="bed_count"
+                      type="number"
+                      min="0"
+                      value={formData.bed_count}
+                      onChange={(e) => setFormData({ ...formData, bed_count: parseInt(e.target.value) || 0 })}
+                      placeholder="e.g., 200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>24/7 Emergency</Label>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Switch
+                        checked={formData.emergency_available}
+                        onCheckedChange={(checked) => setFormData({ ...formData, emergency_available: checked })}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {formData.emergency_available ? "Available" : "Not Available"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -582,15 +869,17 @@ const AdminHospitals = () => {
                   <TableRow>
                     <TableHead>Hospital</TableHead>
                     <TableHead>City</TableHead>
-                    <TableHead>Specialties</TableHead>
-                    <TableHead>Rating</TableHead>
+                    <TableHead>Departments</TableHead>
+                    <TableHead>Doctors</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Featured</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredHospitals.map((hospital) => (
+                  {filteredHospitals.map((hospital) => {
+                    const hospitalDoctors = getHospitalDoctors(hospital.name);
+                    return (
                     <TableRow key={hospital.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -607,34 +896,48 @@ const AdminHospitals = () => {
                           </div>
                           <div>
                             <p className="font-medium">{hospital.name}</p>
-                            <p className="text-xs text-muted-foreground">{hospital.contact_phone}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{hospital.contact_phone || "-"}</span>
+                              {hospital.emergency_available && (
+                                <Badge variant="destructive" className="text-[10px] px-1 py-0">
+                                  <Ambulance className="w-2.5 h-2.5 mr-0.5" />
+                                  24/7
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{hospital.city || "-"}</TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          {hospital.specialties?.slice(0, 2).map((s) => (
-                            <Badge key={s} variant="outline" className="text-xs">
-                              {s}
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          {hospital.city || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[180px]">
+                          {hospital.departments?.slice(0, 2).map((d) => (
+                            <Badge key={d} variant="secondary" className="text-xs">
+                              {d.split(" ")[0]}
                             </Badge>
                           ))}
-                          {hospital.specialties && hospital.specialties.length > 2 && (
+                          {hospital.departments && hospital.departments.length > 2 && (
                             <Badge variant="outline" className="text-xs">
-                              +{hospital.specialties.length - 2}
+                              +{hospital.departments.length - 2}
                             </Badge>
+                          )}
+                          {(!hospital.departments || hospital.departments.length === 0) && (
+                            <span className="text-muted-foreground text-xs">-</span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {hospital.rating ? (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                            <span>{hospital.rating}</span>
-                          </div>
-                        ) : (
-                          "-"
-                        )}
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className={hospitalDoctors.length > 0 ? "text-primary font-medium" : ""}>
+                            {hospitalDoctors.length}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Switch
@@ -668,7 +971,7 @@ const AdminHospitals = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );})}
                 </TableBody>
               </Table>
             )}

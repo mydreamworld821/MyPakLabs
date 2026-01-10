@@ -138,6 +138,7 @@ export type Database = {
           email: string | null
           emergency_available: boolean | null
           experience_years: number | null
+          featured_order: number | null
           followup_fee: number | null
           full_name: string
           gender: string | null
@@ -190,6 +191,7 @@ export type Database = {
           email?: string | null
           emergency_available?: boolean | null
           experience_years?: number | null
+          featured_order?: number | null
           followup_fee?: number | null
           full_name: string
           gender?: string | null
@@ -242,6 +244,7 @@ export type Database = {
           email?: string | null
           emergency_available?: boolean | null
           experience_years?: number | null
+          featured_order?: number | null
           followup_fee?: number | null
           full_name?: string
           gender?: string | null

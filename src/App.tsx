@@ -43,6 +43,7 @@ import AdminSpecializations from "./pages/admin/Specializations";
 import AdminDoctors from "./pages/admin/Doctors";
 import AdminServiceCards from "./pages/admin/ServiceCards";
 import AdminFeaturedLabs from "./pages/admin/FeaturedLabs";
+import AdminFeaturedDoctors from "./pages/admin/FeaturedDoctors";
 import AdminSurgeries from "./pages/admin/Surgeries";
 import AdminSurgeryInquiries from "./pages/admin/SurgeryInquiries";
 import AdminHospitals from "./pages/admin/Hospitals";
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/service-cards" element={<ProtectedRoute requireAdmin><AdminServiceCards /></ProtectedRoute>} />
             <Route path="/admin/featured-labs" element={<ProtectedRoute requireAdmin><AdminFeaturedLabs /></ProtectedRoute>} />
+            <Route path="/admin/featured-doctors" element={<ProtectedRoute requireAdmin><AdminFeaturedDoctors /></ProtectedRoute>} />
             <Route path="/admin/surgeries" element={<ProtectedRoute requireAdmin><AdminSurgeries /></ProtectedRoute>} />
             <Route path="/admin/surgery-inquiries" element={<ProtectedRoute requireAdmin><AdminSurgeryInquiries /></ProtectedRoute>} />
             <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><AdminHospitals /></ProtectedRoute>} />

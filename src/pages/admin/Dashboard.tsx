@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import InquiryTrendsChart from "@/components/admin/InquiryTrendsChart";
 import {
   Building2,
   TestTube,
@@ -930,6 +931,9 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Inquiry Trends Chart */}
+        <InquiryTrendsChart />
 
         {/* Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

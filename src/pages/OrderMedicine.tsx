@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -45,20 +45,24 @@ interface Medicine {
 const OrderMedicine = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   
   const [store, setStore] = useState<MedicalStore | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("prescription");
+  const [activeTab, setActiveTab] = useState("manual");
   
   // Prescription upload state
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [prescriptionPreview, setPrescriptionPreview] = useState<string | null>(null);
   const [uploadingPrescription, setUploadingPrescription] = useState(false);
   
+  // Get pre-filled medicine from URL
+  const prefilledMedicine = searchParams.get("medicine") || "";
+  
   // Manual medicines state
-  const [medicines, setMedicines] = useState<Medicine[]>([{ name: "", quantity: 1, notes: "" }]);
+  const [medicines, setMedicines] = useState<Medicine[]>([{ name: prefilledMedicine, quantity: 1, notes: "" }]);
   
   // Common fields
   const [deliveryAddress, setDeliveryAddress] = useState("");

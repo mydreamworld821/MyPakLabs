@@ -9,6 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { CitySelect } from "@/components/ui/city-select";
 import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { 
   Store, 
   Search, 
   MapPin, 
@@ -16,7 +22,9 @@ import {
   Truck, 
   Star,
   Phone,
-  Loader2
+  Loader2,
+  Pill,
+  X
 } from "lucide-react";
 
 interface MedicalStore {
@@ -42,6 +50,8 @@ const FindPharmacies = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
+  const [medicineSearch, setMedicineSearch] = useState("");
+  const [showMedicineSearch, setShowMedicineSearch] = useState(false);
 
   useEffect(() => {
     fetchStores();
@@ -79,6 +89,12 @@ const FindPharmacies = () => {
 
   const featuredStores = filteredStores.filter(s => s.is_featured);
   const regularStores = filteredStores.filter(s => !s.is_featured);
+
+  const handleOrderWithMedicine = (storeId: string) => {
+    // Navigate to order page with medicine name pre-filled
+    navigate(`/order-medicine/${storeId}?medicine=${encodeURIComponent(medicineSearch)}`);
+    setShowMedicineSearch(false);
+  };
 
   const StoreCard = ({ store }: { store: MedicalStore }) => (
     <Card 
@@ -159,7 +175,29 @@ const FindPharmacies = () => {
             </p>
           </div>
 
-          {/* Search & Filter */}
+          {/* Medicine Search Card */}
+          <Card className="max-w-2xl mx-auto mb-6 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <Pill className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">Search for Medicine</h3>
+                  <p className="text-xs text-muted-foreground">Find which pharmacies have your medicine</p>
+                </div>
+              </div>
+              <Button 
+                className="w-full bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => setShowMedicineSearch(true)}
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Search Medicine
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Store Search & Filter */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -227,6 +265,102 @@ const FindPharmacies = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Medicine Search Dialog */}
+      <Dialog open={showMedicineSearch} onOpenChange={setShowMedicineSearch}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="w-5 h-5 text-emerald-600" />
+              Search Medicine
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Enter medicine name (e.g., Panadol, Augmentin)..."
+                value={medicineSearch}
+                onChange={(e) => setMedicineSearch(e.target.value)}
+                className="pl-9"
+                autoFocus
+              />
+              {medicineSearch && (
+                <button
+                  onClick={() => setMedicineSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {medicineSearch.length >= 2 && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Select a pharmacy to order <span className="font-medium text-foreground">"{medicineSearch}"</span>
+                </p>
+                
+                <div className="max-h-[300px] overflow-y-auto space-y-2">
+                  {stores.length === 0 ? (
+                    <p className="text-center py-4 text-sm text-muted-foreground">
+                      No pharmacies available. Please try again later.
+                    </p>
+                  ) : (
+                    stores.slice(0, 10).map((store) => (
+                      <Card 
+                        key={store.id} 
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleOrderWithMedicine(store.id)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                              {store.logo_url ? (
+                                <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-lg" />
+                              ) : (
+                                <Store className="w-5 h-5 text-emerald-600" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{store.name}</p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {store.area}, {store.city}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              {store.delivery_available && (
+                                <Badge variant="outline" className="text-[10px] bg-blue-50">
+                                  <Truck className="w-3 h-3 mr-1" />
+                                  Delivery
+                                </Badge>
+                              )}
+                              <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700">
+                                Order Here
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {medicineSearch.length < 2 && (
+              <div className="text-center py-6">
+                <Pill className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Type at least 2 characters to search for a medicine
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

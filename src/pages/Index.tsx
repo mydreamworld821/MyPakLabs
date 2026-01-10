@@ -10,7 +10,7 @@ import FeaturedNurses from "@/components/home/FeaturedNurses";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
-import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Star, Shield, Clock, ChevronRight, TrendingDown, Award, AlertTriangle } from "lucide-react";
+import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Star, Shield, Clock, ChevronRight, TrendingDown, Award, AlertTriangle, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 interface Profile {
   full_name: string | null;
@@ -126,19 +126,19 @@ const Index = () => {
     bgColor: "bg-sky-100",
     iconColor: "text-primary"
   }, {
-    id: "medicines",
-    title: "Medicines",
-    icon: Pill,
-    link: "/medicines",
+    id: "pharmacies",
+    title: "Pharmacies",
+    icon: Store,
+    link: "/pharmacies",
+    bgColor: "bg-emerald-100",
+    iconColor: "text-emerald-600"
+  }, {
+    id: "doctors",
+    title: "Doctors",
+    icon: Stethoscope,
+    link: "/find-doctors",
     bgColor: "bg-blue-100",
     iconColor: "text-blue-600"
-  }, {
-    id: "health-hub",
-    title: "Health Hub",
-    icon: Heart,
-    link: "/health-hub",
-    bgColor: "bg-red-100",
-    iconColor: "text-red-500"
   }, {
     id: "hospitals",
     title: "Hospitals",
@@ -149,7 +149,7 @@ const Index = () => {
   }, {
     id: "surgeries",
     title: "Surgeries",
-    icon: Stethoscope,
+    icon: Heart,
     link: "/surgeries",
     bgColor: "bg-purple-100",
     iconColor: "text-purple-600"

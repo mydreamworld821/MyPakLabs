@@ -46,6 +46,7 @@ const navItems = [
   { href: "/admin/doctors", label: "Doctors", icon: UserRound },
   { href: "/admin/featured-doctors", label: "Featured Doctors", icon: Star },
   { href: "/admin/nurses", label: "Nurses", icon: Heart },
+  { href: "/admin/featured-nurses", label: "Featured Nurses", icon: Star },
   { href: "/admin/hospitals", label: "Hospitals", icon: Building2 },
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },

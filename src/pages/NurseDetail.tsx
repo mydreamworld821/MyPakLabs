@@ -3,9 +3,28 @@ import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { 
   Heart, 
   MapPin, 
@@ -20,7 +39,8 @@ import {
   Globe,
   AlertCircle,
   Syringe,
-  MessageCircle
+  MessageCircle,
+  CalendarPlus
 } from "lucide-react";
 
 interface Nurse {
@@ -52,8 +72,20 @@ interface Nurse {
 
 const NurseDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [nurse, setNurse] = useState<Nurse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    patient_name: "",
+    patient_phone: "",
+    patient_address: "",
+    service_needed: "",
+    preferred_date: "",
+    preferred_time: "",
+    notes: "",
+  });
 
   useEffect(() => {
     fetchNurse();
@@ -90,6 +122,48 @@ const NurseDetail = () => {
       const number = (nurse.whatsapp_number || nurse.phone).replace(/[^0-9]/g, "");
       const formattedNumber = number.startsWith("0") ? "92" + number.slice(1) : number;
       window.open(`https://wa.me/${formattedNumber}?text=Hi, I found your profile on MyPakLabs and would like to book a home nursing visit.`, "_blank");
+    }
+  };
+
+  const handleSubmitBooking = async () => {
+    if (!nurse) return;
+    
+    if (!bookingForm.patient_name || !bookingForm.patient_phone || !bookingForm.service_needed || !bookingForm.preferred_date || !bookingForm.preferred_time) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    setSubmittingBooking(true);
+    try {
+      const { error } = await supabase.from("nurse_bookings").insert({
+        nurse_id: nurse.id,
+        patient_id: user?.id || null,
+        patient_name: bookingForm.patient_name.trim(),
+        patient_phone: bookingForm.patient_phone.trim(),
+        patient_address: bookingForm.patient_address || null,
+        service_needed: bookingForm.service_needed,
+        preferred_date: bookingForm.preferred_date,
+        preferred_time: bookingForm.preferred_time,
+        notes: bookingForm.notes || null,
+      });
+
+      if (error) throw error;
+
+      toast.success("Booking request submitted! The nurse will contact you shortly.");
+      setShowBookingDialog(false);
+      setBookingForm({
+        patient_name: "",
+        patient_phone: "",
+        patient_address: "",
+        service_needed: "",
+        preferred_date: "",
+        preferred_time: "",
+        notes: "",
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit booking");
+    } finally {
+      setSubmittingBooking(false);
     }
   };
 
@@ -369,6 +443,14 @@ const NurseDetail = () => {
                   <div className="space-y-2">
                     <Button 
                       className="w-full bg-rose-600 hover:bg-rose-700" 
+                      onClick={() => setShowBookingDialog(true)}
+                    >
+                      <CalendarPlus className="w-4 h-4 mr-2" />
+                      Book Home Visit
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="w-full" 
                       onClick={handleCall}
                     >
                       <Phone className="w-4 h-4 mr-2" />
@@ -383,6 +465,118 @@ const NurseDetail = () => {
                       WhatsApp
                     </Button>
                   </div>
+
+                  {/* Booking Dialog */}
+                  <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="text-sm">Book Home Visit</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-xs">Your Name *</Label>
+                          <Input
+                            value={bookingForm.patient_name}
+                            onChange={(e) => setBookingForm(prev => ({ ...prev, patient_name: e.target.value }))}
+                            placeholder="Enter your full name"
+                            className="text-xs h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Phone Number *</Label>
+                          <Input
+                            value={bookingForm.patient_phone}
+                            onChange={(e) => setBookingForm(prev => ({ ...prev, patient_phone: e.target.value }))}
+                            placeholder="0300-1234567"
+                            className="text-xs h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Address</Label>
+                          <Input
+                            value={bookingForm.patient_address}
+                            onChange={(e) => setBookingForm(prev => ({ ...prev, patient_address: e.target.value }))}
+                            placeholder="Your home address for visit"
+                            className="text-xs h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Service Needed *</Label>
+                          <Select 
+                            value={bookingForm.service_needed} 
+                            onValueChange={(v) => setBookingForm(prev => ({ ...prev, service_needed: v }))}
+                          >
+                            <SelectTrigger className="text-xs h-8">
+                              <SelectValue placeholder="Select service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {nurse.services_offered?.map((service) => (
+                                <SelectItem key={service} value={service} className="text-xs">
+                                  {service}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Preferred Date *</Label>
+                            <Input
+                              type="date"
+                              value={bookingForm.preferred_date}
+                              onChange={(e) => setBookingForm(prev => ({ ...prev, preferred_date: e.target.value }))}
+                              min={new Date().toISOString().split('T')[0]}
+                              className="text-xs h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Preferred Time *</Label>
+                            <Select 
+                              value={bookingForm.preferred_time} 
+                              onValueChange={(v) => setBookingForm(prev => ({ ...prev, preferred_time: v }))}
+                            >
+                              <SelectTrigger className="text-xs h-8">
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Morning (8AM-12PM)" className="text-xs">Morning (8AM-12PM)</SelectItem>
+                                <SelectItem value="Afternoon (12PM-5PM)" className="text-xs">Afternoon (12PM-5PM)</SelectItem>
+                                <SelectItem value="Evening (5PM-9PM)" className="text-xs">Evening (5PM-9PM)</SelectItem>
+                                <SelectItem value="Night (9PM-12AM)" className="text-xs">Night (9PM-12AM)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Additional Notes</Label>
+                          <Textarea
+                            value={bookingForm.notes}
+                            onChange={(e) => setBookingForm(prev => ({ ...prev, notes: e.target.value }))}
+                            placeholder="Any specific requirements or health conditions..."
+                            className="text-xs"
+                            rows={2}
+                          />
+                        </div>
+                        <Button 
+                          className="w-full bg-rose-600 hover:bg-rose-700"
+                          onClick={handleSubmitBooking}
+                          disabled={submittingBooking}
+                        >
+                          {submittingBooking ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Submit Booking Request
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </CardContent>
               </Card>
             </div>

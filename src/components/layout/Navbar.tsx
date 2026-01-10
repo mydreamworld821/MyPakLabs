@@ -120,6 +120,7 @@ const Navbar = () => {
     { href: "/compare", label: "Compare Prices", icon: BarChart3 },
     { href: "/hospitals", label: "Hospitals", icon: Hospital },
     { href: "/surgeries", label: "Surgeries", icon: Scissors },
+    { href: "/find-nurses", label: "Home Nurses", icon: Heart },
     { href: "/health-hub", label: "Health Hub", icon: Heart },
   ];
 
@@ -311,6 +312,16 @@ const Navbar = () => {
                 Surgeries
               </Button>
             </Link>
+            <Link to="/find-nurses">
+              <Button
+                variant={isActive("/find-nurses") ? "soft" : "ghost"}
+                size="sm"
+                className="gap-1.5 text-xs px-2"
+              >
+                <Heart className="w-3.5 h-3.5" />
+                Nurses
+              </Button>
+            </Link>
             <Link to="/health-hub">
               <Button
                 variant={isActive("/health-hub") ? "soft" : "ghost"}
@@ -448,6 +459,7 @@ const Navbar = () => {
               { href: "/find-doctors", label: "Find Doctors", icon: Stethoscope },
               { href: "/hospitals", label: "Hospitals", icon: Hospital },
               { href: "/surgeries", label: "Surgeries", icon: Scissors },
+              { href: "/find-nurses", label: "Home Nurses", icon: Heart },
               { href: "/health-hub", label: "Health Hub", icon: Heart },
             ].map((link) => (
               <Link

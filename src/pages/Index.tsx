@@ -220,10 +220,10 @@ const Index = () => {
           <div className="absolute bottom-10 right-10 w-32 h-32 rounded-full bg-white/20" />
         </div>
 
-        <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
+        <div className="container mx-auto px-4 py-10 md:py-16 relative z-10 flex flex-col items-center text-center">
           {/* Greeting */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-semibold text-lg border border-white/30">
               {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "G"}
             </div>
             <span className="text-white/90 text-sm">
@@ -231,59 +231,62 @@ const Index = () => {
             </span>
           </div>
 
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 max-w-xl">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-2xl">
             Compare Lab Test Prices & Save Up to 35%
           </h1>
-          <p className="text-white/90 text-sm md:text-base mb-5 max-w-lg">
+          <p className="text-white/90 text-sm md:text-base mb-8 max-w-lg">
             Book tests from ISO certified labs with priority processing
           </p>
 
-          {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-lg p-1.5 shadow-xl max-w-xl">
-            <div className="flex items-center gap-1 px-2 py-1.5 sm:border-r border-gray-200">
-              <MapPin className="w-4 h-4 text-gray-400" />
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[100px] h-8 focus:ring-0 text-gray-700 text-sm">
-                  <SelectValue placeholder="City" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1 flex items-center gap-1">
-              <Search className="w-4 h-4 text-gray-400 ml-1" />
-              <Input
-                type="text"
-                placeholder="Search for tests, labs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-8 text-sm"
-              />
-              <Button onClick={handleSearch} size="sm" className="shrink-0">
-                Search
-              </Button>
+          {/* Centered Search Bar */}
+          <div className="w-full max-w-2xl">
+            <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-2 shadow-2xl">
+              <div className="flex items-center gap-2 px-3 py-2 sm:border-r border-gray-200">
+                <MapPin className="w-5 h-5 text-primary" />
+                <Select value={selectedCity} onValueChange={setSelectedCity}>
+                  <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[120px] h-10 focus:ring-0 text-gray-700 font-medium">
+                    <SelectValue placeholder="Select City" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <Search className="w-5 h-5 text-gray-400 ml-2" />
+                <Input
+                  type="text"
+                  placeholder="Search for tests, labs, health packages..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-10 text-base"
+                />
+                <Button onClick={handleSearch} size="lg" className="shrink-0 px-6 rounded-lg">
+                  <Search className="w-4 h-4 mr-2" />
+                  Search
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Trust Badges */}
-          <div className="flex flex-wrap gap-3 md:gap-6 mt-5">
-            <div className="flex items-center gap-1.5 text-white/90">
-              <Shield className="w-4 h-4" />
-              <span className="text-xs">ISO Certified</span>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-8">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <Shield className="w-4 h-4 text-white" />
+              <span className="text-sm text-white font-medium">ISO Certified</span>
             </div>
-            <div className="flex items-center gap-1.5 text-white/90">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs">Quick Results</span>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <Clock className="w-4 h-4 text-white" />
+              <span className="text-sm text-white font-medium">Quick Results</span>
             </div>
-            <div className="flex items-center gap-1.5 text-white/90">
-              <TrendingDown className="w-4 h-4" />
-              <span className="text-xs">Best Prices</span>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <TrendingDown className="w-4 h-4 text-white" />
+              <span className="text-sm text-white font-medium">Best Prices</span>
             </div>
           </div>
         </div>

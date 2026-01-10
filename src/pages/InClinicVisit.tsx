@@ -101,7 +101,7 @@ const InClinicVisit = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-500 to-orange-500 text-white pt-20 pb-10">
+      <section className="gradient-hero text-white pt-20 pb-10">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -119,7 +119,7 @@ const InClinicVisit = () => {
           <div className="max-w-3xl mx-auto">
             <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-2 shadow-xl">
               <div className="flex items-center gap-2 px-3 py-2 sm:border-r border-gray-200">
-                <MapPin className="w-5 h-5 text-amber-600" />
+                <MapPin className="w-5 h-5 text-primary" />
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
                   <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[120px] h-10 focus:ring-0 text-gray-700 font-medium">
                     <SelectValue placeholder="Select City" />
@@ -142,7 +142,7 @@ const InClinicVisit = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-10"
                 />
-                <Button size="lg" className="shrink-0 px-6 rounded-lg bg-amber-600 hover:bg-amber-700">
+                <Button size="lg" className="shrink-0 px-6 rounded-lg">
                   <Search className="w-4 h-4 mr-2" />
                   Search
                 </Button>

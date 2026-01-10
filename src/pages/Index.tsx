@@ -1,317 +1,348 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import LabCard from "@/components/labs/LabCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  Search,
+  MapPin,
+  Video,
+  Calendar,
+  Zap,
+  Dumbbell,
   FlaskConical,
-  ArrowRight,
-  Shield,
-  Percent,
-  Clock,
-  CheckCircle,
+  Pill,
+  Heart,
   Building2,
-  BarChart3,
-  FileText,
-  Sparkles,
-  ChevronRight,
-  Loader2,
+  Stethoscope,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface Lab {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  logo_url: string | null;
-  discount_percentage: number | null;
-  rating: number | null;
-  review_count: number | null;
-  cities: string[] | null;
-  branches: unknown;
-  popular_tests: string[] | null;
+interface Profile {
+  full_name: string | null;
 }
 
 const Index = () => {
-  const [featuredLabs, setFeaturedLabs] = useState<Lab[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
-    const fetchFeaturedLabs = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("labs")
-          .select("*")
-          .eq("is_active", true)
-          .order("discount_percentage", { ascending: false })
-          .limit(3);
-
-        if (error) throw error;
-        setFeaturedLabs(data || []);
-      } catch (error) {
-        console.error("Error fetching featured labs:", error);
-      } finally {
-        setIsLoading(false);
+    const fetchProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .single();
+        setProfile(data);
       }
     };
+    fetchProfile();
+  }, [user]);
 
-    fetchFeaturedLabs();
-  }, []);
+  // Cities list - can be fetched from database later
+  const cities = [
+    "Karachi",
+    "Lahore", 
+    "Islamabad",
+    "Rawalpindi",
+    "Faisalabad",
+    "Multan",
+    "Peshawar",
+    "Quetta",
+  ];
 
-  const steps = [
+  // Main service cards
+  const mainServices = [
     {
+      id: "video-consultation",
+      title: "Video Consultation",
+      subtitle: "PMC Verified Doctors",
+      icon: Video,
+      bgColor: "bg-sky-50",
+      iconColor: "text-primary",
+      link: "/video-consultation",
+      featured: false,
+    },
+    {
+      id: "in-clinic",
+      title: "In-clinic Visit",
+      subtitle: "Book Appointment",
+      icon: Calendar,
+      bgColor: "bg-amber-50",
+      iconColor: "text-amber-600",
+      link: "/in-clinic-visit",
+      featured: false,
+    },
+    {
+      id: "instant-doctor",
+      title: "INSTANT DOCTOR+",
+      subtitle: "Get Instant Relief in a Click",
+      icon: Zap,
+      bgColor: "bg-sky-50",
+      iconColor: "text-yellow-500",
+      link: "/instant-doctor",
+      featured: true,
+    },
+    {
+      id: "weight-loss",
+      title: "Weight Loss Clinic",
+      subtitle: "Healthy Lifestyle",
+      icon: Dumbbell,
+      bgColor: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      link: "/weight-loss-clinic",
+      featured: false,
+    },
+  ];
+
+  // Quick access services (bottom icons)
+  const quickServices = [
+    {
+      id: "labs",
+      title: "Labs",
+      icon: FlaskConical,
+      link: "/labs",
+      bgColor: "bg-sky-100",
+      iconColor: "text-primary",
+    },
+    {
+      id: "medicines",
+      title: "Medicines",
+      icon: Pill,
+      link: "/medicines",
+      bgColor: "bg-blue-100",
+      iconColor: "text-blue-600",
+    },
+    {
+      id: "health-hub",
+      title: "Health Hub",
+      icon: Heart,
+      link: "/health-hub",
+      bgColor: "bg-red-100",
+      iconColor: "text-red-500",
+    },
+    {
+      id: "hospitals",
+      title: "Hospitals",
       icon: Building2,
-      title: "Choose a Lab",
-      description: "Browse top-rated labs near you with exclusive discounts",
+      link: "/hospitals",
+      bgColor: "bg-teal-100",
+      iconColor: "text-teal-600",
     },
     {
-      icon: FileText,
-      title: "Select Tests",
-      description: "Pick tests manually or upload your prescription",
-    },
-    {
-      icon: Sparkles,
-      title: "Get Discount ID",
-      description: "Receive a unique ID with locked discounted prices",
-    },
-    {
-      icon: CheckCircle,
-      title: "Visit & Save",
-      description: "Show your ID at the lab and pay the discounted rate",
+      id: "surgeries",
+      title: "Surgeries",
+      icon: Stethoscope,
+      link: "/surgeries",
+      bgColor: "bg-purple-100",
+      iconColor: "text-purple-600",
     },
   ];
 
-  const benefits = [
-    {
-      icon: Percent,
-      title: "Up to 35% Off",
-      description: "Exclusive discounts on all lab tests across Pakistan",
-    },
-    {
-      icon: Shield,
-      title: "Verified Labs",
-      description: "All partner labs are ISO certified and trusted",
-    },
-    {
-      icon: Clock,
-      title: "Quick Results",
-      description: "Get your reports faster with priority processing",
-    },
-    {
-      icon: BarChart3,
-      title: "Price Comparison",
-      description: "Compare prices across labs to find the best deal",
-    },
-  ];
+  const handleSearch = () => {
+    // Search functionality - will be implemented later
+    console.log("Search:", searchQuery, "City:", selectedCity);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 gradient-hero opacity-5" />
-        <div className="absolute top-20 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
-
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            <Badge variant="discount" className="mb-6 animate-fade-up">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Save up to 35% on lab tests
-            </Badge>
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
-              Get Lab Tests at{" "}
-              <span className="text-gradient">Discounted Prices</span>{" "}
-              Across Pakistan
+      <main className="pt-20 pb-8">
+        <div className="container mx-auto px-4">
+          {/* Greeting Section */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-lg">
+                {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "G"}
+              </div>
+              <span className="text-foreground">
+                Hello, {profile?.full_name || (user ? "User" : "Guest")}!
+              </span>
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">
+              Find the Best Doctor Near You
             </h1>
-
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              Compare prices from top diagnostic labs, get exclusive discounts, and download your unique discount ID for instant savings.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up" style={{ animationDelay: "0.3s" }}>
-              <Link to="/labs">
-                <Button size="xl" variant="medical" className="w-full sm:w-auto">
-                  Browse Labs
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/compare">
-                <Button size="xl" variant="outline" className="w-full sm:w-auto">
-                  Compare Prices
-                  <BarChart3 className="w-5 h-5" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center gap-6 mt-12 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle className="w-5 h-5 text-medical-green" />
-                <span className="text-sm">50+ Partner Labs</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle className="w-5 h-5 text-medical-green" />
-                <span className="text-sm">100K+ Tests Booked</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle className="w-5 h-5 text-medical-green" />
-                <span className="text-sm">All Major Cities</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-4">How It Works</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Get Discounts in 4 Simple Steps
-            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step, index) => (
-              <Card key={index} variant="elevated" className="relative">
-                <CardContent className="p-6 text-center">
-                  <div className="absolute -top-3 -left-3 w-8 h-8 gradient-hero rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm shadow-glow">
-                    {index + 1}
-                  </div>
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <step.icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
-                </CardContent>
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
-                    <ChevronRight className="w-6 h-6 text-muted-foreground/30" />
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Labs */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <Badge variant="secondary" className="mb-2">Featured Labs</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                Top Diagnostic Labs
-              </h2>
+          {/* Search Section */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-8 bg-card rounded-xl p-2 shadow-card border border-border">
+            <div className="flex items-center gap-2 px-3 py-2 sm:border-r border-border">
+              <MapPin className="w-5 h-5 text-muted-foreground" />
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
+                <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[140px] focus:ring-0">
+                  <SelectValue placeholder="Enter City" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Link to="/labs">
-              <Button variant="ghost" className="hidden sm:flex">
-                View All Labs
-                <ArrowRight className="w-4 h-4" />
+            <div className="flex-1 flex items-center gap-2">
+              <Input
+                type="text"
+                placeholder="Search by Doctors"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-0 shadow-none bg-transparent focus-visible:ring-0"
+              />
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={handleSearch}
+                className="shrink-0"
+              >
+                <Search className="w-5 h-5 text-muted-foreground" />
               </Button>
-            </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {isLoading ? (
-              <div className="col-span-full flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : featuredLabs.length > 0 ? (
-              featuredLabs.map((lab) => (
-                <LabCard key={lab.id} lab={lab} />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-muted-foreground">
-                No labs available yet
-              </div>
-            )}
-          </div>
-
-          <div className="text-center mt-8 sm:hidden">
-            <Link to="/labs">
-              <Button variant="outline">
-                View All Labs
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section className="py-16 md:py-24 gradient-hero">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
-              Why Choose MyPakLabs?
+          {/* How can we help section */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              How can we help you today?
             </h2>
-            <p className="text-white/80 mt-3 max-w-xl mx-auto">
-              We're committed to making healthcare affordable and accessible for everyone in Pakistan.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <Card key={index} variant="glass" className="border-white/10 bg-white/10 backdrop-blur-sm">
-                <CardContent className="p-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
-                    <benefit.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-white mb-2">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-sm text-white/70">
-                    {benefit.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+            {/* Main Service Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* Video Consultation - Left column */}
+              <Link 
+                to={mainServices[0].link}
+                className="block"
+              >
+                <Card className={`h-full ${mainServices[0].bgColor} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden`}>
+                  <CardContent className="p-5 h-full flex flex-col justify-between min-h-[200px]">
+                    <div>
+                      <h3 className="font-semibold text-primary text-lg mb-1">
+                        {mainServices[0].title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {mainServices[0].subtitle}
+                      </p>
+                    </div>
+                    <div className="flex justify-center mt-4">
+                      <div className="w-24 h-24 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Video className="w-12 h-12 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
 
-      {/* CTA Section */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <Card variant="elevated" className="p-8 md:p-12 text-center">
-            <div className="max-w-2xl mx-auto">
-              <div className="w-16 h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-glow">
-                <FlaskConical className="w-8 h-8 text-primary-foreground" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                Ready to Save on Your Lab Tests?
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Join thousands of patients who are already saving money on their diagnostic tests. Sign up today and get exclusive discounts!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/auth?mode=signup">
-                  <Button size="lg" variant="medical" className="w-full sm:w-auto">
-                    Create Free Account
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
+              {/* Middle column - In-clinic + Weight Loss stacked */}
+              <div className="flex flex-col gap-4">
+                <Link to={mainServices[1].link} className="block flex-1">
+                  <Card className={`h-full ${mainServices[1].bgColor} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer group`}>
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-amber-700 text-base mb-0.5">
+                          {mainServices[1].title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {mainServices[1].subtitle}
+                        </p>
+                      </div>
+                      <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Calendar className="w-7 h-7 text-amber-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
-                <Link to="/compare">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    Compare Prices First
-                  </Button>
+
+                <Link to={mainServices[3].link} className="block flex-1">
+                  <Card className={`h-full ${mainServices[3].bgColor} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer group`}>
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-emerald-700 text-base mb-0.5">
+                          {mainServices[3].title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {mainServices[3].subtitle}
+                        </p>
+                      </div>
+                      <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Dumbbell className="w-7 h-7 text-emerald-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               </div>
+
+              {/* Instant Doctor - Right column (featured) */}
+              <Link 
+                to={mainServices[2].link}
+                className="block"
+              >
+                <Card className={`h-full ${mainServices[2].bgColor} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden`}>
+                  <CardContent className="p-5 h-full flex flex-col justify-between min-h-[200px]">
+                    <div className="flex items-start gap-2">
+                      <Zap className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+                      <div>
+                        <h3 className="font-bold text-primary text-lg tracking-tight">
+                          INSTANT
+                        </h3>
+                        <h3 className="font-bold text-primary text-lg -mt-1">
+                          DOCTOR<span className="text-red-500">+</span>
+                        </h3>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {mainServices[2].subtitle}
+                    </p>
+                    <div className="flex justify-end mt-4">
+                      <div className="w-20 h-20 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Stethoscope className="w-10 h-10 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             </div>
-          </Card>
+
+            {/* Quick Access Services */}
+            <div className="grid grid-cols-5 gap-2 md:gap-4">
+              {quickServices.map((service) => (
+                <Link
+                  key={service.id}
+                  to={service.link}
+                  className="block group"
+                >
+                  <div className="flex flex-col items-center gap-2 p-2 md:p-4 rounded-xl hover:bg-muted/50 transition-colors">
+                    <div className={`w-14 h-14 md:w-16 md:h-16 rounded-xl ${service.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm`}>
+                      <service.icon className={`w-7 h-7 md:w-8 md:h-8 ${service.iconColor}`} />
+                    </div>
+                    <span className="text-xs md:text-sm font-medium text-foreground text-center">
+                      {service.title}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Underline indicator for Labs */}
+            <div className="flex justify-center mt-2">
+              <div className="w-16 h-1 bg-primary rounded-full" />
+            </div>
+          </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>

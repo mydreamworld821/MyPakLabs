@@ -12,6 +12,7 @@ import {
   Scissors,
   TestTube,
   FlaskConical,
+  Building2,
   Loader2,
   X,
 } from "lucide-react";
@@ -26,7 +27,7 @@ import {
 interface SearchResult {
   id: string;
   name: string;
-  type: "doctor" | "specialization" | "surgery" | "test" | "lab";
+  type: "doctor" | "specialization" | "surgery" | "test" | "lab" | "hospital";
   slug?: string;
   subtitle?: string;
 }
@@ -191,6 +192,27 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         });
       }
 
+      // Search hospitals (ready for when hospitals table is created)
+      // Uncomment when hospitals table exists:
+      // const { data: hospitals } = await supabase
+      //   .from("hospitals")
+      //   .select("id, name, slug, city")
+      //   .eq("is_active", true)
+      //   .ilike("name", searchTerm)
+      //   .limit(5);
+      //
+      // if (hospitals) {
+      //   hospitals.forEach((hospital) => {
+      //     allResults.push({
+      //       id: hospital.id,
+      //       name: hospital.name,
+      //       type: "hospital",
+      //       slug: hospital.slug,
+      //       subtitle: hospital.city || "Hospital",
+      //     });
+      //   });
+      // }
+
       setResults(allResults);
       setShowDropdown(allResults.length > 0);
     } catch (error) {
@@ -220,6 +242,9 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       case "lab":
         navigate(`/lab/${result.slug}`);
         break;
+      case "hospital":
+        navigate(`/hospital/${result.slug}`);
+        break;
     }
   };
 
@@ -235,6 +260,8 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         return <TestTube className="w-4 h-4" />;
       case "lab":
         return <FlaskConical className="w-4 h-4" />;
+      case "hospital":
+        return <Building2 className="w-4 h-4" />;
     }
   };
 
@@ -245,6 +272,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       surgery: { label: "Surgery", color: "bg-green-100 text-green-700" },
       test: { label: "Test", color: "bg-orange-100 text-orange-700" },
       lab: { label: "Lab", color: "bg-primary/10 text-primary" },
+      hospital: { label: "Hospital", color: "bg-red-100 text-red-700" },
     };
     return badges[type];
   };

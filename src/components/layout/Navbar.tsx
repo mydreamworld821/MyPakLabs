@@ -327,6 +327,12 @@ const Navbar = () => {
                 Join as Doctor
               </Button>
             </Link>
+            <Link to="/join-as-nurse">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white">
+                <Heart className="w-3.5 h-3.5" />
+                Join as Nurse
+              </Button>
+            </Link>
           </div>
 
           {/* Auth Buttons */}
@@ -463,6 +469,12 @@ const Navbar = () => {
               <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-primary text-primary text-xs">
                 <UserPlus className="w-3.5 h-3.5" />
                 Join as Doctor
+              </Button>
+            </Link>
+            <Link to="/join-as-nurse" onClick={() => setIsOpen(false)}>
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-rose-600 text-rose-600 text-xs">
+                <Heart className="w-3.5 h-3.5" />
+                Join as Nurse
               </Button>
             </Link>
             <div className="pt-2 border-t border-border space-y-1">

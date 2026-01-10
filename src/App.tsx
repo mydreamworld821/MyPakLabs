@@ -26,6 +26,7 @@ import Surgeries from "./pages/Surgeries";
 import SurgeryDetail from "./pages/SurgeryDetail";
 import HealthHub from "./pages/HealthHub";
 import JoinAsDoctor from "./pages/JoinAsDoctor";
+import JoinAsNurse from "./pages/JoinAsNurse";
 import DoctorRegister from "./pages/DoctorRegister";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorDetail from "./pages/DoctorDetail";
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/surgery/:slug" element={<SurgeryDetail />} />
             <Route path="/health-hub" element={<HealthHub />} />
             <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
+            <Route path="/join-as-nurse" element={<JoinAsNurse />} />
             <Route path="/doctor-register" element={<DoctorRegister />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/:id" element={<DoctorDetail />} />

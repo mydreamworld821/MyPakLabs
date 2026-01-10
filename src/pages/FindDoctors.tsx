@@ -46,7 +46,9 @@ const iconMap: { [key: string]: React.ComponentType<any> } = {
 const FindDoctors = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const specialtySlug = searchParams.get("specialty");
+  const specialtySlug = searchParams.get("specialty") || searchParams.get("specialization");
+  const consultationType = searchParams.get("type"); // "online" or "physical"
+  const cityFilter = searchParams.get("city");
   
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -108,12 +110,23 @@ const FindDoctors = () => {
   const fetchDoctorsBySpecialty = async (specId: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("doctors")
         .select("*, specialization:doctor_specializations(name)")
         .eq("status", "approved")
-        .eq("specialization_id", specId)
-        .order("is_featured", { ascending: false });
+        .eq("specialization_id", specId);
+
+      // Filter by consultation type
+      if (consultationType === "online") {
+        query = query.eq("video_consultation", true);
+      }
+
+      // Filter by city
+      if (cityFilter) {
+        query = query.ilike("city", `%${cityFilter}%`);
+      }
+
+      const { data, error } = await query.order("is_featured", { ascending: false });
 
       if (error) throw error;
       setDoctors(data || []);
@@ -148,24 +161,45 @@ const FindDoctors = () => {
   };
 
   if (selectedSpecialty) {
+    const headerBg = consultationType === "online" 
+      ? "gradient-hero" 
+      : consultationType === "physical" 
+        ? "bg-gradient-to-r from-amber-500 to-orange-500" 
+        : "bg-primary";
+    
+    const headerTitle = consultationType === "online"
+      ? `Video Consultation - ${selectedSpecialty.name}s`
+      : consultationType === "physical"
+        ? `In-Clinic - ${selectedSpecialty.name}s`
+        : `${selectedSpecialty.name}s`;
+
+    const backPath = consultationType === "online"
+      ? "/video-consultation"
+      : consultationType === "physical"
+        ? "/in-clinic-visit"
+        : "/find-doctors";
+
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="pt-16 pb-8">
           {/* Header */}
-          <div className="bg-primary text-primary-foreground py-6">
+          <div className={`${headerBg} text-white py-6`}>
             <div className="container mx-auto px-4">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-primary-foreground/80 hover:text-primary-foreground mb-2"
-                onClick={handleBackToSpecialties}
+                className="text-xs text-white/80 hover:text-white mb-2"
+                onClick={() => navigate(backPath)}
               >
                 ← Back to Specialties
               </Button>
-              <h1 className="text-lg md:text-xl font-bold">{selectedSpecialty.name}s</h1>
-              <p className="text-xs text-primary-foreground/80">
+              <h1 className="text-lg md:text-xl font-bold">{headerTitle}</h1>
+              <p className="text-xs text-white/80">
                 {doctors.length} Doctor(s) available
+                {cityFilter && ` in ${cityFilter}`}
+                {consultationType === "online" && " for video consultation"}
+                {consultationType === "physical" && " for in-clinic visit"}
               </p>
             </div>
           </div>

@@ -1380,15 +1380,26 @@ const MyBookings = () => {
                         size="sm"
                         onClick={async () => {
                           try {
+                            // prescription_url contains the file path like "appointmentId/timestamp.ext"
+                            const filePath = selectedAppointment.prescription_url!;
+                            
                             const { data, error } = await supabase.storage
                               .from("prescriptions")
-                              .createSignedUrl(selectedAppointment.prescription_url!, 60);
+                              .createSignedUrl(filePath, 300); // 5 min expiry
                             
-                            if (error) throw error;
-                            window.open(data.signedUrl, '_blank');
-                          } catch (error) {
+                            if (error) {
+                              console.error("Signed URL error:", error);
+                              throw error;
+                            }
+                            
+                            if (data?.signedUrl) {
+                              window.open(data.signedUrl, '_blank');
+                            } else {
+                              throw new Error("No signed URL returned");
+                            }
+                          } catch (error: any) {
                             console.error("Error getting prescription:", error);
-                            toast.error("Failed to download prescription");
+                            toast.error(error?.message || "Failed to download prescription");
                           }
                         }}
                       >

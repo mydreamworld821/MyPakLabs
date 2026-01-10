@@ -30,18 +30,18 @@ const LabCard = ({ lab }: LabCardProps) => {
   return (
     <Link to={`/labs/${lab.id}`} className="block">
       <Card variant="interactive" className="overflow-hidden group cursor-pointer h-full relative">
-        {/* Header with Logo/Discount - Compact */}
-        <div className="relative h-20 gradient-hero flex items-center justify-center">
+        {/* Header with Logo/Discount */}
+        <div className="relative h-24 gradient-hero flex items-center justify-center p-2">
           {lab.logo_url ? (
             <img 
               src={lab.logo_url} 
               alt={lab.name}
-              className="w-12 h-12 object-contain rounded-lg bg-white p-1"
+              className="w-16 h-16 object-contain rounded-lg bg-white p-1.5 shadow-sm"
             />
           ) : (
             <div className="text-center text-primary-foreground">
-              <div className="text-2xl font-bold">{discount}%</div>
-              <div className="text-[10px] opacity-90">OFF</div>
+              <div className="text-3xl font-bold">{discount}%</div>
+              <div className="text-xs opacity-90">OFF</div>
             </div>
           )}
           {discount > 0 && (

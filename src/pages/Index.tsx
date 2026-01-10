@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 import {
-  Search,
-  MapPin,
   Video,
   Calendar,
   Zap,
@@ -27,13 +24,6 @@ import {
   TrendingDown,
   Award,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Profile {
   full_name: string | null;
@@ -71,8 +61,6 @@ interface ServiceCard {
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [featuredLabs, setFeaturedLabs] = useState<Lab[]>([]);
   const [popularTests, setPopularTests] = useState<Test[]>([]);
@@ -141,18 +129,6 @@ const Index = () => {
     fetchData();
   }, [user]);
 
-  // Cities list
-  const cities = [
-    "Karachi",
-    "Lahore", 
-    "Islamabad",
-    "Rawalpindi",
-    "Faisalabad",
-    "Multan",
-    "Peshawar",
-    "Quetta",
-  ];
-
   // Icon mapping for fallback
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     Video,
@@ -209,17 +185,6 @@ const Index = () => {
     },
   ];
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -251,41 +216,8 @@ const Index = () => {
             Book tests from ISO certified labs with priority processing
           </p>
 
-          {/* Centered Search Bar */}
-          <div className="w-full max-w-2xl">
-            <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-2 shadow-2xl">
-              <div className="flex items-center gap-2 px-3 py-2 sm:border-r border-gray-200">
-                <MapPin className="w-5 h-5 text-primary" />
-                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[120px] h-10 focus:ring-0 text-gray-700 font-medium">
-                    <SelectValue placeholder="Select City" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 flex items-center gap-2">
-                <Search className="w-5 h-5 text-gray-400 ml-2" />
-                <Input
-                  type="text"
-                  placeholder="Search for tests, labs, health packages..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-10 text-base"
-                />
-                <Button onClick={handleSearch} size="lg" className="shrink-0 px-6 rounded-lg">
-                  <Search className="w-4 h-4 mr-2" />
-                  Search
-                </Button>
-              </div>
-            </div>
-          </div>
+          {/* Global Search Bar */}
+          <GlobalSearch className="w-full max-w-2xl" />
 
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-8">

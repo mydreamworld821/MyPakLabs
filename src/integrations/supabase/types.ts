@@ -659,6 +659,191 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_stores: {
+        Row: {
+          admin_notes: string | null
+          area: string
+          city: string
+          closing_time: string | null
+          cnic: string | null
+          cover_image_url: string | null
+          created_at: string
+          delivery_available: boolean | null
+          email: string | null
+          featured_order: number | null
+          full_address: string
+          id: string
+          is_24_hours: boolean | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          license_number: string
+          location_lat: number | null
+          location_lng: number | null
+          logo_url: string | null
+          name: string
+          opening_time: string | null
+          owner_name: string
+          phone: string
+          rating: number | null
+          review_count: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          area: string
+          city: string
+          closing_time?: string | null
+          cnic?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          delivery_available?: boolean | null
+          email?: string | null
+          featured_order?: number | null
+          full_address: string
+          id?: string
+          is_24_hours?: boolean | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          license_number: string
+          location_lat?: number | null
+          location_lng?: number | null
+          logo_url?: string | null
+          name: string
+          opening_time?: string | null
+          owner_name: string
+          phone: string
+          rating?: number | null
+          review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          area?: string
+          city?: string
+          closing_time?: string | null
+          cnic?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          delivery_available?: boolean | null
+          email?: string | null
+          featured_order?: number | null
+          full_address?: string
+          id?: string
+          is_24_hours?: boolean | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          license_number?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          logo_url?: string | null
+          name?: string
+          opening_time?: string | null
+          owner_name?: string
+          phone?: string
+          rating?: number | null
+          review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      medicine_orders: {
+        Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          delivery_address: string
+          delivery_lat: number | null
+          delivery_lng: number | null
+          dispatched_at: string | null
+          estimated_delivery_time: string | null
+          estimated_price: number | null
+          final_price: number | null
+          id: string
+          medicines: Json | null
+          notes: string | null
+          pharmacy_confirmed_at: string | null
+          pharmacy_notes: string | null
+          prepared_at: string | null
+          prescription_url: string | null
+          status: string
+          store_id: string
+          unique_id: string
+          updated_at: string
+          user_confirmed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          delivery_address: string
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          dispatched_at?: string | null
+          estimated_delivery_time?: string | null
+          estimated_price?: number | null
+          final_price?: number | null
+          id?: string
+          medicines?: Json | null
+          notes?: string | null
+          pharmacy_confirmed_at?: string | null
+          pharmacy_notes?: string | null
+          prepared_at?: string | null
+          prescription_url?: string | null
+          status?: string
+          store_id: string
+          unique_id: string
+          updated_at?: string
+          user_confirmed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          delivery_address?: string
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          dispatched_at?: string | null
+          estimated_delivery_time?: string | null
+          estimated_price?: number | null
+          final_price?: number | null
+          id?: string
+          medicines?: Json | null
+          notes?: string | null
+          pharmacy_confirmed_at?: string | null
+          pharmacy_notes?: string | null
+          prepared_at?: string | null
+          prescription_url?: string | null
+          status?: string
+          store_id?: string
+          unique_id?: string
+          updated_at?: string
+          user_confirmed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicine_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "medical_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nurse_bookings: {
         Row: {
           cancelled_at: string | null

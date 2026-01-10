@@ -125,6 +125,8 @@ const LabDetail = () => {
   useEffect(() => {
     if (id) {
       fetchLabData();
+    } else {
+      setIsLoading(false);
     }
   }, [id]);
 

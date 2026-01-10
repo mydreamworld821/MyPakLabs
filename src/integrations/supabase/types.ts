@@ -671,6 +671,56 @@ export type Database = {
         }
         Relationships: []
       }
+      surgery_inquiries: {
+        Row: {
+          admin_notes: string | null
+          city: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string
+          question: string | null
+          status: string
+          surgery_id: string | null
+          surgery_name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+          question?: string | null
+          status?: string
+          surgery_id?: string | null
+          surgery_name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+          question?: string | null
+          status?: string
+          surgery_id?: string | null
+          surgery_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surgery_inquiries_surgery_id_fkey"
+            columns: ["surgery_id"]
+            isOneToOne: false
+            referencedRelation: "surgeries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tests: {
         Row: {
           category: string | null

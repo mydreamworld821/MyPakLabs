@@ -92,12 +92,28 @@ const SurgeryDetail = () => {
 
     setSubmitting(true);
     
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast.success("We will contact you soon!");
-    setFormData({ question: "", phone: "", name: "", city: "" });
-    setSubmitting(false);
+    try {
+      const { error } = await supabase
+        .from("surgery_inquiries")
+        .insert({
+          surgery_id: surgery?.id,
+          surgery_name: surgery?.name || "Unknown",
+          name: formData.name,
+          phone: formData.phone,
+          city: formData.city || null,
+          question: formData.question || null,
+        });
+
+      if (error) throw error;
+      
+      toast.success("We will contact you soon!");
+      setFormData({ question: "", phone: "", name: "", city: "" });
+    } catch (error) {
+      console.error("Failed to submit inquiry:", error);
+      toast.error("Failed to submit. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const faqs = [

@@ -3,6 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,21 +17,30 @@ import {
   Star,
   Phone,
   ChevronRight,
-  Thermometer,
-  Wind,
-  Frown,
-  Brain,
-  Heart,
   Stethoscope,
   Loader2,
   Video,
+  Heart,
+  Brain,
+  Eye,
+  Ear,
+  Bone,
+  Pill,
+  Thermometer,
+  Activity,
+  Droplets,
+  Shield,
+  Frown,
+  Wind,
+  X,
+  HeartPulse,
 } from "lucide-react";
 
 interface HealthCondition {
   name: string;
   urdu: string;
   icon: React.ReactNode;
-  searchTerm: string;
+  specialty: string; // Related specialty slug
 }
 
 interface Specialization {
@@ -50,14 +65,34 @@ interface Doctor {
 }
 
 const healthConditions: HealthCondition[] = [
-  { name: "Fever", urdu: "بخار", icon: <Thermometer className="w-6 h-6" />, searchTerm: "fever" },
-  { name: "Cough", urdu: "کھانسی", icon: <Wind className="w-6 h-6" />, searchTerm: "cough" },
-  { name: "Sore throat", urdu: "گلے کی سوزش", icon: <Frown className="w-6 h-6" />, searchTerm: "throat" },
-  { name: "Blocked nose", urdu: "بند ناک", icon: <Wind className="w-6 h-6" />, searchTerm: "nose" },
-  { name: "Runny nose", urdu: "ناک بہنا", icon: <Wind className="w-6 h-6" />, searchTerm: "cold" },
-  { name: "Headache", urdu: "سر درد", icon: <Brain className="w-6 h-6" />, searchTerm: "headache" },
-  { name: "Stomach ache", urdu: "پیٹ درد", icon: <Heart className="w-6 h-6" />, searchTerm: "stomach" },
-  { name: "Skin issues", urdu: "جلد کے مسائل", icon: <Stethoscope className="w-6 h-6" />, searchTerm: "skin" },
+  { name: "Diabetes", urdu: "ذیابیطس", icon: <Droplets className="w-5 h-5" />, specialty: "endocrinologist" },
+  { name: "Hypertension", urdu: "بلند فشار خون", icon: <Activity className="w-5 h-5" />, specialty: "cardiologist" },
+  { name: "Heart Disease", urdu: "دل کی بیماری", icon: <Heart className="w-5 h-5" />, specialty: "cardiologist" },
+  { name: "Stroke", urdu: "فالج", icon: <Brain className="w-5 h-5" />, specialty: "neurologist" },
+  { name: "Asthma", urdu: "دمہ", icon: <HeartPulse className="w-5 h-5" />, specialty: "pulmonologist" },
+  { name: "Allergies", urdu: "الرجی", icon: <Shield className="w-5 h-5" />, specialty: "allergist" },
+  { name: "Anemia", urdu: "خون کی کمی", icon: <Droplets className="w-5 h-5" />, specialty: "hematologist" },
+  { name: "Arthritis", urdu: "جوڑوں کا درد", icon: <Bone className="w-5 h-5" />, specialty: "rheumatologist" },
+  { name: "Cancer", urdu: "کینسر", icon: <Activity className="w-5 h-5" />, specialty: "oncologist" },
+  { name: "Tuberculosis", urdu: "تپ دق", icon: <HeartPulse className="w-5 h-5" />, specialty: "pulmonologist" },
+  { name: "Hepatitis", urdu: "ہیپاٹائٹس", icon: <Activity className="w-5 h-5" />, specialty: "gastroenterologist" },
+  { name: "Obesity", urdu: "موٹاپا", icon: <Activity className="w-5 h-5" />, specialty: "endocrinologist" },
+  { name: "Depression", urdu: "ڈپریشن", icon: <Frown className="w-5 h-5" />, specialty: "psychiatrist" },
+  { name: "Anxiety", urdu: "اضطراب", icon: <Brain className="w-5 h-5" />, specialty: "psychiatrist" },
+  { name: "Migraine", urdu: "شدید سر درد", icon: <Brain className="w-5 h-5" />, specialty: "neurologist" },
+  { name: "Flu", urdu: "فلو / زکام", icon: <Thermometer className="w-5 h-5" />, specialty: "general-physician" },
+  { name: "Cold", urdu: "نزلہ / زکام", icon: <Wind className="w-5 h-5" />, specialty: "general-physician" },
+  { name: "COVID-19", urdu: "کووڈ-۱۹", icon: <Shield className="w-5 h-5" />, specialty: "pulmonologist" },
+  { name: "Pneumonia", urdu: "نمونیا", icon: <HeartPulse className="w-5 h-5" />, specialty: "pulmonologist" },
+  { name: "Thyroid", urdu: "تھائرائڈ", icon: <Activity className="w-5 h-5" />, specialty: "endocrinologist" },
+  { name: "Kidney Disease", urdu: "گردوں کی بیماری", icon: <Activity className="w-5 h-5" />, specialty: "nephrologist" },
+  { name: "Liver Disease", urdu: "جگر کی بیماری", icon: <Activity className="w-5 h-5" />, specialty: "gastroenterologist" },
+  { name: "Skin Infection", urdu: "جلدی انفیکشن", icon: <Stethoscope className="w-5 h-5" />, specialty: "dermatologist" },
+  { name: "Eye Problems", urdu: "آنکھوں کے مسائل", icon: <Eye className="w-5 h-5" />, specialty: "ophthalmologist" },
+  { name: "Ear Infection", urdu: "کان کا انفیکشن", icon: <Ear className="w-5 h-5" />, specialty: "ent-specialist" },
+  { name: "Gastritis", urdu: "معدے کی سوزش", icon: <Activity className="w-5 h-5" />, specialty: "gastroenterologist" },
+  { name: "Ulcer", urdu: "السر / زخم", icon: <Pill className="w-5 h-5" />, specialty: "gastroenterologist" },
+  { name: "Fever", urdu: "بخار", icon: <Thermometer className="w-5 h-5" />, specialty: "general-physician" },
 ];
 
 const InstantDoctor = () => {
@@ -66,6 +101,7 @@ const InstantDoctor = () => {
   const [onlineDoctors, setOnlineDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const [showAllConditions, setShowAllConditions] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -125,8 +161,8 @@ const InstantDoctor = () => {
     }
   };
 
-  const handleConditionClick = (searchTerm: string) => {
-    navigate(`/find-doctors?type=online&search=${searchTerm}`);
+  const handleConditionClick = (specialty: string) => {
+    navigate(`/find-doctors?type=online&specialization=${specialty}`);
   };
 
   const handleSpecialtyClick = (slug: string) => {
@@ -183,16 +219,16 @@ const InstantDoctor = () => {
         <section>
           <h2 className="text-lg md:text-xl font-bold mb-4">Common Health Conditions</h2>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-            {healthConditions.map((condition) => (
+            {healthConditions.slice(0, 8).map((condition) => (
               <button
                 key={condition.name}
-                onClick={() => handleConditionClick(condition.searchTerm)}
+                onClick={() => handleConditionClick(condition.specialty)}
                 className="flex flex-col items-center p-3 rounded-xl bg-card hover:bg-accent transition-colors group"
               >
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-colors">
                   <span className="text-primary">{condition.icon}</span>
                 </div>
-                <span className="text-xs md:text-sm font-medium text-center">{condition.name}</span>
+                <span className="text-xs md:text-sm font-medium text-center leading-tight">{condition.name}</span>
                 <span className="text-[10px] text-muted-foreground">{condition.urdu}</span>
               </button>
             ))}
@@ -201,13 +237,40 @@ const InstantDoctor = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate("/find-doctors?type=online")}
+              onClick={() => setShowAllConditions(true)}
               className="gap-1"
             >
               View All <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </section>
+
+        {/* View All Conditions Dialog */}
+        <Dialog open={showAllConditions} onOpenChange={setShowAllConditions}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">All Health Conditions</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mt-4">
+              {healthConditions.map((condition) => (
+                <button
+                  key={condition.name}
+                  onClick={() => {
+                    setShowAllConditions(false);
+                    handleConditionClick(condition.specialty);
+                  }}
+                  className="flex flex-col items-center p-3 rounded-xl bg-muted hover:bg-accent transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-colors">
+                    <span className="text-primary">{condition.icon}</span>
+                  </div>
+                  <span className="text-xs font-medium text-center leading-tight">{condition.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{condition.urdu}</span>
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Top Specialties */}
         <section>

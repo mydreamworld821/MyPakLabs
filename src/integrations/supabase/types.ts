@@ -578,6 +578,74 @@ export type Database = {
         }
         Relationships: []
       }
+      nurse_bookings: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          nurse_id: string
+          nurse_notes: string | null
+          patient_address: string | null
+          patient_id: string | null
+          patient_name: string
+          patient_phone: string
+          preferred_date: string
+          preferred_time: string
+          service_needed: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          nurse_id: string
+          nurse_notes?: string | null
+          patient_address?: string | null
+          patient_id?: string | null
+          patient_name: string
+          patient_phone: string
+          preferred_date: string
+          preferred_time: string
+          service_needed: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          nurse_id?: string
+          nurse_notes?: string | null
+          patient_address?: string | null
+          patient_id?: string | null
+          patient_name?: string
+          patient_phone?: string
+          preferred_date?: string
+          preferred_time?: string
+          service_needed?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_bookings_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nurses: {
         Row: {
           admin_notes: string | null

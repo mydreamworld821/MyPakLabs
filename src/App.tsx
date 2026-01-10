@@ -30,6 +30,7 @@ import JoinAsNurse from "./pages/JoinAsNurse";
 import NurseRegister from "./pages/NurseRegister";
 import FindNurses from "./pages/FindNurses";
 import NurseDetail from "./pages/NurseDetail";
+import NurseDashboard from "./pages/NurseDashboard";
 import DoctorRegister from "./pages/DoctorRegister";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorDetail from "./pages/DoctorDetail";
@@ -53,6 +54,7 @@ import AdminSurgeryInquiries from "./pages/admin/SurgeryInquiries";
 import AdminHospitals from "./pages/admin/Hospitals";
 import AdminLocations from "./pages/admin/Locations";
 import AdminNurses from "./pages/admin/Nurses";
+import AdminFeaturedNurses from "./pages/admin/FeaturedNurses";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 
 const queryClient = new QueryClient();
@@ -90,6 +92,7 @@ const App = () => (
             <Route path="/nurse-register" element={<NurseRegister />} />
             <Route path="/find-nurses" element={<FindNurses />} />
             <Route path="/nurse/:id" element={<NurseDetail />} />
+            <Route path="/nurse-dashboard" element={<NurseDashboard />} />
             <Route path="/doctor-register" element={<DoctorRegister />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/:id" element={<DoctorDetail />} />
@@ -115,6 +118,7 @@ const App = () => (
             <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><AdminHospitals /></ProtectedRoute>} />
             <Route path="/admin/locations" element={<ProtectedRoute requireAdmin><AdminLocations /></ProtectedRoute>} />
             <Route path="/admin/nurses" element={<ProtectedRoute requireAdmin><AdminNurses /></ProtectedRoute>} />
+            <Route path="/admin/featured-nurses" element={<ProtectedRoute requireAdmin><AdminFeaturedNurses /></ProtectedRoute>} />
             
             {/* Moderator Routes */}
             <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

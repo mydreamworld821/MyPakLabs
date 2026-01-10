@@ -32,12 +32,12 @@ const LabListCard = ({ lab }: LabListCardProps) => {
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
         {/* Logo */}
         <div className="flex-shrink-0 flex items-center justify-center">
-          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden border-2 border-border">
             {lab.logo_url ? (
               <img 
                 src={lab.logo_url} 
                 alt={lab.name}
-                className="w-full h-full object-contain p-2"
+                className="max-w-full max-h-full object-contain p-2"
               />
             ) : (
               <Building2 className="w-10 h-10 text-muted-foreground" />

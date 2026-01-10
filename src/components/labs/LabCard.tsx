@@ -33,11 +33,13 @@ const LabCard = ({ lab }: LabCardProps) => {
         {/* Header with Logo/Discount */}
         <div className="relative h-24 gradient-hero flex items-center justify-center p-2">
           {lab.logo_url ? (
-            <img 
-              src={lab.logo_url} 
-              alt={lab.name}
-              className="w-16 h-16 object-contain rounded-lg bg-white p-1.5 shadow-sm"
-            />
+            <div className="w-16 h-16 rounded-lg bg-white shadow-sm flex items-center justify-center overflow-hidden">
+              <img 
+                src={lab.logo_url} 
+                alt={lab.name}
+                className="max-w-full max-h-full object-contain p-1"
+              />
+            </div>
           ) : (
             <div className="text-center text-primary-foreground">
               <div className="text-3xl font-bold">{discount}%</div>

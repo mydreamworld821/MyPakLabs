@@ -211,14 +211,16 @@ const ImageUpload = ({
       
       {preview ? (
         <div className="relative">
-          <img
-            src={preview}
-            alt={label}
-            className={`w-full object-cover rounded-lg border ${
-              aspectRatio === "banner" ? "h-32" : "h-24 w-24"
-            }`}
-            onError={() => setPreview("")}
-          />
+          <div className={`rounded-lg border bg-muted/30 flex items-center justify-center overflow-hidden ${
+            aspectRatio === "banner" ? "h-32 w-full" : "h-24 w-24"
+          }`}>
+            <img
+              src={preview}
+              alt={label}
+              className="max-w-full max-h-full object-contain p-1"
+              onError={() => setPreview("")}
+            />
+          </div>
           <Button
             type="button"
             variant="destructive"

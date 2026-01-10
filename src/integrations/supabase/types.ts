@@ -578,6 +578,159 @@ export type Database = {
         }
         Relationships: []
       }
+      nurses: {
+        Row: {
+          admin_notes: string | null
+          area_of_service: string | null
+          available_days: string[] | null
+          available_shifts: string[] | null
+          background_check_consent: boolean | null
+          certificate_urls: string[] | null
+          certifications: string[] | null
+          city: string | null
+          cnic: string | null
+          created_at: string
+          current_employment: string | null
+          date_of_birth: string | null
+          degree_certificate_url: string | null
+          department_experience: string[] | null
+          email: string | null
+          emergency_available: boolean | null
+          ethics_accepted: boolean | null
+          experience_years: number | null
+          featured_order: number | null
+          fee_negotiable: boolean | null
+          full_name: string
+          gender: string | null
+          home_visit_radius: number | null
+          id: string
+          institute_name: string | null
+          is_featured: boolean | null
+          languages_spoken: string[] | null
+          monthly_package_fee: number | null
+          per_hour_fee: number | null
+          per_visit_fee: number | null
+          phone: string | null
+          photo_url: string | null
+          pnc_card_url: string | null
+          pnc_expiry_date: string | null
+          pnc_number: string
+          previous_workplaces: string[] | null
+          qualification: string
+          rating: number | null
+          review_count: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          services_offered: string[]
+          status: string
+          terms_accepted: boolean | null
+          updated_at: string
+          user_id: string | null
+          whatsapp_number: string | null
+          year_of_completion: number | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          area_of_service?: string | null
+          available_days?: string[] | null
+          available_shifts?: string[] | null
+          background_check_consent?: boolean | null
+          certificate_urls?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          cnic?: string | null
+          created_at?: string
+          current_employment?: string | null
+          date_of_birth?: string | null
+          degree_certificate_url?: string | null
+          department_experience?: string[] | null
+          email?: string | null
+          emergency_available?: boolean | null
+          ethics_accepted?: boolean | null
+          experience_years?: number | null
+          featured_order?: number | null
+          fee_negotiable?: boolean | null
+          full_name: string
+          gender?: string | null
+          home_visit_radius?: number | null
+          id?: string
+          institute_name?: string | null
+          is_featured?: boolean | null
+          languages_spoken?: string[] | null
+          monthly_package_fee?: number | null
+          per_hour_fee?: number | null
+          per_visit_fee?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          pnc_card_url?: string | null
+          pnc_expiry_date?: string | null
+          pnc_number: string
+          previous_workplaces?: string[] | null
+          qualification: string
+          rating?: number | null
+          review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          services_offered?: string[]
+          status?: string
+          terms_accepted?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_number?: string | null
+          year_of_completion?: number | null
+        }
+        Update: {
+          admin_notes?: string | null
+          area_of_service?: string | null
+          available_days?: string[] | null
+          available_shifts?: string[] | null
+          background_check_consent?: boolean | null
+          certificate_urls?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          cnic?: string | null
+          created_at?: string
+          current_employment?: string | null
+          date_of_birth?: string | null
+          degree_certificate_url?: string | null
+          department_experience?: string[] | null
+          email?: string | null
+          emergency_available?: boolean | null
+          ethics_accepted?: boolean | null
+          experience_years?: number | null
+          featured_order?: number | null
+          fee_negotiable?: boolean | null
+          full_name?: string
+          gender?: string | null
+          home_visit_radius?: number | null
+          id?: string
+          institute_name?: string | null
+          is_featured?: boolean | null
+          languages_spoken?: string[] | null
+          monthly_package_fee?: number | null
+          per_hour_fee?: number | null
+          per_visit_fee?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          pnc_card_url?: string | null
+          pnc_expiry_date?: string | null
+          pnc_number?: string
+          previous_workplaces?: string[] | null
+          qualification?: string
+          rating?: number | null
+          review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          services_offered?: string[]
+          status?: string
+          terms_accepted?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_number?: string | null
+          year_of_completion?: number | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           availed_at: string | null

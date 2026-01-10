@@ -518,7 +518,52 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const handleSearch = () => {
     if (searchQuery.trim()) {
       saveRecentSearch(searchQuery.trim());
-      navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+      
+      // Smart navigation based on results or first result type
+      if (results.length > 0) {
+        // Navigate based on the most common result type or first result
+        const firstResult = results[0];
+        switch (firstResult.type) {
+          case "doctor":
+            navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
+            break;
+          case "nurse":
+            navigate(`/find-nurses?search=${encodeURIComponent(searchQuery)}`);
+            break;
+          case "hospital":
+            navigate(`/hospitals?search=${encodeURIComponent(searchQuery)}`);
+            break;
+          case "surgery":
+            navigate(`/surgeries?search=${encodeURIComponent(searchQuery)}`);
+            break;
+          case "specialization":
+            navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
+            break;
+          case "city":
+            navigate(`/find-doctors?city=${firstResult.name}`);
+            break;
+          case "test":
+          case "lab":
+          default:
+            navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+            break;
+        }
+      } else {
+        // Default fallback - detect intent from query keywords
+        const queryLower = searchQuery.toLowerCase();
+        if (queryLower.includes('nurse') || queryLower.includes('nursing') || queryLower.includes('home care')) {
+          navigate(`/find-nurses?search=${encodeURIComponent(searchQuery)}`);
+        } else if (queryLower.includes('doctor') || queryLower.includes('dr.') || queryLower.includes('physician')) {
+          navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
+        } else if (queryLower.includes('hospital') || queryLower.includes('clinic')) {
+          navigate(`/hospitals?search=${encodeURIComponent(searchQuery)}`);
+        } else if (queryLower.includes('surgery') || queryLower.includes('operation')) {
+          navigate(`/surgeries?search=${encodeURIComponent(searchQuery)}`);
+        } else {
+          navigate(`/labs?search=${encodeURIComponent(searchQuery)}`);
+        }
+      }
+      
       setShowDropdown(false);
       setShowRecent(false);
     }

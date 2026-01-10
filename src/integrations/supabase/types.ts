@@ -323,6 +323,87 @@ export type Database = {
           },
         ]
       }
+      emergency_nursing_requests: {
+        Row: {
+          accepted_nurse_id: string | null
+          accepted_offer_id: string | null
+          admin_notes: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          city: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          location_address: string | null
+          location_lat: number
+          location_lng: number
+          notes: string | null
+          patient_id: string
+          patient_name: string
+          patient_offer_price: number | null
+          patient_phone: string
+          patient_rating: number | null
+          patient_review: string | null
+          services_needed: string[]
+          status: Database["public"]["Enums"]["emergency_request_status"]
+          tip_amount: number | null
+          updated_at: string
+          urgency: Database["public"]["Enums"]["emergency_urgency"]
+        }
+        Insert: {
+          accepted_nurse_id?: string | null
+          accepted_offer_id?: string | null
+          admin_notes?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          city?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          location_address?: string | null
+          location_lat: number
+          location_lng: number
+          notes?: string | null
+          patient_id: string
+          patient_name: string
+          patient_offer_price?: number | null
+          patient_phone: string
+          patient_rating?: number | null
+          patient_review?: string | null
+          services_needed?: string[]
+          status?: Database["public"]["Enums"]["emergency_request_status"]
+          tip_amount?: number | null
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["emergency_urgency"]
+        }
+        Update: {
+          accepted_nurse_id?: string | null
+          accepted_offer_id?: string | null
+          admin_notes?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          city?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          location_address?: string | null
+          location_lat?: number
+          location_lng?: number
+          notes?: string | null
+          patient_id?: string
+          patient_name?: string
+          patient_offer_price?: number | null
+          patient_phone?: string
+          patient_rating?: number | null
+          patient_review?: string | null
+          services_needed?: string[]
+          status?: Database["public"]["Enums"]["emergency_request_status"]
+          tip_amount?: number | null
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["emergency_urgency"]
+        }
+        Relationships: []
+      }
       hospital_doctors: {
         Row: {
           created_at: string
@@ -642,6 +723,117 @@ export type Database = {
             columns: ["nurse_id"]
             isOneToOne: false
             referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_emergency_tracking: {
+        Row: {
+          arrived_at: string | null
+          current_lat: number
+          current_lng: number
+          id: string
+          nurse_id: string
+          request_id: string
+          service_started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arrived_at?: string | null
+          current_lat: number
+          current_lng: number
+          id?: string
+          nurse_id: string
+          request_id: string
+          service_started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arrived_at?: string | null
+          current_lat?: number
+          current_lng?: number
+          id?: string
+          nurse_id?: string
+          request_id?: string
+          service_started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_emergency_tracking_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_emergency_tracking_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_nursing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_offers: {
+        Row: {
+          created_at: string
+          distance_km: number | null
+          eta_minutes: number
+          id: string
+          message: string | null
+          nurse_id: string
+          nurse_lat: number | null
+          nurse_lng: number | null
+          offered_price: number
+          request_id: string
+          status: Database["public"]["Enums"]["nurse_offer_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          distance_km?: number | null
+          eta_minutes: number
+          id?: string
+          message?: string | null
+          nurse_id: string
+          nurse_lat?: number | null
+          nurse_lng?: number | null
+          offered_price: number
+          request_id: string
+          status?: Database["public"]["Enums"]["nurse_offer_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          distance_km?: number | null
+          eta_minutes?: number
+          id?: string
+          message?: string | null
+          nurse_id?: string
+          nurse_lat?: number | null
+          nurse_lng?: number | null
+          offered_price?: number
+          request_id?: string
+          status?: Database["public"]["Enums"]["nurse_offer_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_offers_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_offers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_nursing_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -1231,6 +1423,14 @@ export type Database = {
         | "completed"
         | "no_show"
       consultation_type: "physical" | "online"
+      emergency_request_status:
+        | "live"
+        | "accepted"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      emergency_urgency: "critical" | "within_1_hour" | "scheduled"
+      nurse_offer_status: "pending" | "accepted" | "rejected" | "expired"
       order_status: "pending" | "confirmed" | "completed" | "cancelled"
       prescription_status: "pending_review" | "approved" | "rejected"
     }
@@ -1369,6 +1569,15 @@ export const Constants = {
         "no_show",
       ],
       consultation_type: ["physical", "online"],
+      emergency_request_status: [
+        "live",
+        "accepted",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      emergency_urgency: ["critical", "within_1_hour", "scheduled"],
+      nurse_offer_status: ["pending", "accepted", "rejected", "expired"],
       order_status: ["pending", "confirmed", "completed", "cancelled"],
       prescription_status: ["pending_review", "approved", "rejected"],
     },

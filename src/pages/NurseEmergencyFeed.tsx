@@ -118,9 +118,9 @@ export default function NurseEmergencyFeed() {
     
     fetchRequests();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates for the feed page
     const channel = supabase
-      .channel('emergency-requests')
+      .channel('emergency-requests-feed')
       .on(
         'postgres_changes',
         {
@@ -131,7 +131,7 @@ export default function NurseEmergencyFeed() {
         },
         () => {
           fetchRequests();
-          // Play notification sound for new requests
+          // Play notification sound for new requests (in-page sound)
           playNotificationSound();
         }
       )

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
 import { 
   Heart, 
@@ -42,7 +43,9 @@ import {
   ExternalLink,
   AlertCircle,
   MessageSquare,
-  AlertTriangle
+  AlertTriangle,
+  Bell,
+  BellOff
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -107,6 +110,48 @@ const SERVICES = [
   "Bedridden Patient Care",
   "Medication Administration at Home"
 ];
+
+// Notification Toggle Button Component
+const NotificationToggleButton = () => {
+  const { notificationPermission, requestNotificationPermission } = useNotifications();
+  const [requesting, setRequesting] = useState(false);
+
+  const handleClick = async () => {
+    if (notificationPermission === 'granted') {
+      toast.info("Notifications are already enabled");
+      return;
+    }
+    setRequesting(true);
+    await requestNotificationPermission();
+    setRequesting(false);
+  };
+
+  if (notificationPermission === 'granted') {
+    return (
+      <Button size="sm" variant="outline" className="gap-2 text-green-600 border-green-200">
+        <Bell className="w-4 h-4" />
+        Alerts On
+      </Button>
+    );
+  }
+
+  return (
+    <Button 
+      size="sm" 
+      variant="outline" 
+      className="gap-2" 
+      onClick={handleClick}
+      disabled={requesting}
+    >
+      {requesting ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <BellOff className="w-4 h-4" />
+      )}
+      Enable Alerts
+    </Button>
+  );
+};
 
 const NurseDashboard = () => {
   const navigate = useNavigate();
@@ -371,14 +416,17 @@ const NurseDashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {nurse.status === "approved" && (
-                <Link to="/nurse-emergency-feed">
-                  <Button size="sm" className="gap-2 bg-red-600 hover:bg-red-700">
-                    <AlertTriangle className="w-4 h-4" />
-                    Emergency Requests
-                  </Button>
-                </Link>
+                <>
+                  <NotificationToggleButton />
+                  <Link to="/nurse-emergency-feed">
+                    <Button size="sm" className="gap-2 bg-red-600 hover:bg-red-700">
+                      <AlertTriangle className="w-4 h-4" />
+                      Emergency Requests
+                    </Button>
+                  </Link>
+                </>
               )}
               <Link to={`/nurse/${nurse.id}`} target="_blank">
                 <Button variant="outline" size="sm" className="gap-2">

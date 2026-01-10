@@ -53,6 +53,7 @@ interface Nurse {
   experience_years: number;
   city: string;
   area_of_service: string | null;
+  home_visit_radius: number | null;
   phone: string;
   email: string;
   services_offered: string[];
@@ -121,6 +122,7 @@ const NurseDashboard = () => {
   const [formData, setFormData] = useState({
     phone: "",
     area_of_service: "",
+    home_visit_radius: "",
     services_offered: [] as string[],
     available_days: [] as string[],
     available_shifts: [] as string[],
@@ -168,6 +170,7 @@ const NurseDashboard = () => {
       setFormData({
         phone: data.phone || "",
         area_of_service: data.area_of_service || "",
+        home_visit_radius: data.home_visit_radius?.toString() || "",
         services_offered: data.services_offered || [],
         available_days: data.available_days || [],
         available_shifts: data.available_shifts || [],
@@ -232,6 +235,7 @@ const NurseDashboard = () => {
         .update({
           phone: formData.phone,
           area_of_service: formData.area_of_service || null,
+          home_visit_radius: formData.home_visit_radius ? parseInt(formData.home_visit_radius) : null,
           services_offered: formData.services_offered,
           available_days: formData.available_days,
           available_shifts: formData.available_shifts,
@@ -445,6 +449,24 @@ const NurseDashboard = () => {
                       placeholder="e.g., DHA, Gulberg, Model Town"
                       className="text-xs h-8"
                     />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Home Visit Radius (km)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={formData.home_visit_radius}
+                        onChange={(e) => setFormData(prev => ({ ...prev, home_visit_radius: e.target.value }))}
+                        placeholder="e.g., 10"
+                        className="text-xs h-8 flex-1"
+                      />
+                      <span className="text-xs text-muted-foreground">km</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Maximum distance you're willing to travel for home visits
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
                     <Checkbox

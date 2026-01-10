@@ -149,15 +149,6 @@ const Index = () => {
       iconColor: "text-yellow-500",
       link: "/instant-doctor",
     },
-    {
-      id: "weight-loss",
-      title: "Weight Loss Clinic",
-      subtitle: "Healthy Lifestyle",
-      icon: Dumbbell,
-      bgColor: "bg-emerald-50",
-      iconColor: "text-emerald-600",
-      link: "/weight-loss-clinic",
-    },
   ];
 
   // Quick access services

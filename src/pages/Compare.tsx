@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -20,20 +22,114 @@ import {
 } from "@/components/ui/table";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { labs, tests, labTests } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart3,
   ArrowUpDown,
   TrendingDown,
-  CheckCircle,
   Building2,
   FlaskConical,
+  Search,
+  Loader2,
 } from "lucide-react";
 
+interface Lab {
+  id: string;
+  name: string;
+  slug: string;
+  discount_percentage: number | null;
+  cities: string[] | null;
+  logo_url: string | null;
+}
+
+interface Test {
+  id: string;
+  name: string;
+  category: string | null;
+  slug: string;
+}
+
+interface LabTest {
+  lab_id: string;
+  test_id: string;
+  price: number;
+  discounted_price: number | null;
+}
+
 const Compare = () => {
+  const [labs, setLabs] = useState<Lab[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [labTests, setLabTests] = useState<LabTest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedLabs, setSelectedLabs] = useState<string[]>([]);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"price" | "discount">("price");
+  const [labSearch, setLabSearch] = useState("");
+  const [testSearch, setTestSearch] = useState("");
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch all active labs
+      const { data: labsData, error: labsError } = await supabase
+        .from("labs")
+        .select("id, name, slug, discount_percentage, cities, logo_url")
+        .eq("is_active", true)
+        .order("name");
+
+      if (labsError) throw labsError;
+
+      // Fetch all active tests
+      const { data: testsData, error: testsError } = await supabase
+        .from("tests")
+        .select("id, name, category, slug")
+        .eq("is_active", true)
+        .order("name");
+
+      if (testsError) throw testsError;
+
+      // Fetch all lab test pricing
+      const { data: labTestsData, error: labTestsError } = await supabase
+        .from("lab_tests")
+        .select("lab_id, test_id, price, discounted_price")
+        .eq("is_available", true);
+
+      if (labTestsError) throw labTestsError;
+
+      setLabs(labsData || []);
+      setTests(testsData || []);
+      setLabTests(labTestsData || []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredLabs = labs.filter((lab) =>
+    lab.name.toLowerCase().includes(labSearch.toLowerCase())
+  );
+
+  const filteredTests = tests.filter((test) =>
+    test.name.toLowerCase().includes(testSearch.toLowerCase()) ||
+    (test.category && test.category.toLowerCase().includes(testSearch.toLowerCase()))
+  );
+
+  // Group tests by category for better organization
+  const testsByCategory = useMemo(() => {
+    const grouped: Record<string, Test[]> = {};
+    filteredTests.forEach((test) => {
+      const category = test.category || "Other";
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(test);
+    });
+    return grouped;
+  }, [filteredTests]);
 
   const toggleLab = (labId: string) => {
     if (selectedLabs.includes(labId)) {
@@ -56,18 +152,22 @@ const Compare = () => {
 
     return selectedLabs.map((labId) => {
       const lab = labs.find((l) => l.id === labId)!;
+      const discount = lab.discount_percentage || 0;
+      
       const testsData = selectedTests.map((testId) => {
         const labTest = labTests.find(
-          (lt) => lt.labId === labId && lt.testId === testId
+          (lt) => lt.lab_id === labId && lt.test_id === testId
         );
         const test = tests.find((t) => t.id === testId)!;
+        
         if (!labTest) return { test, originalPrice: null, discountedPrice: null };
-        const discountedPrice = Math.round(
-          labTest.originalPrice * (1 - lab.discount / 100)
-        );
+        
+        const discountedPrice = labTest.discounted_price || 
+          Math.round(labTest.price * (1 - discount / 100));
+        
         return {
           test,
-          originalPrice: labTest.originalPrice,
+          originalPrice: labTest.price,
           discountedPrice,
         };
       });
@@ -89,19 +189,30 @@ const Compare = () => {
         savings: totalOriginal - totalDiscounted,
       };
     });
-  }, [selectedLabs, selectedTests]);
+  }, [selectedLabs, selectedTests, labs, tests, labTests]);
 
   const sortedData = useMemo(() => {
     return [...comparisonData].sort((a, b) => {
       if (sortBy === "price") {
         return a.totalDiscounted - b.totalDiscounted;
       }
-      return b.lab.discount - a.lab.discount;
+      return (b.lab.discount_percentage || 0) - (a.lab.discount_percentage || 0);
     });
   }, [comparisonData, sortBy]);
 
-  const bestValue =
-    sortedData.length > 0 ? sortedData[0].lab.id : null;
+  const bestValue = sortedData.length > 0 ? sortedData[0].lab.id : null;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,88 +242,137 @@ const Compare = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Select Labs */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-primary" />
                   Select Labs (up to 10)
+                  {selectedLabs.length > 0 && (
+                    <Badge variant="secondary">{selectedLabs.length} selected</Badge>
+                  )}
                 </CardTitle>
+                <div className="relative mt-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search labs..."
+                    value={labSearch}
+                    onChange={(e) => setLabSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {labs.map((lab) => (
-                    <div
-                      key={lab.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        selectedLabs.includes(lab.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => toggleLab(lab.id)}
-                    >
-                      <div className="flex items-start gap-2">
-                        <Checkbox
-                          checked={selectedLabs.includes(lab.id)}
-                          onCheckedChange={() => toggleLab(lab.id)}
-                          disabled={
-                            !selectedLabs.includes(lab.id) &&
-                            selectedLabs.length >= 10
-                          }
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {lab.name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="discount" className="text-xs">
-                              {lab.discount}% off
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {lab.city}
-                            </span>
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {filteredLabs.map((lab) => (
+                      <div
+                        key={lab.id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                          selectedLabs.includes(lab.id)
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                        onClick={() => toggleLab(lab.id)}
+                      >
+                        <div className="flex items-start gap-2">
+                          <Checkbox
+                            checked={selectedLabs.includes(lab.id)}
+                            onCheckedChange={() => toggleLab(lab.id)}
+                            disabled={
+                              !selectedLabs.includes(lab.id) &&
+                              selectedLabs.length >= 10
+                            }
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {lab.name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {lab.discount_percentage && lab.discount_percentage > 0 && (
+                                <Badge variant="discount" className="text-xs">
+                                  {lab.discount_percentage}% off
+                                </Badge>
+                              )}
+                              {lab.cities && lab.cities.length > 0 && (
+                                <span className="text-xs text-muted-foreground">
+                                  {lab.cities[0]}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                    {filteredLabs.length === 0 && (
+                      <div className="col-span-2 py-8 text-center text-muted-foreground">
+                        No labs found
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
 
             {/* Select Tests */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <FlaskConical className="w-5 h-5 text-primary" />
                   Select Tests
+                  {selectedTests.length > 0 && (
+                    <Badge variant="secondary">{selectedTests.length} selected</Badge>
+                  )}
                 </CardTitle>
+                <div className="relative mt-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search tests by name or category..."
+                    value={testSearch}
+                    onChange={(e) => setTestSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto">
-                  {tests.map((test) => (
-                    <div
-                      key={test.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        selectedTests.includes(test.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => toggleTest(test.id)}
-                    >
-                      <div className="flex items-start gap-2">
-                        <Checkbox
-                          checked={selectedTests.includes(test.id)}
-                          onCheckedChange={() => toggleTest(test.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{test.name}</p>
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {test.category}
-                          </Badge>
-                        </div>
-                      </div>
+                <ScrollArea className="h-[300px] pr-4">
+                  {Object.keys(testsByCategory).length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      No tests found
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {Object.entries(testsByCategory).map(([category, categoryTests]) => (
+                        <div key={category}>
+                          <h4 className="text-sm font-semibold text-muted-foreground mb-2 sticky top-0 bg-card py-1">
+                            {category} ({categoryTests.length})
+                          </h4>
+                          <div className="grid grid-cols-1 gap-2">
+                            {categoryTests.map((test) => (
+                              <div
+                                key={test.id}
+                                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                  selectedTests.includes(test.id)
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:border-primary/50"
+                                }`}
+                                onClick={() => toggleTest(test.id)}
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={selectedTests.includes(test.id)}
+                                    onCheckedChange={() => toggleTest(test.id)}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm">{test.name}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
               </CardContent>
             </Card>
           </div>
@@ -258,7 +418,7 @@ const Compare = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sortedData.map((data, index) => (
+                      {sortedData.map((data) => (
                         <TableRow
                           key={data.lab.id}
                           className={
@@ -275,9 +435,11 @@ const Compare = () => {
                               )}
                               <div>
                                 <p className="font-medium">{data.lab.name}</p>
-                                <Badge variant="discount" className="text-xs">
-                                  {data.lab.discount}% off
-                                </Badge>
+                                {data.lab.discount_percentage && data.lab.discount_percentage > 0 && (
+                                  <Badge variant="discount" className="text-xs">
+                                    {data.lab.discount_percentage}% off
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </TableCell>
@@ -328,6 +490,10 @@ const Compare = () => {
                   Choose at least one lab and one test from above to see the
                   price comparison
                 </p>
+                <div className="mt-4 text-sm text-muted-foreground">
+                  <span className="font-medium">{labs.length}</span> labs and{" "}
+                  <span className="font-medium">{tests.length}</span> tests available
+                </div>
               </CardContent>
             </Card>
           )}

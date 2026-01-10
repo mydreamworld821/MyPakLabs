@@ -39,7 +39,13 @@ const QUALIFICATIONS = [
   "RN (Registered Nurse)",
   "BSc Nursing",
   "Post-RN BSc Nursing",
-  "Diploma in Nursing"
+  "Diploma in Nursing",
+  "Nursing Certificate (up to 6 months)"
+];
+
+// Qualifications that require minimum 1 year experience
+const SHORT_DURATION_QUALIFICATIONS = [
+  "Nursing Certificate (up to 6 months)"
 ];
 
 const DEPARTMENTS = [
@@ -206,6 +212,14 @@ const NurseRegister = () => {
         if (!formData.qualification || !formData.pnc_number || !formData.experience_years) {
           toast.error("Please fill qualification, PNC number, and experience");
           return false;
+        }
+        // Validate minimum 1 year experience for short-duration qualifications
+        if (SHORT_DURATION_QUALIFICATIONS.includes(formData.qualification)) {
+          const expYears = parseInt(formData.experience_years);
+          if (isNaN(expYears) || expYears < 1) {
+            toast.error("Nursing Certificate (up to 6 months) requires minimum 1 year of experience");
+            return false;
+          }
         }
         break;
       case 3:

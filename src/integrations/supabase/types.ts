@@ -569,6 +569,48 @@ export type Database = {
         }
         Relationships: []
       }
+      service_cards: {
+        Row: {
+          bg_color: string | null
+          created_at: string
+          display_order: number | null
+          icon_name: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string | null
+          created_at?: string
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string | null
+          created_at?: string
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tests: {
         Row: {
           category: string | null

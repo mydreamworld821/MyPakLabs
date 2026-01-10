@@ -160,7 +160,7 @@ const LabDetail = () => {
 
   const fetchLabData = async () => {
     try {
-      // Fetch lab details - try by id first, then by slug
+      // Fetch lab details - try by id first, then by slug, then by name
       let labData = null;
       let labError = null;
 
@@ -172,18 +172,34 @@ const LabDetail = () => {
           .from("labs")
           .select("*")
           .eq("id", labIdentifier)
+          .eq("is_active", true)
           .maybeSingle();
         labData = result.data;
         labError = result.error;
       } else {
-        // Try by slug
-        const result = await supabase
+        // Try by slug first
+        const slugResult = await supabase
           .from("labs")
           .select("*")
           .eq("slug", labIdentifier)
+          .eq("is_active", true)
           .maybeSingle();
-        labData = result.data;
-        labError = result.error;
+        
+        if (slugResult.data) {
+          labData = slugResult.data;
+          labError = slugResult.error;
+        } else {
+          // Fallback: try case-insensitive slug match
+          const ilikeSluResult = await supabase
+            .from("labs")
+            .select("*")
+            .ilike("slug", labIdentifier || "")
+            .eq("is_active", true)
+            .maybeSingle();
+          
+          labData = ilikeSluResult.data;
+          labError = ilikeSluResult.error;
+        }
       }
 
       if (labError) throw labError;
@@ -267,9 +283,19 @@ const LabDetail = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 pt-24 text-center">
-          <h1 className="text-2xl font-bold mb-4">Lab not found</h1>
-          <Button onClick={() => navigate("/labs")}>Back to Labs</Button>
+          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Lab Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            The lab you're looking for doesn't exist or may have been removed.
+          </p>
+          <Button onClick={() => navigate("/labs")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Browse All Labs
+          </Button>
         </div>
+        <Footer />
       </div>
     );
   }

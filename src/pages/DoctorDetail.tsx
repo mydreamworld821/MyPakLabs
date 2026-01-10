@@ -86,18 +86,18 @@ const DoctorDetail = () => {
         .select("*, specialization:doctor_specializations(name, slug)")
         .eq("id", id)
         .eq("status", "approved")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      
+      if (!data) {
+        setIsLoading(false);
+        return;
+      }
+      
       setDoctor(data);
     } catch (error) {
       console.error("Error fetching doctor:", error);
-      toast({
-        title: "Error",
-        description: "Doctor not found",
-        variant: "destructive",
-      });
-      navigate("/find-doctors");
     } finally {
       setIsLoading(false);
     }
@@ -181,8 +181,18 @@ const DoctorDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex items-center justify-center py-24">
-          <p>Doctor not found</p>
+        <div className="container mx-auto px-4 pt-24 text-center">
+          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <UserRound className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Doctor Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            The doctor you're looking for doesn't exist or may have been removed.
+          </p>
+          <Button onClick={() => navigate("/find-doctors")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Browse All Doctors
+          </Button>
         </div>
         <Footer />
       </div>

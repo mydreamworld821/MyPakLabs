@@ -99,6 +99,8 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   }, [isApprovedNurse, nurseId, permission]);
 
   const handleNewEmergencyRequest = useCallback((request: any) => {
+    console.log('handleNewEmergencyRequest called:', request);
+    
     const urgencyType = request.urgency === 'critical' ? 'critical' : 
                         request.urgency === 'within_1_hour' ? 'urgent' : 'info';
     
@@ -113,10 +115,13 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     const message = `Patient needs: ${servicesText}${request.city ? ` in ${request.city}` : ''}`;
 
     // Play sound immediately
+    console.log('Playing notification sound');
     playNotificationSound();
 
-    // Show browser notification (works even when tab is in background)
+    // Show browser/system notification (appears in notification bar like WhatsApp)
+    console.log('Notification permission:', permission);
     if (permission === 'granted') {
+      console.log('Showing system notification');
       showNotification({
         title,
         body: message,
@@ -124,7 +129,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       });
     }
 
-    // Add to flash notifications queue
+    // Add to flash notifications queue (in-app banner)
     const notification: EmergencyNotification = {
       id: request.id,
       title,
@@ -134,10 +139,13 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       createdAt: new Date(),
     };
 
+    console.log('Adding flash notification:', notification);
     setPendingNotifications((prev) => {
       // Don't add duplicate notifications
       if (prev.some((n) => n.id === notification.id)) return prev;
-      return [notification, ...prev];
+      const updated = [notification, ...prev];
+      console.log('Updated pending notifications:', updated.length);
+      return updated;
     });
   }, [permission, showNotification, playNotificationSound]);
 

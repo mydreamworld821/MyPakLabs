@@ -30,10 +30,11 @@ interface NearbyStore {
   is_24_hours: boolean;
   opening_time: string;
   closing_time: string;
-  location_lat: number;
-  location_lng: number;
+  location_lat: number | null;
+  location_lng: number | null;
   google_maps_url: string | null;
   distance: number;
+  hasCoordinates: boolean;
 }
 
 const NearbyPharmaciesMap = () => {
@@ -61,24 +62,48 @@ const NearbyPharmaciesMap = () => {
   const fetchNearbyStores = useCallback(async (lat: number, lng: number, searchRadius: number) => {
     setLoading(true);
     try {
+      // Fetch all approved and active stores
       const { data, error } = await supabase
         .from("medical_stores")
         .select("*")
         .eq("status", "approved")
-        .eq("is_active", true)
-        .not("location_lat", "is", null)
-        .not("location_lng", "is", null);
+        .eq("is_active", true);
 
       if (error) throw error;
 
-      // Calculate distance for each store and filter by radius
+      // Process stores - calculate distance for those with coordinates
+      // For stores without coordinates, we'll still include them but mark distance as -1
       const storesWithDistance = (data || [])
-        .map(store => ({
-          ...store,
-          distance: calculateDistance(lat, lng, store.location_lat, store.location_lng)
-        }))
-        .filter(store => store.distance <= searchRadius)
-        .sort((a, b) => a.distance - b.distance);
+        .map(store => {
+          if (store.location_lat && store.location_lng) {
+            return {
+              ...store,
+              distance: calculateDistance(lat, lng, store.location_lat, store.location_lng),
+              hasCoordinates: true
+            };
+          }
+          // For stores without GPS, include them with a special distance marker
+          return {
+            ...store,
+            distance: -1,
+            hasCoordinates: false
+          };
+        })
+        .filter(store => {
+          // Include stores with coordinates within radius
+          if (store.hasCoordinates) {
+            return store.distance <= searchRadius;
+          }
+          // Include stores without coordinates (show them as "nearby" based on city)
+          return true;
+        })
+        .sort((a, b) => {
+          // Stores with coordinates come first, sorted by distance
+          if (a.hasCoordinates && !b.hasCoordinates) return -1;
+          if (!a.hasCoordinates && b.hasCoordinates) return 1;
+          if (a.hasCoordinates && b.hasCoordinates) return a.distance - b.distance;
+          return 0;
+        });
 
       setNearbyStores(storesWithDistance);
     } catch (error) {
@@ -140,6 +165,10 @@ const NearbyPharmaciesMap = () => {
       window.open(store.google_maps_url, "_blank");
     } else if (store.location_lat && store.location_lng) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${store.location_lat},${store.location_lng}`, "_blank");
+    } else {
+      // Fallback to searching by address
+      const address = encodeURIComponent(`${store.full_address}, ${store.area}, ${store.city}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, "_blank");
     }
   };
 
@@ -284,7 +313,8 @@ const NearbyPharmaciesMap = () => {
             ) : (
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 <p className="text-xs text-muted-foreground mb-2">
-                  Found {nearbyStores.length} {nearbyStores.length === 1 ? "pharmacy" : "pharmacies"} within {radius} km
+                  Found {nearbyStores.length} {nearbyStores.length === 1 ? "pharmacy" : "pharmacies"}
+                  {nearbyStores.some(s => !s.hasCoordinates) && " (some without GPS data)"}
                 </p>
                 {nearbyStores.map((store) => (
                   <Card 
@@ -309,8 +339,8 @@ const NearbyPharmaciesMap = () => {
                                 {store.area}, {store.city}
                               </p>
                             </div>
-                            <Badge className="bg-emerald-100 text-emerald-700 text-[10px] ml-2">
-                              {store.distance.toFixed(1)} km
+                            <Badge className={`${store.hasCoordinates ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"} text-[10px] ml-2`}>
+                              {store.hasCoordinates ? `${store.distance.toFixed(1)} km` : "No GPS"}
                             </Badge>
                           </div>
                           

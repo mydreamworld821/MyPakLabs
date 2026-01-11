@@ -418,30 +418,39 @@ export type Database = {
           created_at: string
           department: string | null
           doctor_id: string
+          end_year: number | null
           hospital_id: string
           id: string
+          is_current: boolean | null
           is_primary: boolean | null
           schedule: string | null
+          start_year: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           department?: string | null
           doctor_id: string
+          end_year?: number | null
           hospital_id: string
           id?: string
+          is_current?: boolean | null
           is_primary?: boolean | null
           schedule?: string | null
+          start_year?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           department?: string | null
           doctor_id?: string
+          end_year?: number | null
           hospital_id?: string
           id?: string
+          is_current?: boolean | null
           is_primary?: boolean | null
           schedule?: string | null
+          start_year?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -971,6 +980,60 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "emergency_nursing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_hospitals: {
+        Row: {
+          created_at: string
+          department: string | null
+          end_year: number | null
+          hospital_id: string
+          id: string
+          is_current: boolean | null
+          nurse_id: string
+          schedule: string | null
+          start_year: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          end_year?: number | null
+          hospital_id: string
+          id?: string
+          is_current?: boolean | null
+          nurse_id: string
+          schedule?: string | null
+          start_year?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          end_year?: number | null
+          hospital_id?: string
+          id?: string
+          is_current?: boolean | null
+          nurse_id?: string
+          schedule?: string | null
+          start_year?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_hospitals_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_hospitals_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
             referencedColumns: ["id"]
           },
         ]

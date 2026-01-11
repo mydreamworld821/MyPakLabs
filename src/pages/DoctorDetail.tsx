@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   Loader2,
   MessageCircle,
 } from "lucide-react";
+import HospitalBadges from "@/components/HospitalBadges";
 
 interface Doctor {
   id: string;
@@ -64,11 +65,20 @@ interface Doctor {
   specialization?: { name: string; slug: string } | null;
 }
 
+interface HospitalAffiliation {
+  hospital_id: string;
+  hospital_name: string;
+  hospital_slug: string;
+  department: string | null;
+  is_current: boolean;
+}
+
 const DoctorDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [hospitals, setHospitals] = useState<HospitalAffiliation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -78,6 +88,7 @@ const DoctorDetail = () => {
   useEffect(() => {
     if (id) {
       fetchDoctor();
+      fetchHospitalAffiliations();
     }
   }, [id]);
 
@@ -107,6 +118,33 @@ const DoctorDetail = () => {
       console.error("Error fetching doctor:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchHospitalAffiliations = async () => {
+    try {
+      const { data } = await supabase
+        .from("hospital_doctors")
+        .select(`
+          hospital_id,
+          department,
+          is_current,
+          hospital:hospitals(name, slug)
+        `)
+        .eq("doctor_id", id);
+
+      if (data) {
+        const affiliations = data.map((item: any) => ({
+          hospital_id: item.hospital_id,
+          hospital_name: item.hospital?.name || "Unknown Hospital",
+          hospital_slug: item.hospital?.slug || "",
+          department: item.department,
+          is_current: item.is_current ?? true,
+        }));
+        setHospitals(affiliations);
+      }
+    } catch (error) {
+      console.error("Error fetching hospital affiliations:", error);
     }
   };
 
@@ -516,6 +554,16 @@ const DoctorDetail = () => {
                 <TabsContent value="location" className="mt-4">
                   <Card>
                     <CardContent className="p-4 space-y-4">
+                      {/* Hospital Affiliations */}
+                      {hospitals.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                            <Building2 className="w-4 h-4" /> Hospital Affiliations
+                          </h3>
+                          <HospitalBadges hospitals={hospitals} showDepartment />
+                        </div>
+                      )}
+
                       {doctor.clinic_name && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">

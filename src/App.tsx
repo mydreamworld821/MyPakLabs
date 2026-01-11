@@ -73,6 +73,8 @@ import PharmacyDetail from "./pages/PharmacyDetail";
 import PharmacyDashboard from "./pages/PharmacyDashboard";
 import OrderMedicine from "./pages/OrderMedicine";
 import NurseActiveJob from "./pages/NurseActiveJob";
+import AITools from "./pages/AITools";
+import { HealthChatbot } from "./components/ai/HealthChatbot";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +130,7 @@ const App = () => (
               <Route path="/pharmacy/:id" element={<PharmacyDetail />} />
               <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
               <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
+              <Route path="/ai-tools" element={<AITools />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
@@ -160,6 +163,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <HealthChatbot />
           </BrowserRouter>
         </TooltipProvider>
       </NotificationProvider>

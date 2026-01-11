@@ -40,8 +40,10 @@ import {
   AlertCircle,
   Syringe,
   MessageCircle,
-  CalendarPlus
+  CalendarPlus,
+  Building2
 } from "lucide-react";
+import HospitalBadges from "@/components/HospitalBadges";
 
 interface Nurse {
   id: string;
@@ -70,10 +72,19 @@ interface Nurse {
   whatsapp_number: string | null;
 }
 
+interface HospitalAffiliation {
+  hospital_id: string;
+  hospital_name: string;
+  hospital_slug: string;
+  department: string | null;
+  is_current: boolean;
+}
+
 const NurseDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [nurse, setNurse] = useState<Nurse | null>(null);
+  const [hospitals, setHospitals] = useState<HospitalAffiliation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [submittingBooking, setSubmittingBooking] = useState(false);
@@ -89,6 +100,7 @@ const NurseDetail = () => {
 
   useEffect(() => {
     fetchNurse();
+    fetchHospitalAffiliations();
   }, [id]);
 
   const fetchNurse = async () => {
@@ -108,6 +120,34 @@ const NurseDetail = () => {
       console.error("Error fetching nurse:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHospitalAffiliations = async () => {
+    if (!id) return;
+    try {
+      const { data } = await supabase
+        .from("nurse_hospitals")
+        .select(`
+          hospital_id,
+          department,
+          is_current,
+          hospital:hospitals(name, slug)
+        `)
+        .eq("nurse_id", id);
+
+      if (data) {
+        const affiliations = data.map((item: any) => ({
+          hospital_id: item.hospital_id,
+          hospital_name: item.hospital?.name || "Unknown Hospital",
+          hospital_slug: item.hospital?.slug || "",
+          department: item.department,
+          is_current: item.is_current ?? true,
+        }));
+        setHospitals(affiliations);
+      }
+    } catch (error) {
+      console.error("Error fetching hospital affiliations:", error);
     }
   };
 
@@ -301,6 +341,21 @@ const NurseDetail = () => {
                         </Badge>
                       ))}
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Hospital Affiliations */}
+              {hospitals.length > 0 && (
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-rose-600" />
+                      Hospital Experience
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <HospitalBadges hospitals={hospitals} showDepartment />
                   </CardContent>
                 </Card>
               )}

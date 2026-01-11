@@ -33,6 +33,7 @@ import {
   Award
 } from "lucide-react";
 import useCities from "@/hooks/useCities";
+import { HospitalSelector, SelectedHospital } from "@/components/HospitalSelector";
 
 const QUALIFICATIONS = [
   "LPN (Licensed Practical Nurse)",
@@ -147,6 +148,9 @@ const NurseRegister = () => {
     background_check_consent: false,
     ethics_accepted: false,
   });
+
+  // Hospital affiliations
+  const [selectedHospitals, setSelectedHospitals] = useState<SelectedHospital[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -280,7 +284,7 @@ const NurseRegister = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("nurses").insert({
+      const { data: nurseData, error } = await supabase.from("nurses").insert({
         user_id: user.id,
         full_name: formData.full_name.trim(),
         cnic: formData.cnic || null,
@@ -318,9 +322,25 @@ const NurseRegister = () => {
         background_check_consent: formData.background_check_consent,
         ethics_accepted: formData.ethics_accepted,
         status: "pending",
-      });
+      }).select("id").single();
 
       if (error) throw error;
+
+      // Save hospital associations (only for hospitals from database, not custom ones)
+      if (nurseData && selectedHospitals.length > 0) {
+        const hospitalAssociations = selectedHospitals
+          .filter(h => !h.is_custom)
+          .map(h => ({
+            nurse_id: nurseData.id,
+            hospital_id: h.hospital_id,
+            department: h.department || null,
+            is_current: h.is_current,
+          }));
+
+        if (hospitalAssociations.length > 0) {
+          await supabase.from("nurse_hospitals").insert(hospitalAssociations);
+        }
+      }
 
       toast.success("Registration submitted successfully! We'll review your profile within 24-48 hours.");
       navigate("/");
@@ -674,14 +694,26 @@ const NurseRegister = () => {
                         ))}
                       </div>
                     </div>
+                    {/* Hospital Affiliations */}
+                    <div className="border-t pt-3 mt-3">
+                      <HospitalSelector
+                        selectedHospitals={selectedHospitals}
+                        onChange={setSelectedHospitals}
+                        maxSelections={5}
+                      />
+                    </div>
+
                     <div>
-                      <Label className="text-xs">Previous Workplaces (Optional)</Label>
+                      <Label className="text-xs">Other Previous Workplaces (Optional)</Label>
                       <Input
                         value={formData.previous_workplaces}
                         onChange={(e) => handleInputChange("previous_workplaces", e.target.value)}
                         placeholder="Hospital A, Clinic B (comma separated)"
                         className="text-xs h-8"
                       />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        For workplaces not listed above
+                      </p>
                     </div>
                   </>
                 )}

@@ -32,6 +32,7 @@ import {
   X,
   CheckCircle
 } from "lucide-react";
+import { HospitalSelector, SelectedHospital } from "@/components/HospitalSelector";
 
 interface Specialization {
   id: string;
@@ -107,6 +108,9 @@ const DoctorRegister = () => {
     terms_accepted: false,
     privacy_accepted: false,
   });
+
+  // Hospital affiliations
+  const [selectedHospitals, setSelectedHospitals] = useState<SelectedHospital[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -268,7 +272,7 @@ const DoctorRegister = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("doctors").insert({
+      const { data: doctorData, error } = await supabase.from("doctors").insert({
         user_id: user.id,
         full_name: formData.full_name.trim(),
         gender: formData.gender,
@@ -308,9 +312,25 @@ const DoctorRegister = () => {
         terms_accepted: formData.terms_accepted,
         privacy_accepted: formData.privacy_accepted,
         status: "pending",
-      });
+      }).select("id").single();
 
       if (error) throw error;
+
+      // Save hospital associations (only for hospitals from database, not custom ones)
+      if (doctorData && selectedHospitals.length > 0) {
+        const hospitalAssociations = selectedHospitals
+          .filter(h => !h.is_custom)
+          .map(h => ({
+            doctor_id: doctorData.id,
+            hospital_id: h.hospital_id,
+            department: h.department || null,
+            is_current: h.is_current,
+          }));
+
+        if (hospitalAssociations.length > 0) {
+          await supabase.from("hospital_doctors").insert(hospitalAssociations);
+        }
+      }
 
       toast.success("Registration submitted successfully! We'll review your profile within 24-48 hours.");
       navigate("/");
@@ -555,15 +575,26 @@ const DoctorRegister = () => {
                 {/* Step 3: Practice Details */}
                 {currentStep === 3 && (
                   <>
-                    <div>
-                      <Label className="text-xs">Hospital Name (if applicable)</Label>
-                      <Input
-                        value={formData.hospital_name}
-                        onChange={(e) => handleInputChange("hospital_name", e.target.value)}
-                        placeholder="e.g., Aga Khan University Hospital"
-                        className="text-xs h-8"
-                      />
+                    {/* Hospital Affiliations */}
+                    <HospitalSelector
+                      selectedHospitals={selectedHospitals}
+                      onChange={setSelectedHospitals}
+                      maxSelections={5}
+                    />
+
+                    <div className="border-t pt-3 mt-3">
+                      <p className="text-xs text-muted-foreground mb-3">Or enter hospital name manually (for quick setup)</p>
+                      <div>
+                        <Label className="text-xs">Hospital Name (Optional)</Label>
+                        <Input
+                          value={formData.hospital_name}
+                          onChange={(e) => handleInputChange("hospital_name", e.target.value)}
+                          placeholder="e.g., Aga Khan University Hospital"
+                          className="text-xs h-8"
+                        />
+                      </div>
                     </div>
+
                     <div>
                       <Label className="text-xs">Clinic Name *</Label>
                       <Input

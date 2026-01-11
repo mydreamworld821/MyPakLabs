@@ -244,26 +244,45 @@ const Locations = () => {
 
       if (cityNames.length === 0) {
         toast.error("No valid city names found in file");
+        setBulkImporting(false);
         return;
       }
 
-      // Get existing cities for this province to avoid duplicates
-      const existingCities = cities
-        .filter(c => c.province_id === bulkProvinceId)
-        .map(c => c.name.toLowerCase());
+      // Remove duplicates within the file itself (case-insensitive)
+      const uniqueCityNames = [...new Map(cityNames.map(name => [name.toLowerCase(), name])).values()];
 
-      // Filter out duplicates
-      const newCityNames = cityNames.filter(
-        name => !existingCities.includes(name.toLowerCase())
+      // Fetch fresh data from database to check for existing cities
+      const { data: existingCitiesData } = await supabase
+        .from("cities")
+        .select("name")
+        .eq("province_id", bulkProvinceId);
+
+      const existingCityNames = new Set(
+        (existingCitiesData || []).map(c => c.name.toLowerCase())
+      );
+
+      // Filter out cities that already exist in the database
+      const newCityNames = uniqueCityNames.filter(
+        name => !existingCityNames.has(name.toLowerCase())
       );
 
       if (newCityNames.length === 0) {
         toast.info("All cities already exist in this province");
+        setBulkImporting(false);
         return;
       }
 
+      // Get the current max display order for this province
+      const { data: maxOrderData } = await supabase
+        .from("cities")
+        .select("display_order")
+        .eq("province_id", bulkProvinceId)
+        .order("display_order", { ascending: false })
+        .limit(1);
+
+      const startOrder = (maxOrderData?.[0]?.display_order ?? -1) + 1;
+
       // Prepare cities for insert
-      const startOrder = cities.filter(c => c.province_id === bulkProvinceId).length;
       const citiesToInsert = newCityNames.map((name, index) => ({
         name,
         province_id: bulkProvinceId,
@@ -274,16 +293,28 @@ const Locations = () => {
       // Insert in batches of 50
       const batchSize = 50;
       let insertedCount = 0;
+      let skippedCount = 0;
 
       for (let i = 0; i < citiesToInsert.length; i += batchSize) {
         const batch = citiesToInsert.slice(i, i + batchSize);
         const { error } = await supabase.from("cities").insert(batch);
         
-        if (error) throw error;
+        if (error) {
+          // If we still get a duplicate error, skip and continue
+          if (error.code === '23505') {
+            skippedCount += batch.length;
+            continue;
+          }
+          throw error;
+        }
         insertedCount += batch.length;
       }
 
-      toast.success(`Successfully imported ${insertedCount} cities`);
+      const message = skippedCount > 0 
+        ? `Imported ${insertedCount} cities (${skippedCount} duplicates skipped)`
+        : `Successfully imported ${insertedCount} cities`;
+      
+      toast.success(message);
       setBulkDialogOpen(false);
       fetchData();
     } catch (error: any) {

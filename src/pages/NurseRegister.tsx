@@ -244,8 +244,9 @@ const NurseRegister = () => {
         // Skills are optional
         break;
       case 7:
-        if (!formData.degree_certificate_url || !formData.pnc_card_url) {
-          toast.error("Please upload required documents");
+        // At least one document is required (either diploma/degree OR PNC card)
+        if (!formData.degree_certificate_url && !formData.pnc_card_url) {
+          toast.error("Please upload at least one document (Diploma/Degree OR PNC Card)");
           return false;
         }
         break;
@@ -297,8 +298,8 @@ const NurseRegister = () => {
         year_of_completion: formData.year_of_completion ? parseInt(formData.year_of_completion) : null,
         pnc_number: formData.pnc_number.trim(),
         pnc_expiry_date: formData.pnc_expiry_date || null,
-        degree_certificate_url: formData.degree_certificate_url,
-        pnc_card_url: formData.pnc_card_url,
+        degree_certificate_url: formData.degree_certificate_url || null,
+        pnc_card_url: formData.pnc_card_url || null,
         experience_years: parseInt(formData.experience_years),
         current_employment: formData.current_employment || null,
         previous_workplaces: formData.previous_workplaces ? formData.previous_workplaces.split(',').map(s => s.trim()) : [],
@@ -852,20 +853,40 @@ const NurseRegister = () => {
                 {/* Step 7: Documents */}
                 {currentStep === 7 && (
                   <>
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-3">
-                      <p className="text-xs text-amber-800">
-                        📄 Your documents will be kept private and only used for verification purposes.
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg mb-3">
+                      <p className="text-xs text-emerald-800 font-medium">
+                        ✓ Upload at least ONE document to continue
+                      </p>
+                      <p className="text-[10px] text-emerald-700 mt-1">
+                        You can upload either your Diploma/Degree OR PNC Card. The second document is optional.
                       </p>
                     </div>
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-3">
+                      <p className="text-xs text-amber-800">
+                        🔒 Your documents will be kept private and only used for verification purposes.
+                      </p>
+                    </div>
+                    
+                    {/* Show status of document uploads */}
+                    {(formData.degree_certificate_url || formData.pnc_card_url) && (
+                      <div className="p-2 bg-green-50 border border-green-200 rounded-lg mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-xs text-green-700">
+                          Document uploaded - you can proceed to next step
+                        </span>
+                      </div>
+                    )}
+                    
                     <FileUploadButton 
                       field="degree_certificate_url" 
-                      label="Nursing Degree/Diploma *" 
+                      label="Nursing Degree/Diploma (Option 1)" 
                       accept=".pdf,image/*" 
                       bucket="nurse-documents"
                     />
+                    <p className="text-center text-xs text-muted-foreground my-2">— OR —</p>
                     <FileUploadButton 
                       field="pnc_card_url" 
-                      label="PNC Registration Card *" 
+                      label="PNC Registration Card (Option 2)" 
                       accept=".pdf,image/*" 
                       bucket="nurse-documents"
                     />

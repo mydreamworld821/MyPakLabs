@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { FlaskConical, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowLeft, Loader2 } from "lucide-react";
+import logo from "@/assets/mypaklabs-logo.jpeg";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
@@ -459,11 +460,13 @@ const Auth = () => {
           </Link>
 
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 gradient-hero rounded-xl flex items-center justify-center shadow-glow">
-              <FlaskConical className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img 
+              src={logo} 
+              alt="MyPakLabs Logo" 
+              className="w-12 h-12 rounded-xl object-contain"
+            />
             <div>
-              <h1 className="text-2xl font-bold">Medilabs</h1>
+              <h1 className="text-2xl font-bold">MyPakLabs</h1>
               <p className="text-sm text-muted-foreground">Your health, our priority</p>
             </div>
           </div>

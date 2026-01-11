@@ -127,6 +127,15 @@ const HelpCenter = () => {
                         <p className="font-medium text-foreground">mhmmdaqib@gmail.com</p>
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Support Email</p>
+                        <p className="font-medium text-foreground">support@mypaklabs.com</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>

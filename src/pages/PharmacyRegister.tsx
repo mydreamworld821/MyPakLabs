@@ -25,7 +25,8 @@ import {
   X,
   CheckCircle,
   Phone,
-  Truck
+  Truck,
+  Navigation
 } from "lucide-react";
 
 const PharmacyRegister = () => {
@@ -34,6 +35,7 @@ const PharmacyRegister = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
   
   const [formData, setFormData] = useState({
     // Store Info
@@ -108,6 +110,45 @@ const PharmacyRegister = () => {
     }
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        handleInputChange("location_lat", latitude.toString());
+        handleInputChange("location_lng", longitude.toString());
+        toast.success("Location captured successfully!");
+        setGettingLocation(false);
+      },
+      (error) => {
+        setGettingLocation(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast.error("Please allow location access to auto-fill coordinates");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            toast.error("Location information is unavailable");
+            break;
+          case error.TIMEOUT:
+            toast.error("Location request timed out");
+            break;
+          default:
+            toast.error("An error occurred getting your location");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
@@ -125,6 +166,10 @@ const PharmacyRegister = () => {
       case 3:
         if (!formData.city || !formData.area || !formData.full_address) {
           toast.error("Please fill all location fields");
+          return false;
+        }
+        if (!formData.location_lat || !formData.location_lng) {
+          toast.error("GPS coordinates are required for nearby pharmacy search. Use 'Get My Location' or enter manually.");
           return false;
         }
         break;
@@ -410,32 +455,62 @@ const PharmacyRegister = () => {
                         Paste your pharmacy's Google Maps link for easy directions
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs">Latitude (For nearby search)</Label>
-                        <Input
-                          type="number"
-                          step="any"
-                          value={formData.location_lat}
-                          onChange={(e) => handleInputChange("location_lat", e.target.value)}
-                          placeholder="e.g., 31.5204"
-                          className="text-xs h-8"
-                        />
+                    {/* GPS Coordinates Section */}
+                    <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-xs font-medium text-emerald-800">GPS Coordinates *</p>
+                          <p className="text-[10px] text-emerald-600">Required for nearby pharmacy search</p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs bg-white border-emerald-300 hover:bg-emerald-100"
+                          onClick={handleGetLocation}
+                          disabled={gettingLocation}
+                        >
+                          {gettingLocation ? (
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          ) : (
+                            <Navigation className="w-3 h-3 mr-1" />
+                          )}
+                          {gettingLocation ? "Getting..." : "Get My Location"}
+                        </Button>
                       </div>
-                      <div>
-                        <Label className="text-xs">Longitude (For nearby search)</Label>
-                        <Input
-                          type="number"
-                          step="any"
-                          value={formData.location_lng}
-                          onChange={(e) => handleInputChange("location_lng", e.target.value)}
-                          placeholder="e.g., 74.3587"
-                          className="text-xs h-8"
-                        />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Latitude *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={formData.location_lat}
+                            onChange={(e) => handleInputChange("location_lat", e.target.value)}
+                            placeholder="e.g., 31.5204"
+                            className="text-xs h-8 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Longitude *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={formData.location_lng}
+                            onChange={(e) => handleInputChange("location_lng", e.target.value)}
+                            placeholder="e.g., 74.3587"
+                            className="text-xs h-8 bg-white"
+                          />
+                        </div>
                       </div>
+                      {formData.location_lat && formData.location_lng && (
+                        <div className="flex items-center gap-1 mt-2 text-emerald-700">
+                          <CheckCircle className="w-3 h-3" />
+                          <span className="text-[10px]">Location captured</span>
+                        </div>
+                      )}
                     </div>
                     <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-[10px] text-blue-700 font-medium">How to get coordinates:</p>
+                      <p className="text-[10px] text-blue-700 font-medium">📍 How to get coordinates manually:</p>
                       <ol className="text-[10px] text-blue-600 mt-1 list-decimal list-inside space-y-0.5">
                         <li>Open Google Maps and find your pharmacy</li>
                         <li>Right-click on the exact location</li>

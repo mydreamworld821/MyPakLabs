@@ -78,6 +78,8 @@ const AdminLabs = () => {
     logo_url: "",
     cover_image_url: "",
     discount_percentage: 0,
+    rating: 0,
+    review_count: 0,
     is_active: true,
     opening_time: "7:00 AM",
     closing_time: "10:00 PM",
@@ -144,6 +146,8 @@ const AdminLabs = () => {
         logo_url: lab.logo_url || "",
         cover_image_url: lab.cover_image_url || "",
         discount_percentage: lab.discount_percentage || 0,
+        rating: lab.rating || 0,
+        review_count: lab.review_count || 0,
         is_active: lab.is_active ?? true,
         opening_time: lab.opening_time || "7:00 AM",
         closing_time: lab.closing_time || "10:00 PM",
@@ -160,6 +164,8 @@ const AdminLabs = () => {
         logo_url: "",
         cover_image_url: "",
         discount_percentage: 0,
+        rating: 0,
+        review_count: 0,
         is_active: true,
         opening_time: "7:00 AM",
         closing_time: "10:00 PM",
@@ -259,6 +265,8 @@ const AdminLabs = () => {
         logo_url: formData.logo_url || null,
         cover_image_url: formData.cover_image_url || null,
         discount_percentage: formData.discount_percentage,
+        rating: formData.rating,
+        review_count: formData.review_count,
         cities: uniqueCities,
         branches: branches as unknown as any,
         is_active: formData.is_active,
@@ -426,6 +434,34 @@ const AdminLabs = () => {
                     value={formData.discount_percentage}
                     onChange={(e) => setFormData({ ...formData, discount_percentage: Number(e.target.value) })}
                   />
+                </div>
+
+                {/* Rating & Reviews - Manual entry based on Google */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rating">Rating (Google)</Label>
+                    <Input
+                      id="rating"
+                      type="number"
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      value={formData.rating}
+                      onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
+                      placeholder="4.5"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="review_count">Review Count</Label>
+                    <Input
+                      id="review_count"
+                      type="number"
+                      min={0}
+                      value={formData.review_count}
+                      onChange={(e) => setFormData({ ...formData, review_count: Number(e.target.value) })}
+                      placeholder="1234"
+                    />
+                  </div>
                 </div>
 
                 {/* Branch Manager - replaces cities input */}

@@ -1259,7 +1259,7 @@ export type Database = {
           discounted_total: number
           id: string
           is_availed: boolean | null
-          lab_id: string
+          lab_id: string | null
           notes: string | null
           original_total: number
           pdf_url: string | null
@@ -1279,7 +1279,7 @@ export type Database = {
           discounted_total: number
           id?: string
           is_availed?: boolean | null
-          lab_id: string
+          lab_id?: string | null
           notes?: string | null
           original_total: number
           pdf_url?: string | null
@@ -1299,7 +1299,7 @@ export type Database = {
           discounted_total?: number
           id?: string
           is_availed?: boolean | null
-          lab_id?: string
+          lab_id?: string | null
           notes?: string | null
           original_total?: number
           pdf_url?: string | null

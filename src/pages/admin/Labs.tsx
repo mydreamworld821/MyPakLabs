@@ -313,7 +313,11 @@ const AdminLabs = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this lab?")) return;
+    if (!confirm("Are you sure you want to delete this lab? This will also remove its lab tests.")) return;
+
+    // Optimistic UI: remove immediately
+    const prevLabs = labs;
+    setLabs((current) => current.filter((l) => l.id !== id));
 
     try {
       const { error } = await supabase
@@ -322,11 +326,13 @@ const AdminLabs = () => {
         .eq("id", id);
 
       if (error) throw error;
+
       toast.success("Lab deleted successfully");
       fetchLabs();
-    } catch (error) {
-      console.error("Error deleting lab:", error);
-      toast.error("Failed to delete lab");
+    } catch (err: any) {
+      console.error("Error deleting lab:", err);
+      setLabs(prevLabs);
+      toast.error(err?.message || "Failed to delete lab");
     }
   };
 

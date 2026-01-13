@@ -18,7 +18,7 @@ const Footer = () => {
               <span className="text-xl font-bold">MyPakLabs</span>
             </Link>
             <p className="text-muted-foreground text-sm">
-              Pakistan's trusted platform for discounted lab tests. Compare prices, get exclusive discounts, and save on healthcare.
+              Verified Providers with Special Offers & Smart Savings on Medical Care. Access trusted doctors, labs, hospitals, and pharmacies with exclusive discounts.
             </p>
             <div className="flex gap-3">
               <a href="#" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">

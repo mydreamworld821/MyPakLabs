@@ -21,9 +21,9 @@ interface LabTestsCsvUploadProps {
 
 interface TestRow {
   test_name: string;
-  price: number;
-  discounted_price?: number;
-  is_available: boolean;
+  original_price: number;
+  discount_percentage: number;
+  discounted_price: number;
 }
 
 interface ImportResult {
@@ -42,7 +42,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     // Fetch all available tests
     const { data: tests, error } = await supabase
       .from("tests")
-      .select("name, slug")
+      .select("name")
       .eq("is_active", true)
       .order("name");
 
@@ -51,19 +51,17 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
       return;
     }
 
-    const headers = ["test_name", "price", "discounted_price", "is_available"];
-    const rows = tests?.map(test => [test.name, "0", "", "true"]) || [];
+    // Create TXT content with format: test_name, original_price, discount_%
+    const header = "test_name, original_price, discount_%";
+    const rows = tests?.map(test => `${test.name}, 0, 0`) || [];
     
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
-    ].join("\n");
+    const txtContent = [header, ...rows].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const blob = new Blob([txtContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${labName.toLowerCase().replace(/\s+/g, "-")}-tests-template.csv`;
+    a.download = `${labName.toLowerCase().replace(/\s+/g, "-")}-tests-template.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -72,32 +70,33 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     toast.success("Template downloaded with all available tests");
   };
 
-  const parseCSV = (text: string): TestRow[] => {
+  const parseTXT = (text: string): TestRow[] => {
     const lines = text.split("\n").filter(line => line.trim());
     if (lines.length < 2) return [];
 
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const testNameIndex = headers.findIndex(h => h === "test_name");
-    const priceIndex = headers.findIndex(h => h === "price");
-    const discountedPriceIndex = headers.findIndex(h => h === "discounted_price");
-    const isAvailableIndex = headers.findIndex(h => h === "is_available");
-
-    if (testNameIndex === -1 || priceIndex === -1) {
-      throw new Error("CSV must have 'test_name' and 'price' columns");
-    }
-
+    // Skip header line
     return lines.slice(1).map(line => {
-      const values = line.split(",").map(v => v.trim());
-      const price = parseFloat(values[priceIndex]) || 0;
-      const discountedPriceValue = discountedPriceIndex >= 0 ? values[discountedPriceIndex] : "";
+      // Split by comma and trim each value
+      const parts = line.split(",").map(v => v.trim());
+      
+      if (parts.length < 3) {
+        return null;
+      }
+
+      const test_name = parts[0];
+      const original_price = parseFloat(parts[1]) || 0;
+      const discount_percentage = parseFloat(parts[2]) || 0;
+      
+      // Auto-calculate discounted price
+      const discounted_price = original_price - (original_price * discount_percentage / 100);
       
       return {
-        test_name: values[testNameIndex],
-        price,
-        discounted_price: discountedPriceValue ? parseFloat(discountedPriceValue) : undefined,
-        is_available: isAvailableIndex >= 0 ? values[isAvailableIndex].toLowerCase() !== "false" : true
+        test_name,
+        original_price,
+        discount_percentage,
+        discounted_price: Math.round(discounted_price) // Round to whole number
       };
-    }).filter(row => row.test_name && row.price > 0);
+    }).filter((row): row is TestRow => row !== null && row.test_name && row.original_price > 0);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,10 +108,10 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
 
     try {
       const text = await file.text();
-      const rows = parseCSV(text);
+      const rows = parseTXT(text);
 
       if (rows.length === 0) {
-        toast.error("No valid data found in CSV. Ensure price > 0 for tests to import.");
+        toast.error("No valid data found. Format: test_name, original_price, discount_%");
         setIsUploading(false);
         return;
       }
@@ -154,9 +153,9 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
         const labTestData = {
           lab_id: labId,
           test_id: testId,
-          price: row.price,
-          discounted_price: row.discounted_price || null,
-          is_available: row.is_available
+          price: row.original_price,
+          discounted_price: row.discounted_price,
+          is_available: true
         };
 
         if (existing) {
@@ -169,7 +168,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
           importResults.push({
             success: !error,
             test_name: row.test_name,
-            message: error ? error.message : "Updated"
+            message: error ? error.message : `Updated (Rs.${row.discounted_price})`
           });
         } else {
           // Insert new
@@ -180,7 +179,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
           importResults.push({
             success: !error,
             test_name: row.test_name,
-            message: error ? error.message : "Added"
+            message: error ? error.message : `Added (Rs.${row.discounted_price})`
           });
         }
       }
@@ -193,7 +192,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
         onSuccess();
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to process CSV");
+      toast.error(error.message || "Failed to process file");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -219,17 +218,19 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              CSV Format
+              TXT Format (Simple)
             </h4>
-            <p className="text-sm text-muted-foreground">
-              Required columns: <code className="bg-muted px-1 rounded">test_name</code>, <code className="bg-muted px-1 rounded">price</code>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Optional: <code className="bg-muted px-1 rounded">discounted_price</code>, <code className="bg-muted px-1 rounded">is_available</code>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Only tests with price &gt; 0 will be imported. Test names must match existing tests exactly.
-            </p>
+            <div className="bg-background border rounded-md p-3 font-mono text-sm">
+              <p className="text-muted-foreground">test_name, original_price, discount_%</p>
+              <p className="mt-1">CBC, 500, 20</p>
+              <p>Thyroid Panel, 1200, 15</p>
+              <p>Lipid Profile, 800, 25</p>
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>✓ Discounted price is <strong>auto-calculated</strong></p>
+              <p>✓ Only tests with price &gt; 0 will be imported</p>
+              <p>✓ Test names must match existing tests</p>
+            </div>
           </div>
 
           <Button variant="outline" onClick={downloadTemplate} className="w-full">
@@ -241,7 +242,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
             <Input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".txt"
               onChange={handleFileUpload}
               disabled={isUploading}
               className="cursor-pointer"

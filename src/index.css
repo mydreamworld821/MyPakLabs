@@ -269,3 +269,17 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
+
+/* Safe area for native mobile apps (iOS notch/home indicator) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Add bottom padding to main content when using fixed bottom bar */
+.has-bottom-bar {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0));
+}

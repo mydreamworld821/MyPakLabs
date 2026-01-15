@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import GlobalSearch from "@/components/GlobalSearch";
 import TypingAnimation from "./TypingAnimation";
+import { useNativePlatform } from "@/hooks/useNativePlatform";
 import { 
   AlertTriangle, 
   ChevronRight, 
@@ -76,6 +77,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const HeroSection = () => {
+  const { isNative } = useNativePlatform();
   const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -312,10 +314,12 @@ const HeroSection = () => {
               </div>
             )}
 
-            {/* Search Bar */}
-            <div className="w-full max-w-2xl lg:max-w-full lg:pr-4">
-              <GlobalSearch className="w-full" />
-            </div>
+            {/* Search Bar - Hidden on native apps (shown as bottom bar instead) */}
+            {!isNative && (
+              <div className="w-full max-w-2xl lg:max-w-full lg:pr-4">
+                <GlobalSearch className="w-full" />
+              </div>
+            )}
 
             {/* Trust Badges */}
             {trustBadges.length > 0 && (

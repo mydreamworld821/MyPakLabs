@@ -64,7 +64,7 @@ const popularSearches = [
 ];
 
 export const SeoFooterSection = () => {
-  const city = "Islamabad";
+  const city = "Islamabad/Rawalpindi";
 
   return (
     <section className="bg-gradient-to-b from-muted/30 to-muted/60 py-12 md:py-16">

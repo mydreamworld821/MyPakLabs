@@ -15,6 +15,7 @@ import LabCard from "@/components/labs/LabCard";
 import LabListCard from "@/components/labs/LabListCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, SlidersHorizontal, MapPin, Building2, Loader2 } from "lucide-react";
+import { usePageLayoutSettings } from "@/hooks/usePageLayoutSettings";
 
 interface Lab {
   id: string;
@@ -37,6 +38,9 @@ const Labs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
   const [sortBy, setSortBy] = useState("discount");
+  
+  // Get admin-managed layout settings
+  const { settings: layoutSettings, loading: layoutLoading } = usePageLayoutSettings("labs_listing");
 
   useEffect(() => {
     fetchLabs();
@@ -164,9 +168,17 @@ const Labs = () => {
               <p className="text-sm text-muted-foreground mb-6">
                 Showing {filteredLabs.length} lab{filteredLabs.length !== 1 ? "s" : ""}
               </p>
-              <div className="space-y-4">
+              <div 
+                className={layoutSettings.layout_type === 'list' ? 'flex flex-col' : 'grid'}
+                style={{ 
+                  gap: `${layoutSettings.items_gap}px`,
+                  gridTemplateColumns: layoutSettings.layout_type !== 'list' 
+                    ? `repeat(${layoutSettings.columns_desktop}, minmax(0, 1fr))` 
+                    : undefined 
+                }}
+              >
                 {filteredLabs.map((lab) => (
-                  <LabListCard key={lab.id} lab={lab} />
+                  <LabListCard key={lab.id} lab={lab} settings={layoutSettings} />
                 ))}
               </div>
             </>

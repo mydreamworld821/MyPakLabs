@@ -1551,6 +1551,87 @@ export type Database = {
           },
         ]
       }
+      page_layout_settings: {
+        Row: {
+          button_width: number | null
+          card_border_radius: number | null
+          card_min_height: number | null
+          card_padding: number | null
+          card_shadow: string | null
+          columns_desktop: number | null
+          columns_mobile: number | null
+          columns_tablet: number | null
+          created_at: string
+          description_lines: number | null
+          id: string
+          items_gap: number | null
+          layout_type: string | null
+          logo_border_radius: number | null
+          logo_size: number | null
+          page_key: string
+          page_title: string
+          primary_button_text: string | null
+          secondary_button_text: string | null
+          show_branch_count: boolean | null
+          show_description: boolean | null
+          show_logo_border: boolean | null
+          show_rating: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          button_width?: number | null
+          card_border_radius?: number | null
+          card_min_height?: number | null
+          card_padding?: number | null
+          card_shadow?: string | null
+          columns_desktop?: number | null
+          columns_mobile?: number | null
+          columns_tablet?: number | null
+          created_at?: string
+          description_lines?: number | null
+          id?: string
+          items_gap?: number | null
+          layout_type?: string | null
+          logo_border_radius?: number | null
+          logo_size?: number | null
+          page_key: string
+          page_title: string
+          primary_button_text?: string | null
+          secondary_button_text?: string | null
+          show_branch_count?: boolean | null
+          show_description?: boolean | null
+          show_logo_border?: boolean | null
+          show_rating?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          button_width?: number | null
+          card_border_radius?: number | null
+          card_min_height?: number | null
+          card_padding?: number | null
+          card_shadow?: string | null
+          columns_desktop?: number | null
+          columns_mobile?: number | null
+          columns_tablet?: number | null
+          created_at?: string
+          description_lines?: number | null
+          id?: string
+          items_gap?: number | null
+          layout_type?: string | null
+          logo_border_radius?: number | null
+          logo_size?: number | null
+          page_key?: string
+          page_title?: string
+          primary_button_text?: string | null
+          secondary_button_text?: string | null
+          show_branch_count?: boolean | null
+          show_description?: boolean | null
+          show_logo_border?: boolean | null
+          show_rating?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prescriptions: {
         Row: {
           admin_notes: string | null

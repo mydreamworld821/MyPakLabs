@@ -170,46 +170,6 @@ export const SeoFooterSection = () => {
             </div>
           </div>
 
-          {/* Pharmacy & Why Choose Us Column */}
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Pill className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg text-foreground">
-                  💊 Pharmacies & Medicines
-                </h3>
-              </div>
-              <ul className="space-y-2">
-                {pharmacyServices.map((service, index) => (
-                  <li key={index}>
-                    <Link
-                      to={service.link}
-                      className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
-                    >
-                      {service.name} in {city}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <h3 className="font-semibold text-lg text-foreground">
-                  🌟 Why Choose MyPakLabs?
-                </h3>
-              </div>
-              <ul className="space-y-2">
-                {whyChooseUs.map((reason, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-green-500 mt-0.5">✔</span>
-                    {reason}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
         </div>
 
         {/* Popular Searches */}

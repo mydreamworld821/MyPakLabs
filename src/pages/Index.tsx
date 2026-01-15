@@ -170,16 +170,9 @@ const Index = () => {
 
       <main className="py-6 md:py-8 relative z-0">
         <div className="container mx-auto px-4 relative">
-          {/* Services Section - Admin Managed */}
+          {/* Services Section - Bento Grid Layout */}
           {serviceCardsConfig?.is_visible !== false && (
-            <div 
-              className="mb-8"
-              style={{
-                backgroundColor: serviceCardsConfig?.background_color || 'transparent',
-                padding: serviceCardsConfig ? `${serviceCardsConfig.section_padding_y || 0}px ${serviceCardsConfig.section_padding_x || 0}px` : undefined,
-                borderRadius: serviceCardsConfig?.card_border_radius ? `${serviceCardsConfig.card_border_radius}px` : undefined,
-              }}
-            >
+            <div className="mb-8">
               <div className="mb-4">
                 <h2 className="text-base md:text-lg font-semibold text-foreground">
                   {serviceCardsConfig?.title || "How can we help you today?"}
@@ -191,141 +184,218 @@ const Index = () => {
                 )}
               </div>
 
-              {/* Main Service Cards Grid - Uses admin columns config */}
-              <div 
-                className="grid gap-3 mb-4"
-                style={{
-                  gridTemplateColumns: `repeat(${serviceCardsConfig?.columns_mobile || 1}, minmax(0, 1fr))`,
-                }}
-              >
-                <style>
-                  {`
-                    @media (min-width: 768px) {
-                      .service-cards-grid {
-                        grid-template-columns: repeat(${serviceCardsConfig?.columns_tablet || 2}, minmax(0, 1fr)) !important;
-                      }
-                    }
-                    @media (min-width: 1024px) {
-                      .service-cards-grid {
-                        grid-template-columns: repeat(${serviceCardsConfig?.columns_desktop || 3}, minmax(0, 1fr)) !important;
-                      }
-                    }
-                  `}
-                </style>
-                <div 
-                  className="service-cards-grid grid gap-3"
-                  style={{ gap: serviceCardsConfig?.items_gap ? `${serviceCardsConfig.items_gap}px` : '12px' }}
-                >
-                  {serviceCards.length > 0 ? serviceCards.slice(0, serviceCardsConfig?.max_items || 8).map(card => {
-                    const IconComponent = card.icon_name ? iconMap[card.icon_name] : null;
-                    const cardHeight = serviceCardsConfig?.card_height || 160;
-                    const cardBorderRadius = serviceCardsConfig?.card_border_radius || 12;
-                    
-                    return (
-                      <Link key={card.id} to={card.link} className="block">
-                        <Card 
-                          className={`h-full ${card.bg_color || 'bg-primary/10'} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden relative`}
-                          style={{ 
-                            borderRadius: `${cardBorderRadius}px`,
-                            boxShadow: serviceCardsConfig?.card_shadow === 'none' ? 'none' : 
-                                       serviceCardsConfig?.card_shadow === 'sm' ? '0 1px 2px rgba(0,0,0,0.05)' :
-                                       serviceCardsConfig?.card_shadow === 'lg' ? '0 10px 15px rgba(0,0,0,0.1)' :
-                                       '0 4px 6px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          {card.image_url ? (
-                            <>
-                              <img 
-                                src={card.image_url} 
-                                alt={card.title} 
-                                className="absolute inset-0 w-full h-full"
-                                style={{
-                                  objectFit: (serviceCardsConfig?.image_fit as any) || 'cover',
-                                  objectPosition: `${serviceCardsConfig?.image_position_x || 50}% ${serviceCardsConfig?.image_position_y || 50}%`,
-                                  borderRadius: `${serviceCardsConfig?.image_border_radius || 8}px`
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                              <CardContent 
-                                className="p-4 h-full flex flex-col justify-end relative z-10"
-                                style={{ minHeight: `${cardHeight}px` }}
-                              >
-                                <div>
-                                  <h3 className="font-bold text-white text-lg mb-0.5 drop-shadow-lg">
-                                    {card.title}
-                                  </h3>
-                                  {card.subtitle && (
-                                    <p className="text-sm text-white/90 drop-shadow">
-                                      {card.subtitle}
-                                    </p>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </>
-                          ) : (
-                            <CardContent 
-                              className="p-4 h-full flex flex-col justify-between"
-                              style={{ minHeight: `${cardHeight - 20}px` }}
-                            >
-                              <div>
-                                <h3 className="font-semibold text-primary text-base mb-0.5">
-                                  {card.title}
-                                </h3>
-                                {card.subtitle && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {card.subtitle}
-                                  </p>
-                                )}
-                              </div>
-                              {IconComponent && (
-                                <div className="flex justify-center mt-2">
-                                  <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <IconComponent className="w-7 h-7 text-primary" />
-                                  </div>
-                                </div>
+              {/* Bento Grid Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                {/* Left Column - Large Card (Video Consultation) */}
+                {serviceCards[0] && (
+                  <Link 
+                    to={serviceCards[0].link} 
+                    className="md:col-span-3 md:row-span-2 block group"
+                  >
+                    <Card 
+                      className={`h-full ${serviceCards[0].bg_color || 'bg-sky-100'} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden relative`}
+                      style={{ borderRadius: '12px' }}
+                    >
+                      {serviceCards[0].image_url ? (
+                        <>
+                          <img 
+                            src={serviceCards[0].image_url} 
+                            alt={serviceCards[0].title} 
+                            className="absolute inset-0 w-full h-full object-cover object-top"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-transparent to-transparent" />
+                          <CardContent className="p-4 h-full min-h-[280px] md:min-h-[320px] flex flex-col relative z-10">
+                            <div>
+                              <h3 className="font-bold text-white text-lg mb-0.5">
+                                {serviceCards[0].title}
+                              </h3>
+                              {serviceCards[0].subtitle && (
+                                <p className="text-sm text-white/90">
+                                  {serviceCards[0].subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </>
+                      ) : (
+                        <CardContent className="p-4 h-full min-h-[280px] md:min-h-[320px] flex flex-col">
+                          <div>
+                            <h3 className="font-bold text-primary text-lg mb-0.5">
+                              {serviceCards[0].title}
+                            </h3>
+                            {serviceCards[0].subtitle && (
+                              <p className="text-sm text-muted-foreground">
+                                {serviceCards[0].subtitle}
+                              </p>
+                            )}
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  </Link>
+                )}
+
+                {/* Middle Column - Two Stacked Cards */}
+                <div className="md:col-span-4 flex flex-col gap-3">
+                  {/* In-clinic Visit */}
+                  {serviceCards[1] && (
+                    <Link to={serviceCards[1].link} className="block group flex-1">
+                      <Card 
+                        className={`h-full ${serviceCards[1].bg_color || 'bg-teal-600'} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden relative`}
+                        style={{ borderRadius: '12px' }}
+                      >
+                        {serviceCards[1].image_url ? (
+                          <>
+                            <img 
+                              src={serviceCards[1].image_url} 
+                              alt={serviceCards[1].title} 
+                              className="absolute inset-0 w-full h-full object-cover object-right"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-r from-teal-700/95 via-teal-600/60 to-transparent" />
+                            <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center relative z-10">
+                              <h3 className="font-bold text-white text-lg mb-0.5">
+                                {serviceCards[1].title}
+                              </h3>
+                              {serviceCards[1].subtitle && (
+                                <p className="text-sm text-white/90">
+                                  {serviceCards[1].subtitle}
+                                </p>
                               )}
                             </CardContent>
-                          )}
+                          </>
+                        ) : (
+                          <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center">
+                            <h3 className="font-bold text-white text-lg mb-0.5">
+                              {serviceCards[1].title}
+                            </h3>
+                            {serviceCards[1].subtitle && (
+                              <p className="text-sm text-white/90">
+                                {serviceCards[1].subtitle}
+                              </p>
+                            )}
+                          </CardContent>
+                        )}
+                      </Card>
+                    </Link>
+                  )}
+
+                  {/* Weight Loss / Additional Card */}
+                  {serviceCards[2] && (
+                    <Link to={serviceCards[2].link} className="block group flex-1">
+                      <Card 
+                        className={`h-full ${serviceCards[2].bg_color || 'bg-amber-100'} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden relative`}
+                        style={{ borderRadius: '12px' }}
+                      >
+                        {serviceCards[2].image_url ? (
+                          <>
+                            <img 
+                              src={serviceCards[2].image_url} 
+                              alt={serviceCards[2].title} 
+                              className="absolute inset-0 w-full h-full object-cover object-right"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-r from-amber-100/95 via-amber-50/60 to-transparent" />
+                            <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center relative z-10">
+                              <h3 className="font-bold text-teal-700 text-lg mb-0.5">
+                                {serviceCards[2].title}
+                              </h3>
+                              {serviceCards[2].subtitle && (
+                                <p className="text-sm text-teal-600/80">
+                                  {serviceCards[2].subtitle}
+                                </p>
+                              )}
+                            </CardContent>
+                          </>
+                        ) : (
+                          <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center">
+                            <h3 className="font-bold text-teal-700 text-lg mb-0.5">
+                              {serviceCards[2].title}
+                            </h3>
+                            {serviceCards[2].subtitle && (
+                              <p className="text-sm text-teal-600/80">
+                                {serviceCards[2].subtitle}
+                              </p>
+                            )}
+                          </CardContent>
+                        )}
+                      </Card>
+                    </Link>
+                  )}
+                </div>
+
+                {/* Right Column - Instant Doctor + Quick Access */}
+                <div className="md:col-span-5 flex flex-col gap-3">
+                  {/* Instant Doctor Card */}
+                  {serviceCards[3] && (
+                    <Link to={serviceCards[3].link} className="block group">
+                      <Card 
+                        className="h-full bg-gradient-to-r from-amber-50 to-white border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
+                        style={{ borderRadius: '12px' }}
+                      >
+                        <CardContent className="p-4 min-h-[100px] flex items-center gap-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
+                              <Zap className="w-6 h-6 text-white" />
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-amber-600 text-lg flex items-center gap-1">
+                              INSTANT <span className="text-teal-600">DOCTOR</span>
+                              <span className="text-amber-500">+</span>
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {serviceCards[3].subtitle || "Get Instant Relief in a Click"}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )}
+
+                  {/* Quick Access Icons Grid */}
+                  <div className="grid grid-cols-5 gap-2">
+                    {quickServices.map(service => (
+                      <Link key={service.id} to={service.link} className="block group">
+                        <Card className="h-full hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100" style={{ borderRadius: '12px' }}>
+                          <CardContent className="p-2 md:p-3 flex flex-col items-center text-center">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden mb-1.5 group-hover:scale-105 transition-transform">
+                              {service.id === 'labs' && (
+                                <div className="w-full h-full bg-sky-50 flex items-center justify-center">
+                                  <FlaskConical className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                                </div>
+                              )}
+                              {service.id === 'pharmacies' && (
+                                <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                                  <Pill className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+                                </div>
+                              )}
+                              {service.id === 'doctors' && (
+                                <div className="w-full h-full bg-red-50 flex items-center justify-center">
+                                  <Heart className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
+                                </div>
+                              )}
+                              {service.id === 'hospitals' && (
+                                <div className="w-full h-full bg-teal-50 flex items-center justify-center">
+                                  <Building2 className="w-5 h-5 md:w-6 md:h-6 text-teal-600" />
+                                </div>
+                              )}
+                              {service.id === 'surgeries' && (
+                                <div className="w-full h-full bg-purple-50 flex items-center justify-center">
+                                  <Stethoscope className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
+                                </div>
+                              )}
+                            </div>
+                            <h3 className="font-medium text-[10px] md:text-xs text-gray-700 group-hover:text-primary transition-colors">
+                              {service.title}
+                            </h3>
+                          </CardContent>
                         </Card>
                       </Link>
-                    );
-                  }) : (
-                    // Fallback skeleton while loading
-                    <>
-                      {[1, 2, 3].map(i => (
-                        <Card key={i} className="h-full bg-muted/50 border-0 animate-pulse">
-                          <CardContent className="p-4 h-full min-h-[140px]" />
-                        </Card>
-                      ))}
-                    </>
-                  )}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Quick Access Services Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-foreground">
-                Quick Access
-              </h2>
-            </div>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
-              {quickServices.map(service => <Link key={service.id} to={service.link} className="block group">
-                  <Card className="h-full hover:shadow-md transition-all duration-300 overflow-hidden">
-                    <CardContent className="p-3 md:p-4 flex flex-col items-center text-center">
-                      <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl ${service.bgColor} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-sm`}>
-                        <service.icon className={`w-6 h-6 md:w-7 md:h-7 ${service.iconColor}`} />
-                      </div>
-                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors">
-                        {service.title}
-                      </h3>
-                    </CardContent>
-                  </Card>
-                </Link>)}
-            </div>
-          </div>
 
           {/* Consult Best Doctors Online - Specializations Section */}
           <ConsultSpecialists className="mb-8" maxItems={14} />

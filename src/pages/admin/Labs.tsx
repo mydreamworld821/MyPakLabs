@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, Building2, Loader2, MapPin } from "lucide-react";
 import LabsCsvUpload from "@/components/admin/LabsCsvUpload";
 import LabTestsCsvUpload from "@/components/admin/LabTestsCsvUpload";
+import LabTestsEditor from "@/components/admin/LabTestsEditor";
 import ImageUpload from "@/components/admin/ImageUpload";
 import BranchManager, { Branch } from "@/components/admin/BranchManager";
 
@@ -682,7 +683,12 @@ const AdminLabs = () => {
                             <LabTestsCsvUpload
                               labId={lab.id}
                               labName={lab.name}
-                              onSuccess={() => {}}
+                              onSuccess={fetchLabs}
+                            />
+                            <LabTestsEditor
+                              labId={lab.id}
+                              labName={lab.name}
+                              onSuccess={fetchLabs}
                             />
                             <Button
                               variant="ghost"

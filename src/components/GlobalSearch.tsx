@@ -557,7 +557,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyPress}
             onFocus={handleInputFocus}
-            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-12 text-base flex-1 min-w-0"
+            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-900 placeholder:text-gray-400 h-12 text-base flex-1 min-w-0 caret-primary"
           />
           {searchQuery && (
             <Button

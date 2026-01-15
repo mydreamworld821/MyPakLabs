@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, XCircle } from "lucide-react";
+import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, XCircle, Trash2, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
 
@@ -22,9 +33,9 @@ interface LabTestsCsvUploadProps {
 
 interface TestRow {
   test_name: string;
-  original_price: number;
-  discount_percentage: number;
-  discounted_price: number;
+  original_price: number | null;
+  discount_percentage: number | null;
+  discounted_price: number | null;
 }
 
 interface ImportResult {
@@ -36,8 +47,22 @@ interface ImportResult {
 const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [results, setResults] = useState<ImportResult[]>([]);
+  const [existingTestCount, setExistingTestCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch existing test count when dialog opens
+  const handleDialogOpen = async (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      const { count } = await supabase
+        .from("lab_tests")
+        .select("*", { count: "exact", head: true })
+        .eq("lab_id", labId);
+      setExistingTestCount(count || 0);
+    }
+  };
 
   const downloadTemplate = async () => {
     // Fetch all available tests
@@ -58,7 +83,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     // Create data with headers
     const data = [
       ["test_name", "original_price", "discount_%"],
-      ...(tests?.map(test => [test.name, 0, 0]) || [])
+      ...(tests?.map(test => [test.name, "", ""]) || [])
     ];
     
     const ws = XLSX.utils.aoa_to_sheet(data);
@@ -87,15 +112,39 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     const uniqueTests = new Map<string, TestRow>();
     
     jsonData.forEach(row => {
-      // Support various column name formats
-      const test_name = (row["test_name"] || row["Test Name"] || row["test name"] || "").toString().trim();
-      const original_price = parseFloat(row["original_price"] || row["Original Price"] || row["price"] || 0) || 0;
-      const discount_percentage = parseFloat(row["discount_%"] || row["discount"] || row["Discount"] || row["discount_percentage"] || 0) || 0;
+      // Support various column name formats - FLEXIBLE: only test_name is required
+      const test_name = (
+        row["test_name"] || 
+        row["Test Name"] || 
+        row["test name"] || 
+        row["Test_Name"] || 
+        row["name"] || 
+        row["Name"] ||
+        row["TEST NAME"] ||
+        row["TEST_NAME"] ||
+        ""
+      ).toString().trim();
       
-      if (!test_name || original_price <= 0) return;
+      // Parse price - allow empty/0
+      const priceValue = row["original_price"] || row["Original Price"] || row["price"] || row["Price"] || row["PRICE"] || row["original price"] || "";
+      const original_price = priceValue === "" ? null : (parseFloat(priceValue) || null);
       
-      // Auto-calculate discounted price
-      const discounted_price = Math.round(original_price - (original_price * discount_percentage / 100));
+      // Parse discount - allow empty/0
+      const discountValue = row["discount_%"] || row["discount"] || row["Discount"] || row["DISCOUNT"] || row["discount_percentage"] || row["Discount %"] || row["discount %"] || "";
+      const discount_percentage = discountValue === "" ? null : (parseFloat(discountValue) || 0);
+      
+      // Skip if no test name
+      if (!test_name) return;
+      
+      // Auto-calculate discounted price only if we have price and discount
+      let discounted_price: number | null = null;
+      if (original_price !== null && original_price > 0) {
+        if (discount_percentage !== null && discount_percentage > 0) {
+          discounted_price = Math.round(original_price - (original_price * discount_percentage / 100));
+        } else {
+          discounted_price = original_price; // No discount = same as original
+        }
+      }
       
       // Use lowercase name as key to handle case-insensitive duplicates
       uniqueTests.set(test_name.toLowerCase(), {
@@ -107,6 +156,27 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     });
     
     return Array.from(uniqueTests.values());
+  };
+
+  const deleteAllLabTests = async () => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("lab_tests")
+        .delete()
+        .eq("lab_id", labId);
+
+      if (error) throw error;
+
+      toast.success(`All ${existingTestCount} tests deleted from ${labName}`);
+      setExistingTestCount(0);
+      setResults([]);
+      onSuccess();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete tests");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +191,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
       const rows = parseExcel(arrayBuffer);
 
       if (rows.length === 0) {
-        toast.error("No valid data found. Ensure columns: test_name, original_price, discount_%");
+        toast.error("No valid test names found in the file");
         setIsUploading(false);
         return;
       }
@@ -164,29 +234,44 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
           continue;
         }
 
-        const labTestData = {
+        // Build lab test data - flexible fields
+        const labTestData: any = {
           lab_id: labId,
           test_id: testId,
-          price: row.original_price,
-          discounted_price: row.discounted_price,
           is_available: true
         };
+
+        // Only set price if provided
+        if (row.original_price !== null) {
+          labTestData.price = row.original_price;
+        }
+
+        // Only set discounted_price if calculated
+        if (row.discounted_price !== null) {
+          labTestData.discounted_price = row.discounted_price;
+        }
 
         const existingId = existingTestMap.get(testId);
         
         if (existingId) {
           toUpdate.push({ id: existingId, data: labTestData });
+          const priceInfo = row.discounted_price ? `Rs.${row.discounted_price}` : "price pending";
           importResults.push({
             success: true,
             test_name: row.test_name,
-            message: `Updated (Rs.${row.discounted_price})`
+            message: `Updated (${priceInfo})`
           });
         } else {
+          // For new inserts, we need a default price if not provided
+          if (labTestData.price === undefined) {
+            labTestData.price = 0; // Default price, user can update later
+          }
           toInsert.push(labTestData);
+          const priceInfo = row.discounted_price ? `Rs.${row.discounted_price}` : "price pending";
           importResults.push({
             success: true,
             test_name: row.test_name,
-            message: `Added (Rs.${row.discounted_price})`
+            message: `Added (${priceInfo})`
           });
         }
       }
@@ -227,11 +312,20 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
       setResults(importResults);
       
       const successCount = importResults.filter(r => r.success).length;
-      const duplicatesRemoved = rows.length;
+      const failedCount = importResults.filter(r => !r.success).length;
       
       if (successCount > 0) {
-        toast.success(`Imported ${successCount} tests (duplicates auto-merged)`);
+        toast.success(`Imported ${successCount} tests successfully${failedCount > 0 ? `, ${failedCount} failed` : ""}`);
         onSuccess();
+        
+        // Update existing count
+        const { count } = await supabase
+          .from("lab_tests")
+          .select("*", { count: "exact", head: true })
+          .eq("lab_id", labId);
+        setExistingTestCount(count || 0);
+      } else {
+        toast.error("No tests were imported");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to process Excel file");
@@ -244,7 +338,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Upload className="w-4 h-4 mr-2" />
@@ -257,6 +351,52 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          {/* Existing tests info & delete option */}
+          {existingTestCount > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    {existingTestCount} tests already exist
+                  </span>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isDeleting}>
+                      {isDeleting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete All
+                        </>
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete all tests for {labName}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all {existingTestCount} tests from this lab. 
+                        You can then upload a fresh file. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={deleteAllLabTests} className="bg-destructive text-destructive-foreground">
+                        Yes, Delete All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+                Uploading will merge with existing tests. Delete all first for a fresh start.
+              </p>
+            </div>
+          )}
+
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4" />
@@ -266,23 +406,24 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-muted-foreground border-b">
-                    <th className="text-left p-1">test_name</th>
+                    <th className="text-left p-1">test_name *</th>
                     <th className="text-left p-1">original_price</th>
                     <th className="text-left p-1">discount_%</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr><td className="p-1">CBC</td><td className="p-1">500</td><td className="p-1">20</td></tr>
-                  <tr><td className="p-1">Thyroid Panel</td><td className="p-1">1200</td><td className="p-1">15</td></tr>
-                  <tr><td className="p-1">Lipid Profile</td><td className="p-1">800</td><td className="p-1">25</td></tr>
+                  <tr><td className="p-1">Thyroid Panel</td><td className="p-1">1200</td><td className="p-1"></td></tr>
+                  <tr><td className="p-1">Lipid Profile</td><td className="p-1"></td><td className="p-1"></td></tr>
                 </tbody>
               </table>
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
+              <p>✓ Only <strong>test_name is required</strong></p>
+              <p>✓ Price &amp; discount are <strong>optional</strong> (add later manually)</p>
               <p>✓ Discounted price is <strong>auto-calculated</strong></p>
               <p>✓ Duplicate test names are <strong>auto-removed</strong></p>
               <p>✓ Existing tests will be <strong>merged/updated</strong></p>
-              <p>✓ Only tests with price &gt; 0 will be imported</p>
             </div>
           </div>
 

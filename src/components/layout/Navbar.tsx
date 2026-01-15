@@ -358,24 +358,88 @@ const Navbar = () => {
                 Pharmacies
               </Button>
             </Link>
-            <Link to="/join-as-doctor">
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 ml-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                <UserPlus className="w-3.5 h-3.5" />
-                Join as Doctor
-              </Button>
-            </Link>
-            <Link to="/join-as-nurse">
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white">
-                <Heart className="w-3.5 h-3.5" />
-                Join as Nurse
-              </Button>
-            </Link>
-            <Link to="/join-as-pharmacy">
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white">
-                <Store className="w-3.5 h-3.5" />
-                Join as Pharmacy
-              </Button>
-            </Link>
+            {/* Join Us As - Mega Menu */}
+            <HoverCard openDelay={0} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs px-3 ml-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Join Us
+                  <ChevronDown className="w-3 h-3 opacity-70" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-[380px] p-0" align="end">
+                <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 border-b">
+                  <h4 className="text-base font-semibold text-foreground">Join Our Healthcare Network</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Become a part of Pakistan's growing healthcare platform
+                  </p>
+                </div>
+                <div className="p-3 space-y-2">
+                  <Link 
+                    to="/join-as-doctor"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors group border border-transparent hover:border-primary/20"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Stethoscope className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        Join as Doctor
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Expand your practice, reach more patients online
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </Link>
+
+                  <Link 
+                    to="/join-as-nurse"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-rose-50 transition-colors group border border-transparent hover:border-rose-200"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Heart className="w-6 h-6 text-rose-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground group-hover:text-rose-600 transition-colors">
+                        Join as Nurse
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Provide home care services, flexible hours
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-rose-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+
+                  <Link 
+                    to="/join-as-pharmacy"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 transition-colors group border border-transparent hover:border-emerald-200"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Store className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground group-hover:text-emerald-600 transition-colors">
+                        Join as Pharmacy
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        List your store, accept online orders
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                </div>
+                <div className="p-3 bg-muted/50 border-t">
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    All registrations are reviewed by our team within 24-48 hours
+                  </p>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           </div>
 
           {/* Auth Buttons */}
@@ -537,18 +601,46 @@ const Navbar = () => {
                 </Button>
               </Link>
             ))}
-            <Link to="/join-as-doctor" onClick={() => setIsOpen(false)}>
-              <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-primary text-primary text-xs">
-                <UserPlus className="w-3.5 h-3.5" />
-                Join as Doctor
-              </Button>
-            </Link>
-            <Link to="/join-as-nurse" onClick={() => setIsOpen(false)}>
-              <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-rose-600 text-rose-600 text-xs">
-                <Heart className="w-3.5 h-3.5" />
-                Join as Nurse
-              </Button>
-            </Link>
+            
+            {/* Join Us Section - Mobile */}
+            <div className="pt-2 border-t border-border">
+              <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Join Our Network
+              </p>
+              <Link to="/join-as-doctor" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-3 text-xs h-12">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Stethoscope className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Join as Doctor</p>
+                    <p className="text-[10px] text-muted-foreground">Expand your practice</p>
+                  </div>
+                </Button>
+              </Link>
+              <Link to="/join-as-nurse" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-3 text-xs h-12">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
+                    <Heart className="w-4 h-4 text-rose-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Join as Nurse</p>
+                    <p className="text-[10px] text-muted-foreground">Home care services</p>
+                  </div>
+                </Button>
+              </Link>
+              <Link to="/join-as-pharmacy" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-3 text-xs h-12">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Store className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Join as Pharmacy</p>
+                    <p className="text-[10px] text-muted-foreground">Accept online orders</p>
+                  </div>
+                </Button>
+              </Link>
+            </div>
             <div className="pt-2 border-t border-border space-y-1">
               {user ? (
                 <>

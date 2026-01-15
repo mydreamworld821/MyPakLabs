@@ -321,25 +321,21 @@ const SpecialistInCity = () => {
               <div className="flex flex-wrap gap-2">
                 {(
                   [
-                    { label: `All Doctors in ${formattedCity}`, href: `/doctors-in-${city?.toLowerCase()}` },
-                    { label: `Labs in ${formattedCity}`, href: `/labs-in-${city?.toLowerCase()}` },
-                    { label: `Hospitals in ${formattedCity}`, href: `/hospitals-in-${city?.toLowerCase()}` },
-                    { label: `Pharmacies in ${formattedCity}`, href: `/pharmacies-in-${city?.toLowerCase()}` },
-                    { label: `Home Nursing in ${formattedCity}`, href: `/home-nursing-${city?.toLowerCase()}` },
+                    { label: `All Doctors in ${formattedCity}`, to: `/doctors-in-${city?.toLowerCase()}` },
+                    { label: `Labs in ${formattedCity}`, to: `/labs-in-${city?.toLowerCase()}` },
+                    { label: `Hospitals in ${formattedCity}`, to: `/hospitals-in-${city?.toLowerCase()}` },
+                    { label: `Pharmacies in ${formattedCity}`, to: `/pharmacies-in-${city?.toLowerCase()}` },
+                    { label: `Home Nursing in ${formattedCity}`, to: `/home-nursing-${city?.toLowerCase()}` },
                   ] as const
                 ).map((item, idx) => (
-                  <span key={item.href} className="flex items-center gap-2">
-                    <a
-                      href={item.href}
+                  <span key={item.to} className="flex items-center gap-2">
+                    <button
+                      type="button"
                       className="text-primary hover:underline text-sm"
-                      onClick={(e) => {
-                        // Force navigation even if a click overlay/selection mode interferes
-                        e.preventDefault();
-                        window.location.assign(item.href);
-                      }}
+                      onClick={() => navigate(item.to)}
                     >
                       {item.label}
-                    </a>
+                    </button>
                     {idx < 4 && <span className="text-muted-foreground">•</span>}
                   </span>
                 ))}

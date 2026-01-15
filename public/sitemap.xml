@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage - Highest Priority -->
+  <url>
+    <loc>https://mypaklabs.com/</loc>
+    <priority>1.0</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  
+  <!-- Main Service Pages -->
+  <url>
+    <loc>https://mypaklabs.com/labs</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/find-doctors</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/hospitals</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/find-nurses</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/pharmacies</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/surgeries</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/compare</loc>
+    <priority>0.8</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  
+  <!-- City Landing Pages - Islamabad -->
+  <url>
+    <loc>https://mypaklabs.com/doctors-in-islamabad</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/labs-in-islamabad</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/hospitals-in-islamabad</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/pharmacies-in-islamabad</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/home-nursing-islamabad</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  
+  <!-- Specialist Pages - Islamabad -->
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-psychologist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-psychiatrist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-dermatologist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-gynecologist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-urologist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-cardiologist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-neurologist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-orthopedic-surgeon</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-pediatrician</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/islamabad/best-dentist</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  
+  <!-- Consultation Pages -->
+  <url>
+    <loc>https://mypaklabs.com/video-consultation</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/in-clinic-visit</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  
+  <!-- Partner Pages -->
+  <url>
+    <loc>https://mypaklabs.com/join-as-doctor</loc>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/join-as-nurse</loc>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/join-as-pharmacy</loc>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  
+  <!-- Reviews Page -->
+  <url>
+    <loc>https://mypaklabs.com/reviews</loc>
+    <priority>0.7</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  
+  <!-- Legal & Support Pages -->
+  <url>
+    <loc>https://mypaklabs.com/help</loc>
+    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/terms</loc>
+    <priority>0.4</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://mypaklabs.com/privacy</loc>
+    <priority>0.4</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+</urlset>

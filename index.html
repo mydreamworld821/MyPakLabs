@@ -10,31 +10,43 @@
     <link rel="icon" href="/images/mypaklabs-logo.png" sizes="16x16" type="image/png" />
     <link rel="apple-touch-icon" href="/images/mypaklabs-logo.png" />
     <link rel="shortcut icon" href="/images/mypaklabs-logo.png" type="image/png" />
-    <title>MyPakLabs - Discounted Lab Tests Across Pakistan</title>
-    <meta name="description" content="MyPakLabs is Pakistan's trusted healthcare platform to find and compare hospitals, diagnostic labs, doctors, nurses, and pharmacies in one place. Compare medical prices, book lab tests, doctor consultations, nursing care, and medicines with exclusive discounts up to 30%. We connect you with verified, ISO-certified labs and licensed medical professionals near you for fast, affordable, and reliable healthcare services across Pakistan." />
+    
+    <!-- SEO Meta Tags -->
+    <title>MyPakLabs – Compare Hospitals, Labs, Doctors & Pharmacies in Pakistan</title>
+    <meta name="description" content="Compare prices from top hospitals, labs, doctors, nurses, and pharmacies in Pakistan. Save up to 35% on medical services with verified ISO-certified providers. Book online appointments and lab tests now." />
+    <link rel="canonical" href="https://mypaklabs.com/" />
     <meta name="author" content="MyPakLabs" />
-    <meta name="keywords" content="lab tests Pakistan, diagnostic labs, discounted lab tests, medical tests, blood tests Pakistan, MyPakLabs" />
+    <meta name="keywords" content="medical services in Pakistan, diagnostic labs near me, hospital near me, doctor consultation online Pakistan, nursing services at home, pharmacy medicines Pakistan, lab test prices Pakistan, ISO certified labs, discounted medical tests, blood tests Pakistan, MyPakLabs" />
 
-    <meta property="og:title" content="MyPakLabs - Discounted Lab Tests Across Pakistan" />
-    <meta property="og:description" content="MyPakLabs is Pakistan's trusted healthcare platform to find and compare hospitals, diagnostic labs, doctors, nurses, and pharmacies in one place. Compare medical prices, book lab tests, doctor consultations, nursing care, and medicines with exclusive discounts up to 30%." />
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="MyPakLabs – Compare Hospitals, Labs, Doctors & Pharmacies in Pakistan" />
+    <meta property="og:description" content="Compare prices from top hospitals, labs, doctors, nurses, and pharmacies in Pakistan. Save up to 35% on medical services with verified ISO-certified providers. Book online appointments and lab tests now." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://mypaklab.lovable.app/images/mypaklabs-logo.png" />
+    <meta property="og:url" content="https://mypaklabs.com/" />
+    <meta property="og:image" content="https://mypaklabs.com/images/mypaklabs-logo.png" />
+    <meta property="og:site_name" content="MyPakLabs" />
 
+    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@MyPakLabs" />
-    <meta name="twitter:title" content="MyPakLabs - Discounted Lab Tests Across Pakistan" />
-    <meta name="twitter:description" content="MyPakLabs is Pakistan's trusted healthcare platform to find and compare hospitals, diagnostic labs, doctors, nurses, and pharmacies in one place. Compare medical prices, book lab tests with exclusive discounts up to 30%." />
-    <meta name="twitter:image" content="https://mypaklab.lovable.app/images/mypaklabs-logo.png" />
+    <meta name="twitter:title" content="MyPakLabs – Compare Hospitals, Labs, Doctors & Pharmacies in Pakistan" />
+    <meta name="twitter:description" content="Compare prices from top hospitals, labs, doctors, nurses, and pharmacies in Pakistan. Save up to 35% on medical services with verified ISO-certified providers." />
+    <meta name="twitter:image" content="https://mypaklabs.com/images/mypaklabs-logo.png" />
 
-    <!-- JSON-LD Schema Markup for SEO -->
+    <!-- JSON-LD Organization Schema Markup -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "MedicalOrganization",
+      "@type": "Organization",
       "name": "MyPakLabs",
-      "url": "https://mypaklab.lovable.app",
-      "logo": "https://mypaklab.lovable.app/images/mypaklabs-logo.png",
-      "description": "Compare prices from top diagnostic labs in Pakistan, get exclusive discounts up to 35%, and save on your lab tests.",
+      "url": "https://mypaklabs.com",
+      "logo": "https://mypaklabs.com/images/mypaklabs-logo.png",
+      "description": "Pakistan's trusted healthcare platform to compare hospitals, labs, doctors, nurses, and pharmacies. Save up to 35% on medical services.",
+      "sameAs": [
+        "https://www.facebook.com/mypaklabs",
+        "https://twitter.com/mypaklabs",
+        "https://www.instagram.com/mypaklabs"
+      ],
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "G13-1",
@@ -46,16 +58,33 @@
         "telephone": "+92-316-7523434",
         "contactType": "customer support",
         "email": "support@mypaklabs.com",
-        "availableLanguage": ["English", "Urdu"]
+        "availableLanguage": ["English", "Urdu"],
+        "hoursAvailable": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "00:00",
+          "closes": "23:59"
+        }
       },
-      "sameAs": [
-        "https://twitter.com/MyPakLabs"
-      ],
       "areaServed": {
         "@type": "Country",
         "name": "Pakistan"
-      },
-      "medicalSpecialty": "Diagnostic Laboratory"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD WebSite Schema for Site Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MyPakLabs",
+      "url": "https://mypaklabs.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://mypaklabs.com/find-doctors?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
     </script>
   </head>

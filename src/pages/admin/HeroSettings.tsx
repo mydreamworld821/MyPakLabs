@@ -31,6 +31,8 @@ interface HeroSettings {
   background_gradient: string | null;
   image_position_x: number | null;
   image_position_y: number | null;
+  image_width: number | null;
+  image_height: number | null;
   is_active: boolean;
 }
 
@@ -71,6 +73,8 @@ const HeroSettingsPage = () => {
   const [backgroundGradient, setBackgroundGradient] = useState("from-amber-800 via-amber-700 to-blue-900");
   const [imagePositionX, setImagePositionX] = useState(50);
   const [imagePositionY, setImagePositionY] = useState(30);
+  const [imageWidth, setImageWidth] = useState(100);
+  const [imageHeight, setImageHeight] = useState(100);
 
   useEffect(() => {
     fetchSettings();
@@ -98,6 +102,8 @@ const HeroSettingsPage = () => {
         setBackgroundGradient(data.background_gradient || "from-amber-800 via-amber-700 to-blue-900");
         setImagePositionX(data.image_position_x ?? 50);
         setImagePositionY(data.image_position_y ?? 30);
+        setImageWidth(data.image_width ?? 100);
+        setImageHeight(data.image_height ?? 100);
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -128,6 +134,8 @@ const HeroSettingsPage = () => {
         background_gradient: backgroundGradient,
         image_position_x: imagePositionX,
         image_position_y: imagePositionY,
+        image_width: imageWidth,
+        image_height: imageHeight,
         updated_at: new Date().toISOString()
       };
 
@@ -474,17 +482,66 @@ const HeroSettingsPage = () => {
                       </div>
                     </div>
                     
-                    {/* Image Position Preview */}
-                    <div className="mt-4">
-                      <Label className="text-sm">Position Preview</Label>
-                      <div className="relative mt-2 h-32 w-48 rounded-lg overflow-hidden border">
-                        <img
-                          src={heroImageUrl}
-                          alt="Position preview"
-                          className="w-full h-full object-cover"
-                          style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
+                    {/* Image Size Controls */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label>Image Width</Label>
+                          <span className="text-sm text-muted-foreground">{imageWidth}%</span>
+                        </div>
+                        <Slider
+                          value={[imageWidth]}
+                          onValueChange={(value) => setImageWidth(value[0])}
+                          min={50}
+                          max={100}
+                          step={5}
+                          className="w-full"
                         />
-                        <div className="absolute inset-0 border-2 border-dashed border-primary/50 pointer-events-none" />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>50%</span>
+                          <span>75%</span>
+                          <span>100%</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label>Image Height</Label>
+                          <span className="text-sm text-muted-foreground">{imageHeight}%</span>
+                        </div>
+                        <Slider
+                          value={[imageHeight]}
+                          onValueChange={(value) => setImageHeight(value[0])}
+                          min={50}
+                          max={100}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>50%</span>
+                          <span>75%</span>
+                          <span>100%</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Image Preview with all settings */}
+                    <div className="mt-4">
+                      <Label className="text-sm">Size & Position Preview</Label>
+                      <div className="relative mt-2 bg-muted/50 rounded-lg p-4 flex justify-end">
+                        <div 
+                          className="relative rounded-lg overflow-hidden border-2 border-dashed border-primary/50"
+                          style={{ 
+                            width: `${imageWidth * 2}px`,
+                            height: `${imageHeight * 1.5}px`
+                          }}
+                        >
+                          <img
+                            src={heroImageUrl}
+                            alt="Size preview"
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

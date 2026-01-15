@@ -198,18 +198,24 @@ const HeroSection = () => {
   };
 
   // Calculate grid template based on content ratio
-  const getGridStyle = () => {
-    const imageRatio = 100 - contentRatio;
-    return {
-      gridTemplateColumns: `${contentRatio}fr ${imageRatio}fr`
-    };
-  };
+  const imageRatio = 100 - contentRatio;
 
   return (
     <section 
       className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}
       style={{ minHeight: `${heroMinHeight}px` }}
     >
+      {/* Dynamic CSS for responsive grid ratio */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media (min-width: 1024px) {
+            .hero-content-grid {
+              grid-template-columns: ${contentRatio}fr ${imageRatio}fr !important;
+            }
+          }
+        `
+      }} />
+      
       <div 
         className="mx-auto w-full"
         style={{ 
@@ -221,11 +227,10 @@ const HeroSection = () => {
         }}
       >
         <div 
-          className={`grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${
+          className={`hero-content-grid grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${
             heroAlignment === 'left' ? 'justify-start' : 
             heroAlignment === 'right' ? 'justify-end' : 'justify-center'
           }`}
-          style={window.innerWidth >= 1024 ? getGridStyle() : undefined}
         >
           {/* Left Content */}
           <div className="text-left space-y-4 z-10">

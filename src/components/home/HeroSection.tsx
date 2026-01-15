@@ -45,6 +45,13 @@ interface HeroSettings {
   image_fade_intensity: number | null;
   image_soft_edges: boolean | null;
   image_mask_type: string | null;
+  // Layout controls
+  hero_max_width: number | null;
+  hero_min_height: number | null;
+  hero_padding_x: number | null;
+  hero_padding_y: number | null;
+  content_ratio: number | null;
+  hero_alignment: string | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -93,7 +100,13 @@ const HeroSection = () => {
           image_gradient_direction: data.image_gradient_direction || 'left',
           image_fade_intensity: data.image_fade_intensity ?? 50,
           image_soft_edges: data.image_soft_edges ?? true,
-          image_mask_type: data.image_mask_type || 'gradient'
+          image_mask_type: data.image_mask_type || 'gradient',
+          hero_max_width: data.hero_max_width ?? 1400,
+          hero_min_height: data.hero_min_height ?? 400,
+          hero_padding_x: data.hero_padding_x ?? 16,
+          hero_padding_y: data.hero_padding_y ?? 48,
+          content_ratio: data.content_ratio ?? 50,
+          hero_alignment: data.hero_alignment || 'center'
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -124,7 +137,13 @@ const HeroSection = () => {
           image_gradient_direction: "left",
           image_fade_intensity: 50,
           image_soft_edges: true,
-          image_mask_type: "gradient"
+          image_mask_type: "gradient",
+          hero_max_width: 1400,
+          hero_min_height: 400,
+          hero_padding_x: 16,
+          hero_padding_y: 48,
+          content_ratio: 50,
+          hero_alignment: "center"
         });
       } finally {
         setLoading(false);
@@ -152,6 +171,14 @@ const HeroSection = () => {
   const imageSoftEdges = heroSettings?.image_soft_edges ?? true;
   const imageMaskType = heroSettings?.image_mask_type || 'gradient';
   const imageGradientDirection = heroSettings?.image_gradient_direction || 'left';
+  
+  // Layout controls
+  const heroMaxWidth = heroSettings?.hero_max_width ?? 1400;
+  const heroMinHeight = heroSettings?.hero_min_height ?? 400;
+  const heroPaddingX = heroSettings?.hero_padding_x ?? 16;
+  const heroPaddingY = heroSettings?.hero_padding_y ?? 48;
+  const contentRatio = heroSettings?.content_ratio ?? 50;
+  const heroAlignment = heroSettings?.hero_alignment || 'center';
 
   // Generate mask gradient based on settings
   const getMaskGradient = () => {
@@ -170,10 +197,36 @@ const HeroSection = () => {
     }
   };
 
+  // Calculate grid template based on content ratio
+  const getGridStyle = () => {
+    const imageRatio = 100 - contentRatio;
+    return {
+      gridTemplateColumns: `${contentRatio}fr ${imageRatio}fr`
+    };
+  };
+
   return (
-    <section className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}>
-      <div className="container mx-auto px-4 py-8 md:py-10 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+    <section 
+      className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}
+      style={{ minHeight: `${heroMinHeight}px` }}
+    >
+      <div 
+        className="mx-auto w-full"
+        style={{ 
+          maxWidth: `${heroMaxWidth}px`,
+          paddingLeft: `${heroPaddingX}px`,
+          paddingRight: `${heroPaddingX}px`,
+          paddingTop: `${heroPaddingY}px`,
+          paddingBottom: `${heroPaddingY}px`
+        }}
+      >
+        <div 
+          className={`grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${
+            heroAlignment === 'left' ? 'justify-start' : 
+            heroAlignment === 'right' ? 'justify-end' : 'justify-center'
+          }`}
+          style={window.innerWidth >= 1024 ? getGridStyle() : undefined}
+        >
           {/* Left Content */}
           <div className="text-left space-y-4 z-10">
             {/* Title with Typing Animation */}

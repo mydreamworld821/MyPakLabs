@@ -40,6 +40,13 @@ interface HeroSettings {
   image_fade_intensity: number | null;
   image_soft_edges: boolean | null;
   image_mask_type: string | null;
+  // Layout controls
+  hero_max_width: number | null;
+  hero_min_height: number | null;
+  hero_padding_x: number | null;
+  hero_padding_y: number | null;
+  content_ratio: number | null;
+  hero_alignment: string | null;
   is_active: boolean;
 }
 
@@ -99,6 +106,13 @@ const HeroSettingsPage = () => {
   const [imageGradientDirection, setImageGradientDirection] = useState("left");
   const [imageSoftEdges, setImageSoftEdges] = useState(true);
   const [imageMaskType, setImageMaskType] = useState("gradient");
+  // Layout state
+  const [heroMaxWidth, setHeroMaxWidth] = useState(1400);
+  const [heroMinHeight, setHeroMinHeight] = useState(400);
+  const [heroPaddingX, setHeroPaddingX] = useState(16);
+  const [heroPaddingY, setHeroPaddingY] = useState(48);
+  const [contentRatio, setContentRatio] = useState(50);
+  const [heroAlignment, setHeroAlignment] = useState("center");
 
   useEffect(() => {
     fetchSettings();
@@ -134,6 +148,13 @@ const HeroSettingsPage = () => {
         setImageGradientDirection(data.image_gradient_direction || "left");
         setImageSoftEdges(data.image_soft_edges ?? true);
         setImageMaskType(data.image_mask_type || "gradient");
+        // Layout settings
+        setHeroMaxWidth(data.hero_max_width ?? 1400);
+        setHeroMinHeight(data.hero_min_height ?? 400);
+        setHeroPaddingX(data.hero_padding_x ?? 16);
+        setHeroPaddingY(data.hero_padding_y ?? 48);
+        setContentRatio(data.content_ratio ?? 50);
+        setHeroAlignment(data.hero_alignment || "center");
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -172,6 +193,13 @@ const HeroSettingsPage = () => {
         image_gradient_direction: imageGradientDirection,
         image_soft_edges: imageSoftEdges,
         image_mask_type: imageMaskType,
+        // Layout settings
+        hero_max_width: heroMaxWidth,
+        hero_min_height: heroMinHeight,
+        hero_padding_x: heroPaddingX,
+        hero_padding_y: heroPaddingY,
+        content_ratio: contentRatio,
+        hero_alignment: heroAlignment,
         updated_at: new Date().toISOString()
       };
 
@@ -258,6 +286,167 @@ const HeroSettingsPage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Hero Layout Controls - New Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Hero Layout Controls</CardTitle>
+            <CardDescription>
+              Control the overall hero section dimensions, padding, and content ratio
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Max Width */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Max Width</Label>
+                  <span className="text-sm text-muted-foreground">{heroMaxWidth}px</span>
+                </div>
+                <Slider
+                  value={[heroMaxWidth]}
+                  onValueChange={(value) => setHeroMaxWidth(value[0])}
+                  min={800}
+                  max={1920}
+                  step={20}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>800px</span>
+                  <span>1360px</span>
+                  <span>1920px</span>
+                </div>
+              </div>
+
+              {/* Min Height */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Min Height</Label>
+                  <span className="text-sm text-muted-foreground">{heroMinHeight}px</span>
+                </div>
+                <Slider
+                  value={[heroMinHeight]}
+                  onValueChange={(value) => setHeroMinHeight(value[0])}
+                  min={200}
+                  max={800}
+                  step={20}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>200px</span>
+                  <span>500px</span>
+                  <span>800px</span>
+                </div>
+              </div>
+
+              {/* Content Ratio */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Content / Image Ratio</Label>
+                  <span className="text-sm text-muted-foreground">{contentRatio}% / {100 - contentRatio}%</span>
+                </div>
+                <Slider
+                  value={[contentRatio]}
+                  onValueChange={(value) => setContentRatio(value[0])}
+                  min={30}
+                  max={70}
+                  step={5}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>30% Text</span>
+                  <span>50/50</span>
+                  <span>70% Text</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t">
+              {/* Horizontal Padding */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Horizontal Padding</Label>
+                  <span className="text-sm text-muted-foreground">{heroPaddingX}px</span>
+                </div>
+                <Slider
+                  value={[heroPaddingX]}
+                  onValueChange={(value) => setHeroPaddingX(value[0])}
+                  min={0}
+                  max={80}
+                  step={4}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Vertical Padding */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Vertical Padding</Label>
+                  <span className="text-sm text-muted-foreground">{heroPaddingY}px</span>
+                </div>
+                <Slider
+                  value={[heroPaddingY]}
+                  onValueChange={(value) => setHeroPaddingY(value[0])}
+                  min={16}
+                  max={120}
+                  step={4}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Alignment */}
+              <div className="space-y-2">
+                <Label>Hero Alignment</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: 'left', label: 'Left' },
+                    { value: 'center', label: 'Center' },
+                    { value: 'right', label: 'Right' }
+                  ].map((align) => (
+                    <button
+                      key={align.value}
+                      onClick={() => setHeroAlignment(align.value)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        heroAlignment === align.value 
+                          ? "border-primary bg-primary/10 text-primary" 
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                    >
+                      {align.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Layout Preview */}
+            <div className="pt-4 border-t">
+              <Label className="text-sm mb-2 block">Layout Preview</Label>
+              <div className="bg-muted rounded-lg p-4 relative overflow-hidden" style={{ minHeight: '120px' }}>
+                <div 
+                  className={`mx-auto bg-gradient-to-r ${backgroundGradient} rounded-lg p-3 flex gap-2`}
+                  style={{ 
+                    maxWidth: `${Math.min(heroMaxWidth / 4, 300)}px`,
+                    minHeight: `${heroMinHeight / 5}px`
+                  }}
+                >
+                  <div 
+                    className="bg-white/20 rounded flex items-center justify-center text-white text-xs"
+                    style={{ width: `${contentRatio}%` }}
+                  >
+                    Text {contentRatio}%
+                  </div>
+                  <div 
+                    className="bg-white/10 rounded flex items-center justify-center text-white/60 text-xs"
+                    style={{ width: `${100 - contentRatio}%` }}
+                  >
+                    Image {100 - contentRatio}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Title Settings */}

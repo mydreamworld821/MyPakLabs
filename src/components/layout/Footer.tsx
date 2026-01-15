@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Clock, HeadphonesIcon } from "lucide-react";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 import { useNativePlatform } from "@/hooks/useNativePlatform";
 import { cn } from "@/lib/utils";
@@ -28,13 +28,13 @@ const Footer = () => {
               Verified Providers with Special Offers & Smart Savings on Medical Care. Access trusted doctors, labs, hospitals, and pharmacies with exclusive discounts.
             </p>
             <div className="flex gap-3">
-              <a href="#" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
+              <a href="https://www.facebook.com/mypaklabs" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
+              <a href="https://twitter.com/mypaklabs" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
+              <a href="https://www.instagram.com/mypaklabs" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
@@ -47,29 +47,34 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
+              <li><Link to="/" className="text-muted-foreground hover:text-background text-sm transition-colors">Home</Link></li>
               <li><Link to="/labs" className="text-muted-foreground hover:text-background text-sm transition-colors">Browse Labs</Link></li>
+              <li><Link to="/find-doctors" className="text-muted-foreground hover:text-background text-sm transition-colors">Find Doctors</Link></li>
+              <li><Link to="/hospitals" className="text-muted-foreground hover:text-background text-sm transition-colors">Hospitals</Link></li>
+              <li><Link to="/find-nurses" className="text-muted-foreground hover:text-background text-sm transition-colors">Nursing Services</Link></li>
               <li><Link to="/pharmacies" className="text-muted-foreground hover:text-background text-sm transition-colors">Find Pharmacies</Link></li>
               <li><Link to="/compare" className="text-muted-foreground hover:text-background text-sm transition-colors">Compare Prices</Link></li>
-              <li><Link to="/auth" className="text-muted-foreground hover:text-background text-sm transition-colors">Login / Sign Up</Link></li>
-              <li><Link to="/help" className="text-muted-foreground hover:text-background text-sm transition-colors">Help Center</Link></li>
+              <li><Link to="/reviews" className="text-muted-foreground hover:text-background text-sm transition-colors">Patient Reviews</Link></li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
+            <h4 className="font-semibold mb-4">Legal & Partners</h4>
             <ul className="space-y-2">
               <li><Link to="/terms" className="text-muted-foreground hover:text-background text-sm transition-colors">Terms & Conditions</Link></li>
               <li><Link to="/privacy" className="text-muted-foreground hover:text-background text-sm transition-colors">Privacy Policy</Link></li>
               <li><Link to="/partner-terms" className="text-muted-foreground hover:text-background text-sm transition-colors">Partner Lab Terms</Link></li>
+              <li><Link to="/join-as-doctor" className="text-muted-foreground hover:text-background text-sm transition-colors">Join as Doctor</Link></li>
+              <li><Link to="/join-as-nurse" className="text-muted-foreground hover:text-background text-sm transition-colors">Join as Nurse</Link></li>
               <li><Link to="/join-as-pharmacy" className="text-muted-foreground hover:text-background text-sm transition-colors">Join as Pharmacy</Link></li>
-              <li><Link to="/help" className="text-muted-foreground hover:text-background text-sm transition-colors">Contact Support</Link></li>
+              <li><Link to="/help" className="text-muted-foreground hover:text-background text-sm transition-colors">Help Center</Link></li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact & Support */}
           <div>
-            <h4 className="font-semibold mb-4">Contact Us</h4>
+            <h4 className="font-semibold mb-4">Need Help? Contact Us</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Phone className="w-4 h-4" />
@@ -79,11 +84,26 @@ const Footer = () => {
                 <Mail className="w-4 h-4" />
                 <a href="mailto:support@mypaklabs.com" className="hover:text-background transition-colors">support@mypaklabs.com</a>
               </li>
+              <li className="flex items-center gap-2 text-muted-foreground text-sm">
+                <Clock className="w-4 h-4" />
+                <span>24/7 Online Assistance</span>
+              </li>
               <li className="flex items-start gap-2 text-muted-foreground text-sm">
                 <MapPin className="w-4 h-4 mt-0.5" />
-                G13-1 Islamabad
+                <span>Coverage: Islamabad & Rawalpindi</span>
               </li>
             </ul>
+            
+            {/* Trust Badge */}
+            <div className="mt-4 p-3 bg-background/10 rounded-lg">
+              <div className="flex items-center gap-2 text-sm">
+                <HeadphonesIcon className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-background">MyPakLabs Support</p>
+                  <p className="text-xs text-muted-foreground">Fast & Reliable Assistance</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

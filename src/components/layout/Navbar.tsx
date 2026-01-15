@@ -178,7 +178,7 @@ const Navbar = () => {
               <Button
                 variant={isActive("/") ? "soft" : "ghost"}
                 size="sm"
-                className="gap-1.5 text-xs px-2"
+                className={`gap-1.5 text-xs px-2.5 ${isActive("/") ? "bg-primary text-primary-foreground" : "text-primary hover:bg-primary/10"}`}
               >
                 <Home className="w-3.5 h-3.5" />
                 Home
@@ -192,7 +192,7 @@ const Navbar = () => {
                   <Button
                     variant={isActive("/labs") ? "soft" : "ghost"}
                     size="sm"
-                    className="gap-1 text-xs px-2"
+                    className={`gap-1 text-xs px-2.5 ${isActive("/labs") ? "bg-emerald-500 text-white" : "text-emerald-600 hover:bg-emerald-50"}`}
                   >
                     <FlaskConical className="w-3.5 h-3.5" />
                     Labs
@@ -256,7 +256,7 @@ const Navbar = () => {
               <Button
                 variant={isActive("/compare") ? "soft" : "ghost"}
                 size="sm"
-                className="gap-1.5 text-xs px-2"
+                className={`gap-1.5 text-xs px-2.5 ${isActive("/compare") ? "bg-orange-500 text-white" : "text-orange-600 hover:bg-orange-50"}`}
               >
                 <BarChart3 className="w-3.5 h-3.5" />
                 Compare
@@ -270,7 +270,7 @@ const Navbar = () => {
                   <Button
                     variant={isActive("/find-doctors") ? "soft" : "ghost"}
                     size="sm"
-                    className="gap-1 text-xs px-2"
+                    className={`gap-1 text-xs px-2.5 ${isActive("/find-doctors") ? "bg-blue-500 text-white" : "text-blue-600 hover:bg-blue-50"}`}
                   >
                     <Stethoscope className="w-3.5 h-3.5" />
                     Doctors
@@ -322,7 +322,7 @@ const Navbar = () => {
               <Button
                 variant={isActive("/hospitals") ? "soft" : "ghost"}
                 size="sm"
-                className="gap-1.5 text-xs px-2"
+                className={`gap-1.5 text-xs px-2.5 ${isActive("/hospitals") ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-50"}`}
               >
                 <Hospital className="w-3.5 h-3.5" />
                 Hospitals
@@ -332,7 +332,7 @@ const Navbar = () => {
               <Button
                 variant={isActive("/surgeries") ? "soft" : "ghost"}
                 size="sm"
-                className="gap-1.5 text-xs px-2"
+                className={`gap-1.5 text-xs px-2.5 ${isActive("/surgeries") ? "bg-red-500 text-white" : "text-red-600 hover:bg-red-50"}`}
               >
                 <Scissors className="w-3.5 h-3.5" />
                 Surgeries
@@ -342,7 +342,7 @@ const Navbar = () => {
               <Button
                 variant={isActive("/find-nurses") ? "soft" : "ghost"}
                 size="sm"
-                className="gap-1.5 text-xs px-2"
+                className={`gap-1.5 text-xs px-2.5 ${isActive("/find-nurses") ? "bg-rose-500 text-white" : "text-rose-600 hover:bg-rose-50"}`}
               >
                 <Heart className="w-3.5 h-3.5" />
                 Nurses
@@ -352,7 +352,7 @@ const Navbar = () => {
               <Button
                 variant={isActive("/pharmacies") ? "soft" : "ghost"}
                 size="sm"
-                className="gap-1.5 text-xs px-2"
+                className={`gap-1.5 text-xs px-2.5 ${isActive("/pharmacies") ? "bg-teal-500 text-white" : "text-teal-600 hover:bg-teal-50"}`}
               >
                 <Store className="w-3.5 h-3.5" />
                 Pharmacies

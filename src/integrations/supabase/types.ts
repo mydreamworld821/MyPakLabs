@@ -415,6 +415,7 @@ export type Database = {
       }
       hero_settings: {
         Row: {
+          background_gradient: string | null
           badge_text: string | null
           created_at: string
           hero_image_url: string | null
@@ -429,6 +430,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          background_gradient?: string | null
           badge_text?: string | null
           created_at?: string
           hero_image_url?: string | null
@@ -443,6 +445,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          background_gradient?: string | null
           badge_text?: string | null
           created_at?: string
           hero_image_url?: string | null

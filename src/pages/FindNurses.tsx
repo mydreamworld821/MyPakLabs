@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageLayoutSettings } from "@/hooks/usePageLayoutSettings";
+import NurseListCard from "@/components/directory/NurseListCard";
 import { 
   Search, 
   Heart, 
@@ -81,6 +83,9 @@ const FindNurses = () => {
   const [selectedExperience, setSelectedExperience] = useState("all");
   const [selectedGender, setSelectedGender] = useState("all");
   const [emergencyOnly, setEmergencyOnly] = useState(false);
+
+  // Get admin-managed layout settings
+  const { settings: layoutSettings } = usePageLayoutSettings("nurses_listing");
 
   useEffect(() => {
     fetchNurses();
@@ -331,86 +336,16 @@ const FindNurses = () => {
               <p className="text-xs text-muted-foreground mb-4">
                 {nurses.length} nurse{nurses.length !== 1 ? "s" : ""} found
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div 
+                className={
+                  layoutSettings.layout_type === 'list' 
+                    ? 'flex flex-col' 
+                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+                }
+                style={{ gap: `${layoutSettings.items_gap}px` }}
+              >
                 {nurses.map((nurse) => (
-                  <Link key={nurse.id} to={`/nurse/${nurse.id}`}>
-                    <Card className="hover:shadow-md transition-shadow h-full">
-                      <CardContent className="p-4">
-                        <div className="flex gap-3">
-                          <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {nurse.photo_url ? (
-                              <img 
-                                src={nurse.photo_url} 
-                                alt={nurse.full_name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <Heart className="w-6 h-6 text-rose-600" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold truncate">{nurse.full_name}</h3>
-                            <p className="text-xs text-muted-foreground">{nurse.qualification}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className="text-[10px]">
-                                {nurse.experience_years} yrs exp
-                              </Badge>
-                              {nurse.emergency_available && (
-                                <Badge variant="destructive" className="text-[10px]">
-                                  Emergency
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1.5">
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            <span>{nurse.city}{nurse.area_of_service ? `, ${nurse.area_of_service}` : ""}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            <span>{nurse.available_shifts?.join(", ") || "Flexible"}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                            <span>{nurse.rating || "New"}</span>
-                            <span className="text-muted-foreground">
-                              ({nurse.review_count || 0} reviews)
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Services Preview */}
-                        <div className="mt-3 flex flex-wrap gap-1">
-                          {nurse.services_offered?.slice(0, 3).map((service, idx) => (
-                            <Badge key={idx} variant="outline" className="text-[10px] px-1.5">
-                              {service.split(" ")[0]}
-                            </Badge>
-                          ))}
-                          {nurse.services_offered?.length > 3 && (
-                            <Badge variant="outline" className="text-[10px] px-1.5">
-                              +{nurse.services_offered.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div className="mt-3 pt-3 border-t flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Per Visit</p>
-                            <p className="text-sm font-bold text-rose-600">
-                              PKR {nurse.per_visit_fee?.toLocaleString()}
-                            </p>
-                          </div>
-                          <Button size="sm" className="text-xs bg-rose-600 hover:bg-rose-700">
-                            <Phone className="w-3 h-3 mr-1" />
-                            Book Now
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  <NurseListCard key={nurse.id} nurse={nurse} settings={layoutSettings} />
                 ))}
               </div>
             </>

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageLayoutSettings } from "@/hooks/usePageLayoutSettings";
+import DoctorListCard from "@/components/directory/DoctorListCard";
 import { Search, Loader2, Stethoscope, Heart, Brain, Eye, Baby, Bone, Ear, Activity, UserRound, Star, MapPin, Clock, Phone } from "lucide-react";
 
 interface Specialization {
@@ -56,6 +58,9 @@ const FindDoctors = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"popular" | "all">("popular");
   const [selectedSpecialty, setSelectedSpecialty] = useState<Specialization | null>(null);
+
+  // Get admin-managed layout settings
+  const { settings: layoutSettings } = usePageLayoutSettings("doctors_listing");
 
   useEffect(() => {
     fetchSpecializations();
@@ -216,82 +221,21 @@ const FindDoctors = () => {
                 <p className="text-sm text-muted-foreground">No doctors available in this category yet</p>
               </div>
             ) : (
-              <div className="grid gap-3">
+              <div 
+                className={
+                  layoutSettings.layout_type === 'list' 
+                    ? 'flex flex-col' 
+                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+                }
+                style={{ gap: `${layoutSettings.items_gap}px` }}
+              >
                 {doctors.map((doctor) => (
-                  <Card 
+                  <DoctorListCard 
                     key={doctor.id} 
-                    className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/doctor/${doctor.id}`)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex gap-3">
-                        {doctor.photo_url ? (
-                          <img
-                            src={doctor.photo_url}
-                            alt={doctor.full_name}
-                            className="w-16 h-16 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <UserRound className="w-8 h-8 text-primary" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h3 className="text-sm font-semibold text-foreground">
-                                {doctor.full_name}
-                              </h3>
-                              <p className="text-xs text-muted-foreground">
-                                {doctor.qualification}
-                              </p>
-                              <p className="text-xs text-primary">
-                                {doctor.specialization?.name}
-                              </p>
-                            </div>
-                            {doctor.rating && doctor.rating > 0 && (
-                              <div className="flex items-center gap-0.5 text-xs">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span>{doctor.rating}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
-                            {doctor.experience_years && (
-                              <span>{doctor.experience_years} yrs exp</span>
-                            )}
-                            {doctor.city && (
-                              <span className="flex items-center gap-0.5">
-                                <MapPin className="w-3 h-3" />
-                                {doctor.city}
-                              </span>
-                            )}
-                            {doctor.availability && (
-                              <span className="flex items-center gap-0.5">
-                                <Clock className="w-3 h-3" />
-                                {doctor.availability}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs font-semibold text-primary">
-                              Rs. {doctor.consultation_fee}
-                            </span>
-                            <Button 
-                              size="sm" 
-                              className="text-xs h-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/doctor/${doctor.id}`);
-                              }}
-                            >
-                              Book Appointment
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    doctor={doctor} 
+                    settings={layoutSettings}
+                    consultationType={consultationType}
+                  />
                 ))}
               </div>
             )}

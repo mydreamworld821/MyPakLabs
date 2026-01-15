@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageLayoutSettings } from "@/hooks/usePageLayoutSettings";
+import HospitalListCard from "@/components/directory/HospitalListCard";
 import {
   Building2,
   Search,
@@ -69,6 +71,9 @@ const Hospitals = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [citiesWithCounts, setCitiesWithCounts] = useState<CityData[]>(topCities);
+
+  // Get admin-managed layout settings
+  const { settings: layoutSettings } = usePageLayoutSettings("hospitals_listing");
 
   useEffect(() => {
     fetchHospitals();
@@ -197,7 +202,14 @@ const Hospitals = () => {
                   className="pl-10"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div 
+                className={
+                  layoutSettings.layout_type === 'list' 
+                    ? 'flex flex-col' 
+                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+                }
+                style={{ gap: `${layoutSettings.items_gap}px` }}
+              >
                 {hospitals
                   .filter(
                     (h) =>
@@ -206,7 +218,7 @@ const Hospitals = () => {
                   )
                   .slice(0, 12)
                   .map((hospital) => (
-                    <HospitalCard key={hospital.id} hospital={hospital} />
+                    <HospitalListCard key={hospital.id} hospital={hospital} settings={layoutSettings} />
                   ))}
               </div>
               {hospitals.length > 12 && !searchQuery && (
@@ -265,9 +277,16 @@ const Hospitals = () => {
               <p className="text-muted-foreground">Try adjusting your search</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div 
+              className={
+                layoutSettings.layout_type === 'list' 
+                  ? 'flex flex-col' 
+                  : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+              }
+              style={{ gap: `${layoutSettings.items_gap}px` }}
+            >
               {filteredCityHospitals.map((hospital) => (
-                <HospitalCard key={hospital.id} hospital={hospital} />
+                <HospitalListCard key={hospital.id} hospital={hospital} settings={layoutSettings} />
               ))}
             </div>
           )}

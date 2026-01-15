@@ -150,24 +150,16 @@ const Index = () => {
 
       <main className="py-6 md:py-8 relative z-0">
         <div className="container mx-auto px-4 relative">
-          {/* Services Section - Dynamic Grid from Admin */}
+          {/* Services Section - Dynamic Grid from Admin with Quick Access */}
           {serviceCardsConfig?.is_visible !== false && (
-            <div className="mb-6">
-              <DynamicServicesGrid
-                cards={serviceCards}
-                loading={loading}
-                title={serviceCardsConfig?.title || "Our Services"}
-                subtitle={serviceCardsConfig?.subtitle || "Access quality healthcare services"}
-              />
-              
-              {/* Quick Access Services - Badge Style Icons - Below Service Cards */}
-              {quickAccessConfig?.is_visible !== false && (
-                <QuickAccessServices
-                  services={quickAccessServices}
-                  loading={loading}
-                />
-              )}
-            </div>
+            <DynamicServicesGrid
+              cards={serviceCards}
+              loading={loading}
+              title={serviceCardsConfig?.title || "Our Services"}
+              subtitle={serviceCardsConfig?.subtitle || "Access quality healthcare services"}
+              quickAccessServices={quickAccessConfig?.is_visible !== false ? quickAccessServices : undefined}
+              showQuickAccess={quickAccessConfig?.is_visible !== false}
+            />
           )}
 
           {/* Consult Best Doctors Online - Specializations Section */}

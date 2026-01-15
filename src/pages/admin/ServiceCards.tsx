@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -22,8 +22,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Image, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Image, GripVertical, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface ServiceCard {
   id: string;
@@ -35,7 +43,36 @@ interface ServiceCard {
   link: string;
   display_order: number | null;
   is_active: boolean | null;
+  card_size: string | null;
+  col_span: number | null;
+  row_span: number | null;
 }
+
+const iconOptions = [
+  { value: "", label: "None" },
+  { value: "Video", label: "Video" },
+  { value: "Calendar", label: "Calendar" },
+  { value: "Zap", label: "Zap (Lightning)" },
+  { value: "FlaskConical", label: "Lab Flask" },
+  { value: "Pill", label: "Pill" },
+  { value: "Heart", label: "Heart" },
+  { value: "Building2", label: "Building" },
+  { value: "Stethoscope", label: "Stethoscope" },
+  { value: "Store", label: "Store" },
+];
+
+const bgColorOptions = [
+  { value: "bg-sky-100", label: "Sky Light" },
+  { value: "bg-teal-600", label: "Teal Dark" },
+  { value: "bg-amber-100", label: "Amber Light" },
+  { value: "bg-purple-100", label: "Purple Light" },
+  { value: "bg-emerald-100", label: "Emerald Light" },
+  { value: "bg-rose-100", label: "Rose Light" },
+  { value: "bg-blue-600", label: "Blue Dark" },
+  { value: "bg-green-600", label: "Green Dark" },
+  { value: "bg-orange-100", label: "Orange Light" },
+  { value: "bg-indigo-100", label: "Indigo Light" },
+];
 
 const ServiceCards = () => {
   const queryClient = useQueryClient();
@@ -45,9 +82,13 @@ const ServiceCards = () => {
     title: "",
     subtitle: "",
     link: "",
-    bg_color: "bg-primary/10",
+    icon_name: "",
+    bg_color: "bg-sky-100",
     display_order: 0,
     is_active: true,
+    card_size: "normal",
+    col_span: 1,
+    row_span: 1,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -93,35 +134,37 @@ const ServiceCards = () => {
       title: string;
       subtitle: string;
       link: string;
+      icon_name: string;
       bg_color: string;
       display_order: number;
       is_active: boolean;
+      card_size: string;
+      col_span: number;
+      row_span: number;
       image_url?: string | null;
     }) => {
+      const payload = {
+        title: data.title,
+        subtitle: data.subtitle || null,
+        link: data.link,
+        icon_name: data.icon_name || null,
+        bg_color: data.bg_color,
+        display_order: data.display_order,
+        is_active: data.is_active,
+        card_size: data.card_size,
+        col_span: data.col_span,
+        row_span: data.row_span,
+        image_url: data.image_url,
+      };
+
       if (data.id) {
         const { error } = await supabase
           .from("service_cards")
-          .update({
-            title: data.title,
-            subtitle: data.subtitle,
-            link: data.link,
-            bg_color: data.bg_color,
-            display_order: data.display_order,
-            is_active: data.is_active,
-            image_url: data.image_url,
-          })
+          .update(payload)
           .eq("id", data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("service_cards").insert({
-          title: data.title,
-          subtitle: data.subtitle,
-          link: data.link,
-          bg_color: data.bg_color,
-          display_order: data.display_order,
-          is_active: data.is_active,
-          image_url: data.image_url,
-        });
+        const { error } = await supabase.from("service_cards").insert(payload);
         if (error) throw error;
       }
     },
@@ -159,9 +202,13 @@ const ServiceCards = () => {
       title: "",
       subtitle: "",
       link: "",
-      bg_color: "bg-primary/10",
+      icon_name: "",
+      bg_color: "bg-sky-100",
       display_order: 0,
       is_active: true,
+      card_size: "normal",
+      col_span: 1,
+      row_span: 1,
     });
     setEditingCard(null);
     setImageFile(null);
@@ -175,9 +222,13 @@ const ServiceCards = () => {
       title: card.title,
       subtitle: card.subtitle || "",
       link: card.link,
-      bg_color: card.bg_color || "bg-primary/10",
+      icon_name: card.icon_name || "",
+      bg_color: card.bg_color || "bg-sky-100",
       display_order: card.display_order || 0,
       is_active: card.is_active ?? true,
+      card_size: card.card_size || "normal",
+      col_span: card.col_span || 1,
+      row_span: card.row_span || 1,
     });
     setImagePreview(card.image_url);
     setIsDialogOpen(true);
@@ -224,151 +275,270 @@ const ServiceCards = () => {
           <div>
             <h1 className="text-2xl font-bold">Service Cards</h1>
             <p className="text-muted-foreground">
-              Manage homepage service cards with images
+              Manage homepage service cards - auto-adjusts layout based on count
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Card
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCard ? "Edit Service Card" : "Add Service Card"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Card Image</Label>
-                  <div className="mt-2 space-y-3">
-                    {imagePreview ? (
-                      <div className="relative w-full h-32 rounded-lg overflow-hidden border">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                          }}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                        <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          Click to upload image
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    )}
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/" target="_blank">
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </Link>
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => resetForm()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Card
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingCard ? "Edit Service Card" : "Add Service Card"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label>Card Image</Label>
+                    <div className="mt-2 space-y-3">
+                      {imagePreview ? (
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              setImageFile(null);
+                              setImagePreview(null);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                          <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">
+                            Click to upload image
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageChange}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    required
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Title *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="subtitle">Subtitle</Label>
+                      <Input
+                        id="subtitle"
+                        value={formData.subtitle}
+                        onChange={(e) =>
+                          setFormData({ ...formData, subtitle: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <Label htmlFor="subtitle">Subtitle</Label>
-                  <Input
-                    id="subtitle"
-                    value={formData.subtitle}
-                    onChange={(e) =>
-                      setFormData({ ...formData, subtitle: e.target.value })
-                    }
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="link">Link URL *</Label>
+                    <Input
+                      id="link"
+                      value={formData.link}
+                      onChange={(e) =>
+                        setFormData({ ...formData, link: e.target.value })
+                      }
+                      placeholder="/video-consultation"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="link">Link URL *</Label>
-                  <Input
-                    id="link"
-                    value={formData.link}
-                    onChange={(e) =>
-                      setFormData({ ...formData, link: e.target.value })
-                    }
-                    placeholder="/video-consultation"
-                    required
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Icon</Label>
+                      <Select
+                        value={formData.icon_name}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, icon_name: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select icon" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {iconOptions.map((icon) => (
+                            <SelectItem key={icon.value} value={icon.value || "none"}>
+                              {icon.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Background Color</Label>
+                      <Select
+                        value={formData.bg_color}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, bg_color: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bgColorOptions.map((color) => (
+                            <SelectItem key={color.value} value={color.value}>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded ${color.value}`} />
+                                {color.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                <div>
-                  <Label htmlFor="order">Display Order</Label>
-                  <Input
-                    id="order"
-                    type="number"
-                    value={formData.display_order}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        display_order: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label>Card Size</Label>
+                      <Select
+                        value={formData.card_size}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, card_size: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Column Span</Label>
+                      <Select
+                        value={formData.col_span.toString()}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, col_span: parseInt(value) })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 Column</SelectItem>
+                          <SelectItem value="2">2 Columns</SelectItem>
+                          <SelectItem value="3">3 Columns</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Row Span</Label>
+                      <Select
+                        value={formData.row_span.toString()}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, row_span: parseInt(value) })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 Row</SelectItem>
+                          <SelectItem value="2">2 Rows</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, is_active: checked })
-                    }
-                  />
-                  <Label>Active</Label>
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="order">Display Order</Label>
+                      <Input
+                        id="order"
+                        type="number"
+                        value={formData.display_order}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            display_order: parseInt(e.target.value) || 0,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <div className="flex items-center gap-2 pb-2">
+                        <Switch
+                          checked={formData.is_active}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, is_active: checked })
+                          }
+                        />
+                        <Label>Active</Label>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={uploading || saveMutation.isPending}
-                  >
-                    {uploading || saveMutation.isPending
-                      ? "Saving..."
-                      : "Save Card"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetForm}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1"
+                      disabled={uploading || saveMutation.isPending}
+                    >
+                      {uploading || saveMutation.isPending
+                        ? "Saving..."
+                        : "Save Card"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>All Service Cards</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>All Service Cards ({serviceCards?.filter(c => c.is_active).length || 0} active)</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                Layout auto-adjusts: 3 cards = 3 columns, 6 cards = 3×2 grid, etc.
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -386,8 +556,8 @@ const ServiceCards = () => {
                     <TableHead className="w-16">Order</TableHead>
                     <TableHead className="w-20">Image</TableHead>
                     <TableHead>Title</TableHead>
-                    <TableHead>Subtitle</TableHead>
                     <TableHead>Link</TableHead>
+                    <TableHead>Size</TableHead>
                     <TableHead className="w-20">Status</TableHead>
                     <TableHead className="w-24">Actions</TableHead>
                   </TableRow>
@@ -409,17 +579,26 @@ const ServiceCards = () => {
                             className="w-12 h-12 rounded-lg object-cover"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                          <div className={`w-12 h-12 rounded-lg ${card.bg_color || 'bg-muted'} flex items-center justify-center`}>
                             <Image className="w-5 h-5 text-muted-foreground" />
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">{card.title}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {card.subtitle || "-"}
+                      <TableCell>
+                        <div>
+                          <span className="font-medium">{card.title}</span>
+                          {card.subtitle && (
+                            <p className="text-xs text-muted-foreground">{card.subtitle}</p>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {card.link}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <span className="text-muted-foreground">
+                          {card.col_span || 1}×{card.row_span || 1}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span

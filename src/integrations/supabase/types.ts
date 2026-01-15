@@ -1754,17 +1754,17 @@ export type Database = {
         }
         Relationships: []
       }
-      service_cards: {
+      quick_access_services: {
         Row: {
           bg_color: string | null
           created_at: string
           display_order: number | null
-          icon_name: string | null
+          icon_color: string | null
+          icon_name: string
+          icon_size: number | null
           id: string
-          image_url: string | null
           is_active: boolean | null
           link: string
-          subtitle: string | null
           title: string
           updated_at: string
         }
@@ -1772,12 +1772,12 @@ export type Database = {
           bg_color?: string | null
           created_at?: string
           display_order?: number | null
-          icon_name?: string | null
+          icon_color?: string | null
+          icon_name?: string
+          icon_size?: number | null
           id?: string
-          image_url?: string | null
           is_active?: boolean | null
           link: string
-          subtitle?: string | null
           title: string
           updated_at?: string
         }
@@ -1785,11 +1785,62 @@ export type Database = {
           bg_color?: string | null
           created_at?: string
           display_order?: number | null
+          icon_color?: string | null
+          icon_name?: string
+          icon_size?: number | null
+          id?: string
+          is_active?: boolean | null
+          link?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_cards: {
+        Row: {
+          bg_color: string | null
+          card_size: string | null
+          col_span: number | null
+          created_at: string
+          display_order: number | null
+          icon_name: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link: string
+          row_span: number | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string | null
+          card_size?: string | null
+          col_span?: number | null
+          created_at?: string
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link: string
+          row_span?: number | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string | null
+          card_size?: string | null
+          col_span?: number | null
+          created_at?: string
+          display_order?: number | null
           icon_name?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
           link?: string
+          row_span?: number | null
           subtitle?: string | null
           title?: string
           updated_at?: string

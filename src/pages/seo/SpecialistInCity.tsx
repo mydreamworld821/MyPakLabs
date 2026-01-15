@@ -319,20 +319,24 @@ const SpecialistInCity = () => {
 
               <h3 className="text-lg font-medium mb-3">Related Medical Services in {formattedCity}</h3>
               <div className="flex flex-wrap gap-2">
-                <Link to={`/doctors-in-${city}`} className="text-primary hover:underline text-sm">
+                <Link to={`/doctors-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
                   All Doctors in {formattedCity}
                 </Link>
                 <span className="text-muted-foreground">•</span>
-                <Link to={`/labs-in-${city}`} className="text-primary hover:underline text-sm">
+                <Link to={`/labs-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
                   Labs in {formattedCity}
                 </Link>
                 <span className="text-muted-foreground">•</span>
-                <Link to={`/hospitals-in-${city}`} className="text-primary hover:underline text-sm">
+                <Link to={`/hospitals-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
                   Hospitals in {formattedCity}
                 </Link>
                 <span className="text-muted-foreground">•</span>
-                <Link to={`/pharmacies-in-${city}`} className="text-primary hover:underline text-sm">
+                <Link to={`/pharmacies-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
                   Pharmacies in {formattedCity}
+                </Link>
+                <span className="text-muted-foreground">•</span>
+                <Link to={`/home-nursing-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
+                  Home Nursing in {formattedCity}
                 </Link>
               </div>
             </div>

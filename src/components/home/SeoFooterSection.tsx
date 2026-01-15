@@ -34,7 +34,7 @@ const labServices = [
 ];
 
 const nursingServices = [
-  { name: "Emergency Nursing Services", link: "/emergency-nursing" },
+  { name: "Emergency Nursing Services", link: "/emergency-nursing-request" },
   { name: "Home Nursing Care", link: "/home-nursing-islamabad" },
   { name: "Elderly Care Services", link: "/find-nurses" },
   { name: "Physiotherapy at Home", link: "/find-nurses" },
@@ -42,8 +42,8 @@ const nursingServices = [
 
 const pharmacyServices = [
   { name: "Trusted Pharmacies", link: "/pharmacies-in-islamabad" },
-  { name: "Online Medicine Delivery", link: "/order-medicine" },
-  { name: "Discounted Medicines Near You", link: "/find-pharmacies" },
+  { name: "Online Medicine Delivery", link: "/pharmacies" },
+  { name: "Discounted Medicines Near You", link: "/pharmacies" },
 ];
 
 

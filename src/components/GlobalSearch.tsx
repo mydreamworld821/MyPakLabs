@@ -523,15 +523,15 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
   return (
     <div className={`relative z-[100] ${className}`} ref={dropdownRef}>
-      <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-2 shadow-2xl">
+      <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-3 shadow-2xl">
         {/* City Selector */}
-        <div className="flex items-center gap-2 px-3 py-2 sm:border-r border-gray-200">
-          <MapPin className="w-5 h-5 text-primary" />
+        <div className="flex items-center gap-1.5 px-2 py-1 sm:border-r border-gray-200 shrink-0">
+          <MapPin className="w-4 h-4 text-primary shrink-0" />
           <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="border-0 shadow-none bg-transparent min-w-[120px] h-10 focus:ring-0 text-gray-700 font-medium">
-              <SelectValue placeholder={citiesLoading ? "Loading..." : "Select City"} />
+            <SelectTrigger className="border-0 shadow-none bg-transparent w-[90px] h-8 focus:ring-0 text-gray-700 text-sm font-medium p-0 [&>span]:truncate">
+              <SelectValue placeholder={citiesLoading ? "..." : "City"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px]">
               <SelectItem value="all">All Cities</SelectItem>
               {dbCities.map((city) => (
                 <SelectItem key={city.id} value={city.name}>
@@ -543,11 +543,11 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
         </div>
 
         {/* Search Input */}
-        <div className="flex-1 flex items-center gap-2 relative">
+        <div className="flex-1 flex items-center gap-2 relative min-w-0">
           {loading ? (
-            <Loader2 className="w-5 h-5 text-gray-400 ml-2 animate-spin" />
+            <Loader2 className="w-5 h-5 text-gray-400 ml-1 animate-spin shrink-0" />
           ) : (
-            <Brain className="w-5 h-5 text-primary/70 ml-2" />
+            <Brain className="w-5 h-5 text-primary/70 ml-1 shrink-0" />
           )}
           <Input
             ref={inputRef}
@@ -557,7 +557,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyPress}
             onFocus={handleInputFocus}
-            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-10 text-base"
+            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-gray-700 placeholder:text-gray-400 h-12 text-base flex-1 min-w-0"
           />
           {searchQuery && (
             <Button
@@ -591,9 +591,9 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
             </Button>
           )}
           
-          <Button onClick={handleSearch} size="lg" className="shrink-0 px-6 rounded-lg">
-            <Search className="w-4 h-4 mr-2" />
-            Search
+          <Button onClick={handleSearch} size="lg" className="shrink-0 px-4 sm:px-6 rounded-lg h-10">
+            <Search className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Search</span>
           </Button>
         </div>
       </div>

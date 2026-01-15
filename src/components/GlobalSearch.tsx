@@ -386,31 +386,55 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     <>
       {/* Trigger Search Bar */}
       <div className={`relative z-[100] ${className}`}>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="w-full flex items-center bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow cursor-text"
-        >
-          {/* City Preview */}
-          <div className="flex items-center border-r border-gray-200 bg-gray-50/50 px-4 py-3">
-            <MapPin className="w-4 h-4 text-primary mr-2" />
-            <span className="text-sm text-gray-700 font-medium">
-              {selectedCity || "All Cities"}
+        <div className="w-full flex items-stretch bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+          {/* City Name Display */}
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <span className="text-sm text-gray-800 font-medium min-w-[80px] text-left">
+              {selectedCity || "Select City"}
             </span>
-          </div>
+          </button>
           
-          {/* Search Placeholder */}
-          <div className="flex-1 flex items-center px-4 py-3">
-            <Search className="w-5 h-5 text-gray-400 mr-3" />
-            <span className="text-gray-400 text-base">
-              Search for doctors, hospitals, specialties, services...
+          {/* Detect Location Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-auto my-2 px-3 text-primary border-primary rounded-full text-xs font-medium hover:bg-primary/10 shrink-0"
+            onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(() => {
+                  setSelectedCity("all");
+                });
+              }
+            }}
+          >
+            <MapPin className="w-3 h-3 mr-1" />
+            Detect
+          </Button>
+          
+          {/* Divider */}
+          <div className="w-px bg-gray-300 my-2 mx-3" />
+          
+          {/* Search Placeholder - Clickable */}
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex-1 flex items-center px-2 py-3 text-left hover:bg-gray-50 transition-colors cursor-text"
+          >
+            <span className="text-gray-500 text-sm">
+              Doctors, Hospital, Conditions
             </span>
-          </div>
+          </button>
           
           {/* Search Button */}
-          <div className="shrink-0 px-6 py-3 bg-amber-500 text-white font-semibold">
+          <Button 
+            onClick={() => setIsOpen(true)} 
+            className="shrink-0 h-auto px-6 rounded-none bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm"
+          >
             Search
-          </div>
-        </button>
+          </Button>
+        </div>
       </div>
 
       {/* Search Modal */}

@@ -40,6 +40,11 @@ interface HeroSettings {
   image_height: number | null;
   image_overlay_opacity: number | null;
   image_overlay_color: string | null;
+  image_blend_mode: string | null;
+  image_gradient_direction: string | null;
+  image_fade_intensity: number | null;
+  image_soft_edges: boolean | null;
+  image_mask_type: string | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -83,7 +88,12 @@ const HeroSection = () => {
           image_width: data.image_width ?? 100,
           image_height: data.image_height ?? 100,
           image_overlay_opacity: data.image_overlay_opacity ?? 30,
-          image_overlay_color: data.image_overlay_color || 'from-background'
+          image_overlay_color: data.image_overlay_color || 'from-background',
+          image_blend_mode: data.image_blend_mode || 'normal',
+          image_gradient_direction: data.image_gradient_direction || 'left',
+          image_fade_intensity: data.image_fade_intensity ?? 50,
+          image_soft_edges: data.image_soft_edges ?? true,
+          image_mask_type: data.image_mask_type || 'gradient'
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -109,7 +119,12 @@ const HeroSection = () => {
           image_width: 100,
           image_height: 100,
           image_overlay_opacity: 30,
-          image_overlay_color: "from-background"
+          image_overlay_color: "from-background",
+          image_blend_mode: "normal",
+          image_gradient_direction: "left",
+          image_fade_intensity: 50,
+          image_soft_edges: true,
+          image_mask_type: "gradient"
         });
       } finally {
         setLoading(false);
@@ -133,6 +148,27 @@ const HeroSection = () => {
   const imageWidth = heroSettings?.image_width ?? 100;
   const imageHeight = heroSettings?.image_height ?? 100;
   const imageOverlayOpacity = heroSettings?.image_overlay_opacity ?? 30;
+  const imageFadeIntensity = heroSettings?.image_fade_intensity ?? 50;
+  const imageSoftEdges = heroSettings?.image_soft_edges ?? true;
+  const imageMaskType = heroSettings?.image_mask_type || 'gradient';
+  const imageGradientDirection = heroSettings?.image_gradient_direction || 'left';
+
+  // Generate mask gradient based on settings
+  const getMaskGradient = () => {
+    const fadeOpacity = imageFadeIntensity / 100;
+    switch (imageMaskType) {
+      case 'radial':
+        return `radial-gradient(ellipse at ${100 - imagePositionX}% ${imagePositionY}%, transparent 30%, rgba(0,0,0,${fadeOpacity}) 100%)`;
+      case 'vignette':
+        return `radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,${fadeOpacity * 0.8}) 100%)`;
+      case 'gradient':
+      default:
+        const dir = imageGradientDirection === 'left' ? 'to left' : 
+                    imageGradientDirection === 'right' ? 'to right' :
+                    imageGradientDirection === 'top' ? 'to top' : 'to bottom';
+        return `linear-gradient(${dir}, rgba(0,0,0,${fadeOpacity}) 0%, transparent 40%, transparent 60%, rgba(0,0,0,${fadeOpacity * 0.3}) 100%)`;
+    }
+  };
 
   return (
     <section className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}>
@@ -204,34 +240,67 @@ const HeroSection = () => {
             </Link>
           </div>
 
-          {/* Right Image */}
+          {/* Right Image - Seamless Blending */}
           <div className="relative hidden lg:flex items-center justify-end">
             {heroSettings?.hero_image_url ? (
               <div 
-                className="relative rounded-l-3xl overflow-hidden"
+                className={`relative overflow-hidden ${imageSoftEdges ? '' : 'rounded-l-3xl'}`}
                 style={{ 
                   width: `${imageWidth}%`,
                   height: imageHeight === 100 ? '350px' : `${(imageHeight / 100) * 350}px`
                 }}
               >
-                {/* Gradient overlays for natural blending with adjustable opacity */}
+                {/* Primary directional fade - blends image into background */}
                 <div 
-                  className="absolute inset-0 bg-gradient-to-r from-current via-current/30 to-transparent z-10 pointer-events-none" 
-                  style={{ opacity: imageOverlayOpacity / 100 }} 
+                  className="absolute inset-0 z-10 pointer-events-none"
+                  style={{ 
+                    background: imageGradientDirection === 'left' 
+                      ? `linear-gradient(to right, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`
+                      : imageGradientDirection === 'right'
+                      ? `linear-gradient(to left, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`
+                      : imageGradientDirection === 'top'
+                      ? `linear-gradient(to bottom, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`
+                      : `linear-gradient(to top, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`,
+                    opacity: imageOverlayOpacity / 100
+                  }} 
                 />
-                <div 
-                  className="absolute inset-0 bg-gradient-to-t from-current/60 via-transparent to-transparent z-10 pointer-events-none"
-                  style={{ opacity: imageOverlayOpacity / 100 }} 
-                />
-                <div 
-                  className="absolute inset-0 bg-gradient-to-b from-current/40 via-transparent to-transparent z-10 pointer-events-none"
-                  style={{ opacity: (imageOverlayOpacity / 100) * 0.5 }} 
-                />
+                
+                {/* Soft edge vignette for natural blending */}
+                {imageSoftEdges && (
+                  <div 
+                    className="absolute inset-0 z-10 pointer-events-none"
+                    style={{ 
+                      background: `
+                        linear-gradient(to right, currentColor 0%, transparent 15%),
+                        linear-gradient(to left, transparent 85%, currentColor 100%),
+                        linear-gradient(to bottom, currentColor 0%, transparent 10%),
+                        linear-gradient(to top, currentColor 0%, transparent 10%)
+                      `,
+                      opacity: (imageOverlayOpacity / 100) * 0.7
+                    }} 
+                  />
+                )}
+
+                {/* Mask overlay for advanced blending */}
+                {imageMaskType !== 'none' && (
+                  <div 
+                    className="absolute inset-0 z-10 pointer-events-none"
+                    style={{ 
+                      background: getMaskGradient(),
+                      mixBlendMode: 'multiply'
+                    }} 
+                  />
+                )}
+
+                {/* The image itself */}
                 <img
                   src={heroSettings.hero_image_url}
                   alt="Healthcare Professional"
                   className="w-full h-full object-cover"
-                  style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
+                  style={{ 
+                    objectPosition: `${imagePositionX}% ${imagePositionY}%`,
+                    filter: imageSoftEdges ? 'contrast(1.02)' : 'none'
+                  }}
                 />
               </div>
             ) : (

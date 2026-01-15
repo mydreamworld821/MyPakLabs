@@ -35,6 +35,11 @@ interface HeroSettings {
   image_height: number | null;
   image_overlay_opacity: number | null;
   image_overlay_color: string | null;
+  image_blend_mode: string | null;
+  image_gradient_direction: string | null;
+  image_fade_intensity: number | null;
+  image_soft_edges: boolean | null;
+  image_mask_type: string | null;
   is_active: boolean;
 }
 
@@ -90,6 +95,10 @@ const HeroSettingsPage = () => {
   const [imageHeight, setImageHeight] = useState(100);
   const [imageOverlayOpacity, setImageOverlayOpacity] = useState(30);
   const [imageOverlayColor, setImageOverlayColor] = useState("from-background");
+  const [imageFadeIntensity, setImageFadeIntensity] = useState(50);
+  const [imageGradientDirection, setImageGradientDirection] = useState("left");
+  const [imageSoftEdges, setImageSoftEdges] = useState(true);
+  const [imageMaskType, setImageMaskType] = useState("gradient");
 
   useEffect(() => {
     fetchSettings();
@@ -121,6 +130,10 @@ const HeroSettingsPage = () => {
         setImageHeight(data.image_height ?? 100);
         setImageOverlayOpacity(data.image_overlay_opacity ?? 30);
         setImageOverlayColor(data.image_overlay_color || "from-background");
+        setImageFadeIntensity(data.image_fade_intensity ?? 50);
+        setImageGradientDirection(data.image_gradient_direction || "left");
+        setImageSoftEdges(data.image_soft_edges ?? true);
+        setImageMaskType(data.image_mask_type || "gradient");
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -155,6 +168,10 @@ const HeroSettingsPage = () => {
         image_height: imageHeight,
         image_overlay_opacity: imageOverlayOpacity,
         image_overlay_color: imageOverlayColor,
+        image_fade_intensity: imageFadeIntensity,
+        image_gradient_direction: imageGradientDirection,
+        image_soft_edges: imageSoftEdges,
+        image_mask_type: imageMaskType,
         updated_at: new Date().toISOString()
       };
 
@@ -569,10 +586,12 @@ const HeroSettingsPage = () => {
                     
                     {/* Image Blend Controls */}
                     <div className="space-y-4 pt-4 border-t">
-                      <h4 className="font-medium text-sm">Image Blending</h4>
+                      <h4 className="font-medium text-sm">Seamless Blending Controls</h4>
                       <p className="text-xs text-muted-foreground">
-                        Adjust how the image blends with the background gradient
+                        Remove hard edges and blend image seamlessly with the background
                       </p>
+                      
+                      {/* Overlay Strength */}
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <Label>Overlay Strength</Label>
@@ -592,30 +611,138 @@ const HeroSettingsPage = () => {
                           <span>Full Blend</span>
                         </div>
                       </div>
+
+                      {/* Fade Intensity */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label>Fade Intensity</Label>
+                          <span className="text-sm text-muted-foreground">{imageFadeIntensity}%</span>
+                        </div>
+                        <Slider
+                          value={[imageFadeIntensity]}
+                          onValueChange={(value) => setImageFadeIntensity(value[0])}
+                          min={0}
+                          max={100}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Sharp</span>
+                          <span>Soft</span>
+                          <span>Very Soft</span>
+                        </div>
+                      </div>
+
+                      {/* Gradient Direction */}
+                      <div className="space-y-2">
+                        <Label>Fade Direction</Label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { value: 'left', label: '← Left' },
+                            { value: 'right', label: 'Right →' },
+                            { value: 'top', label: '↑ Top' },
+                            { value: 'bottom', label: '↓ Bottom' }
+                          ].map((dir) => (
+                            <button
+                              key={dir.value}
+                              onClick={() => setImageGradientDirection(dir.value)}
+                              className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                imageGradientDirection === dir.value 
+                                  ? "border-primary bg-primary/10 text-primary" 
+                                  : "border-muted hover:border-primary/50"
+                              }`}
+                            >
+                              {dir.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mask Type */}
+                      <div className="space-y-2">
+                        <Label>Mask Type</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { value: 'gradient', label: 'Gradient' },
+                            { value: 'radial', label: 'Radial' },
+                            { value: 'vignette', label: 'Vignette' }
+                          ].map((mask) => (
+                            <button
+                              key={mask.value}
+                              onClick={() => setImageMaskType(mask.value)}
+                              className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                imageMaskType === mask.value 
+                                  ? "border-primary bg-primary/10 text-primary" 
+                                  : "border-muted hover:border-primary/50"
+                              }`}
+                            >
+                              {mask.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Soft Edges Toggle */}
+                      <div className="flex items-center justify-between py-2">
+                        <div>
+                          <Label>Soft Edges</Label>
+                          <p className="text-xs text-muted-foreground">Remove hard borders for seamless blending</p>
+                        </div>
+                        <button
+                          onClick={() => setImageSoftEdges(!imageSoftEdges)}
+                          className={`w-12 h-6 rounded-full transition-colors ${
+                            imageSoftEdges ? 'bg-primary' : 'bg-muted'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                            imageSoftEdges ? 'translate-x-6' : 'translate-x-0.5'
+                          }`} />
+                        </button>
+                      </div>
                     </div>
                     
                     {/* Image Preview with all settings */}
                     <div className="mt-4 pt-4 border-t">
-                      <Label className="text-sm">Final Preview</Label>
+                      <Label className="text-sm">Final Preview (with seamless blending)</Label>
                       <div 
-                        className={`relative mt-2 bg-gradient-to-r ${backgroundGradient} rounded-lg p-4 flex justify-end`}
+                        className={`relative mt-2 bg-gradient-to-r ${backgroundGradient} rounded-lg p-4 flex justify-end overflow-hidden`}
                       >
                         <div 
-                          className="relative rounded-lg overflow-hidden"
+                          className={`relative overflow-hidden ${imageSoftEdges ? '' : 'rounded-lg'}`}
                           style={{ 
                             width: `${imageWidth * 2}px`,
                             height: `${imageHeight * 1.5}px`
                           }}
                         >
-                          {/* Overlay effect preview */}
+                          {/* Primary directional fade */}
                           <div 
-                            className="absolute inset-0 bg-gradient-to-r from-current via-current/30 to-transparent z-10 pointer-events-none" 
-                            style={{ opacity: imageOverlayOpacity / 100 }} 
+                            className="absolute inset-0 z-10 pointer-events-none"
+                            style={{ 
+                              background: imageGradientDirection === 'left' 
+                                ? `linear-gradient(to right, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`
+                                : imageGradientDirection === 'right'
+                                ? `linear-gradient(to left, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`
+                                : imageGradientDirection === 'top'
+                                ? `linear-gradient(to bottom, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`
+                                : `linear-gradient(to top, currentColor ${imageFadeIntensity * 0.6}%, transparent ${Math.min(100, imageFadeIntensity + 30)}%)`,
+                              opacity: imageOverlayOpacity / 100
+                            }} 
                           />
-                          <div 
-                            className="absolute inset-0 bg-gradient-to-t from-current/60 via-transparent to-transparent z-10 pointer-events-none"
-                            style={{ opacity: imageOverlayOpacity / 100 }} 
-                          />
+                          {/* Soft edge vignette */}
+                          {imageSoftEdges && (
+                            <div 
+                              className="absolute inset-0 z-10 pointer-events-none"
+                              style={{ 
+                                background: `
+                                  linear-gradient(to right, currentColor 0%, transparent 15%),
+                                  linear-gradient(to left, transparent 85%, currentColor 100%),
+                                  linear-gradient(to bottom, currentColor 0%, transparent 10%),
+                                  linear-gradient(to top, currentColor 0%, transparent 10%)
+                                `,
+                                opacity: (imageOverlayOpacity / 100) * 0.7
+                              }} 
+                            />
+                          )}
                           <img
                             src={heroImageUrl}
                             alt="Blend preview"

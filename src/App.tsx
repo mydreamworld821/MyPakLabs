@@ -82,6 +82,13 @@ import AITools from "./pages/AITools";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
+// SEO Pages
+import DoctorsInCity from "./pages/seo/DoctorsInCity";
+import LabsInCity from "./pages/seo/LabsInCity";
+import HospitalsInCity from "./pages/seo/HospitalsInCity";
+import HomeNursingInCity from "./pages/seo/HomeNursingInCity";
+import PharmaciesInCity from "./pages/seo/PharmaciesInCity";
+import MedicalTestsInCity from "./pages/seo/MedicalTestsInCity";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -137,6 +144,14 @@ const App = () => (
               <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
               <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
               <Route path="/ai-tools" element={<AITools />} />
+              
+              {/* SEO City Pages */}
+              <Route path="/doctors-in-:city" element={<DoctorsInCity />} />
+              <Route path="/labs-in-:city" element={<LabsInCity />} />
+              <Route path="/hospitals-in-:city" element={<HospitalsInCity />} />
+              <Route path="/home-nursing-:city" element={<HomeNursingInCity />} />
+              <Route path="/pharmacies-in-:city" element={<PharmaciesInCity />} />
+              <Route path="/medical-tests-in-:city" element={<MedicalTestsInCity />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

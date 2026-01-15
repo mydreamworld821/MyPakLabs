@@ -8,6 +8,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import useCities from "@/hooks/useCities";
+import { useNativePlatform } from "@/hooks/useNativePlatform";
 import {
   Search,
   MapPin,
@@ -33,6 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+interface GlobalSearchProps {
+  className?: string;
+  position?: 'inline' | 'bottom-fixed';
+}
 
 interface SearchResult {
   id: string;
@@ -66,9 +72,7 @@ interface RecentSearch {
   timestamp: number;
 }
 
-interface GlobalSearchProps {
-  className?: string;
-}
+// Remove duplicate interface - already defined at top
 
 const RECENT_SEARCHES_KEY = "mypaklabs_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
@@ -85,7 +89,8 @@ const POPULAR_SPECIALIZATIONS = [
   { text: "Cardiologist", type: "specialization" as const },
 ];
 
-const GlobalSearch = ({ className }: GlobalSearchProps) => {
+const GlobalSearch = ({ className, position = 'inline' }: GlobalSearchProps) => {
+  const { isNative } = useNativePlatform();
   const navigate = useNavigate();
   const { cities: dbCities, loading: citiesLoading } = useCities();
   const [searchQuery, setSearchQuery] = useState("");
@@ -382,60 +387,87 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const hasResults = allResults.length > 0;
   const showSuggestions = !hasResults && searchQuery.trim().length < 2;
 
+  // Determine actual position: use bottom-fixed on native apps, inline on web
+  const actualPosition = isNative ? 'bottom-fixed' : position;
+
+  // Bottom fixed bar for native mobile apps
+  const BottomFixedBar = () => (
+    <div className="fixed bottom-0 left-0 right-0 z-[200] bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 safe-area-bottom">
+      <button
+        onClick={() => setIsOpen(true)}
+        className="w-full flex items-center bg-gray-100 rounded-full px-4 py-3 gap-3"
+      >
+        <Search className="w-5 h-5 text-gray-400" />
+        <span className="text-gray-500 text-sm flex-1 text-left">
+          Search doctors, labs, hospitals...
+        </span>
+        <div className="flex items-center gap-1 text-primary text-xs font-medium">
+          <MapPin className="w-3 h-3" />
+          <span>{selectedCity || "All"}</span>
+        </div>
+      </button>
+    </div>
+  );
+
+  // Inline trigger bar for web
+  const InlineTriggerBar = () => (
+    <div className={`relative z-[100] ${className}`}>
+      <div className="w-full flex items-stretch bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+        {/* City Name Display */}
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <span className="text-sm text-gray-800 font-medium min-w-[80px] text-left">
+            {selectedCity || "Select City"}
+          </span>
+        </button>
+        
+        {/* Detect Location Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-auto my-2 px-3 text-primary border-primary rounded-full text-xs font-medium hover:bg-primary/10 shrink-0"
+          onClick={() => {
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(() => {
+                setSelectedCity("all");
+              });
+            }
+          }}
+        >
+          <MapPin className="w-3 h-3 mr-1" />
+          Detect
+        </Button>
+        
+        {/* Divider */}
+        <div className="w-px bg-gray-300 my-2 mx-3" />
+        
+        {/* Search Placeholder - Clickable */}
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex-1 flex items-center px-2 py-3 text-left hover:bg-gray-50 transition-colors cursor-text"
+        >
+          <span className="text-gray-500 text-sm">
+            Doctors, Hospital, Conditions
+          </span>
+        </button>
+        
+        {/* Search Button */}
+        <Button 
+          onClick={() => setIsOpen(true)} 
+          className="shrink-0 h-auto px-6 rounded-none bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm"
+        >
+          Search
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {/* Trigger Search Bar */}
-      <div className={`relative z-[100] ${className}`}>
-        <div className="w-full flex items-stretch bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-          {/* City Name Display */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            <span className="text-sm text-gray-800 font-medium min-w-[80px] text-left">
-              {selectedCity || "Select City"}
-            </span>
-          </button>
-          
-          {/* Detect Location Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-auto my-2 px-3 text-primary border-primary rounded-full text-xs font-medium hover:bg-primary/10 shrink-0"
-            onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(() => {
-                  setSelectedCity("all");
-                });
-              }
-            }}
-          >
-            <MapPin className="w-3 h-3 mr-1" />
-            Detect
-          </Button>
-          
-          {/* Divider */}
-          <div className="w-px bg-gray-300 my-2 mx-3" />
-          
-          {/* Search Placeholder - Clickable */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="flex-1 flex items-center px-2 py-3 text-left hover:bg-gray-50 transition-colors cursor-text"
-          >
-            <span className="text-gray-500 text-sm">
-              Doctors, Hospital, Conditions
-            </span>
-          </button>
-          
-          {/* Search Button */}
-          <Button 
-            onClick={() => setIsOpen(true)} 
-            className="shrink-0 h-auto px-6 rounded-none bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm"
-          >
-            Search
-          </Button>
-        </div>
-      </div>
+      {/* Render trigger based on position */}
+      {actualPosition === 'bottom-fixed' ? <BottomFixedBar /> : <InlineTriggerBar />}
 
       {/* Search Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

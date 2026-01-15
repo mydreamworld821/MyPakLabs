@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, Stethoscope, FlaskConical, Heart, Pill, Search, CheckCircle2 } from "lucide-react";
+import { Building2, Stethoscope, FlaskConical, Heart, Pill, Search } from "lucide-react";
 
 const specialists = [
   { name: "Psychologist", slug: "psychologist" },
@@ -46,13 +46,6 @@ const pharmacyServices = [
   { name: "Discounted Medicines Near You", link: "/find-pharmacies" },
 ];
 
-const whyChooseUs = [
-  "Verified & Licensed Doctors",
-  "ISO-Certified Partner Labs",
-  "Transparent Pricing & Comparisons",
-  "Save Up to 30% on Medical Services",
-  "Easy Online Booking & Quick Support",
-];
 
 const popularSearches = [
   "Best doctors near me in Islamabad",
@@ -126,16 +119,38 @@ export const SeoFooterSection = () => {
           </div>
 
           {/* Labs & Diagnostics Column */}
+          <div className="space-y-4">
+            <Link to="/labs" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+              <FlaskConical className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
+                🧪 Diagnostic Labs & Services
+              </h3>
+            </Link>
+            <ul className="space-y-2">
+              {labServices.map((service, index) => (
+                <li key={index}>
+                  <Link
+                    to={service.link}
+                    className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                  >
+                    {service.name} in {city}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Pharmacy & Nursing Column */}
           <div className="space-y-6">
             <div>
-              <Link to="/labs" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
-                <FlaskConical className="h-5 w-5 text-primary" />
+              <Link to="/find-pharmacies" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+                <Pill className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
-                  🧪 Diagnostic Labs & Services
+                  💊 Pharmacies & Medicines
                 </h3>
               </Link>
               <ul className="space-y-2">
-                {labServices.map((service, index) => (
+                {pharmacyServices.map((service, index) => (
                   <li key={index}>
                     <Link
                       to={service.link}
@@ -164,47 +179,6 @@ export const SeoFooterSection = () => {
                     >
                       {service.name} in {city}
                     </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Pharmacy & Why Choose Us Column */}
-          <div className="space-y-6">
-            <div>
-              <Link to="/find-pharmacies" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
-                <Pill className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
-                  💊 Pharmacies & Medicines
-                </h3>
-              </Link>
-              <ul className="space-y-2">
-                {pharmacyServices.map((service, index) => (
-                  <li key={index}>
-                    <Link
-                      to={service.link}
-                      className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
-                    >
-                      {service.name} in {city}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <h3 className="font-semibold text-lg text-foreground">
-                  🌟 Why Choose MyPakLabs?
-                </h3>
-              </div>
-              <ul className="space-y-2">
-                {whyChooseUs.map((reason, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-green-500 mt-0.5">✔</span>
-                    {reason}
                   </li>
                 ))}
               </ul>

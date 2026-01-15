@@ -40,6 +40,13 @@ export interface HomepageSection {
   
   section_type: string;
   custom_content: Record<string, unknown> | null;
+
+  // Quick Access specific fields
+  icon_container_size?: number;
+  icon_size?: number;
+  show_labels?: boolean;
+  justify_content?: string;
+  layout_mode?: string;
 }
 
 export const useHomepageSections = () => {

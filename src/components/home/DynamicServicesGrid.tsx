@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Store, Syringe, FileText, Clipboard, Activity, UserRound, Thermometer, Microscope } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import QuickAccessSection from "./QuickAccessSection";
 
 interface ServiceCard {
   id: string;
@@ -29,6 +30,15 @@ interface QuickAccessService {
   display_order: number | null;
 }
 
+interface QuickAccessLayoutSettings {
+  icon_container_size?: number;
+  icon_size?: number;
+  items_gap?: number;
+  show_labels?: boolean;
+  justify_content?: string;
+  layout_mode?: string;
+}
+
 interface DynamicServicesGridProps {
   cards: ServiceCard[];
   loading?: boolean;
@@ -36,6 +46,7 @@ interface DynamicServicesGridProps {
   subtitle?: string;
   quickAccessServices?: QuickAccessService[];
   showQuickAccess?: boolean;
+  quickAccessLayout?: QuickAccessLayoutSettings;
 }
 
 const iconMap: Record<string, LucideIcon> = {
@@ -57,7 +68,7 @@ const iconMap: Record<string, LucideIcon> = {
   Microscope,
 };
 
-const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServices, showQuickAccess = true }: DynamicServicesGridProps) => {
+const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServices, showQuickAccess = true, quickAccessLayout }: DynamicServicesGridProps) => {
   if (loading) {
     return (
       <div className="mb-8">
@@ -205,34 +216,10 @@ const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServi
 
       {/* Quick Access Services - Badge Style Icons */}
       {showQuickAccess && quickAccessServices && quickAccessServices.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-3 md:gap-4 justify-center md:justify-start">
-          {quickAccessServices.map((service) => {
-            const IconComponent = iconMap[service.icon_name] || FlaskConical;
-            const bgColor = service.bg_color || "bg-muted";
-            const iconColor = service.icon_color || "text-primary";
-            const iconSize = service.icon_size || 24;
-
-            return (
-              <Link
-                key={service.id}
-                to={service.link}
-                className="flex flex-col items-center min-w-[64px] md:min-w-[72px] group"
-              >
-                <div
-                  className={`w-12 h-12 md:w-14 md:h-14 rounded-xl ${bgColor} flex items-center justify-center mb-1.5 transition-all duration-200 group-hover:shadow-md group-hover:scale-105`}
-                >
-                  <IconComponent 
-                    className={iconColor} 
-                    size={iconSize} 
-                  />
-                </div>
-                <span className="text-xs font-medium text-foreground text-center line-clamp-1">
-                  {service.title}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+        <QuickAccessSection 
+          services={quickAccessServices} 
+          layout={quickAccessLayout} 
+        />
       )}
     </div>
   );

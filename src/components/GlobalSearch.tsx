@@ -523,15 +523,57 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
   return (
     <div className={`relative z-[100] ${className}`} ref={dropdownRef}>
-      <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-xl p-3 shadow-2xl">
-        {/* City Selector */}
-        <div className="flex items-center gap-1.5 px-2 py-1 sm:border-r border-gray-200 shrink-0">
-          <MapPin className="w-4 h-4 text-primary shrink-0" />
+      {/* Modern Search Bar Container */}
+      <div className="relative">
+        {/* Main Search Input Container */}
+        <div className="flex items-center bg-white rounded-full shadow-xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 overflow-hidden">
+          {/* Search Icon */}
+          <div className="pl-4 pr-2">
+            {loading ? (
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            ) : (
+              <Search className="w-5 h-5 text-primary" />
+            )}
+          </div>
+          
+          {/* Search Input */}
+          <Input
+            ref={inputRef}
+            type="text"
+            placeholder="Search doctors, labs, tests, hospitals..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyPress}
+            onFocus={handleInputFocus}
+            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-black placeholder:text-gray-400 h-14 text-base flex-1 min-w-0 caret-primary font-medium"
+          />
+          
+          {/* Clear Button */}
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 rounded-full hover:bg-gray-100"
+              onClick={() => {
+                setSearchQuery("");
+                setCategorizedResults(null);
+                setShowDropdown(false);
+              }}
+            >
+              <X className="w-4 h-4 text-gray-500" />
+            </Button>
+          )}
+          
+          {/* Divider */}
+          <div className="h-8 w-px bg-gray-200 mx-2" />
+          
+          {/* Compact City Selector */}
           <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="border-0 shadow-none bg-transparent w-[90px] h-8 focus:ring-0 text-gray-700 text-sm font-medium p-0 [&>span]:truncate">
+            <SelectTrigger className="border-0 shadow-none bg-transparent w-auto min-w-[70px] max-w-[100px] h-10 focus:ring-0 text-gray-700 text-sm font-medium gap-1 [&>span]:truncate">
+              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
               <SelectValue placeholder={citiesLoading ? "..." : "City"} />
             </SelectTrigger>
-            <SelectContent className="max-h-[300px]">
+            <SelectContent className="max-h-[300px] bg-white z-[9999]">
               <SelectItem value="all">All Cities</SelectItem>
               {dbCities.map((city) => (
                 <SelectItem key={city.id} value={city.name}>
@@ -540,46 +582,13 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Search Input */}
-        <div className="flex-1 flex items-center gap-2 relative min-w-0">
-          {loading ? (
-            <Loader2 className="w-5 h-5 text-gray-400 ml-1 animate-spin shrink-0" />
-          ) : (
-            <Brain className="w-5 h-5 text-primary/70 ml-1 shrink-0" />
-          )}
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Try: 'heart doctor', 'sugar test', 'home nursing'..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onFocus={handleInputFocus}
-            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-black placeholder:text-gray-400 h-12 text-base flex-1 min-w-0 caret-primary"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={() => {
-                setSearchQuery("");
-                setCategorizedResults(null);
-                setShowDropdown(false);
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
           
           {/* Voice Search Button */}
           {voiceSupported && (
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 shrink-0 transition-colors ${isListening ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'hover:bg-muted'}`}
+              className={`h-10 w-10 shrink-0 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'hover:bg-gray-100 text-gray-500'}`}
               onClick={toggleVoiceSearch}
               title={isListening ? "Stop listening" : "Voice search"}
             >
@@ -591,10 +600,20 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
             </Button>
           )}
           
-          <Button onClick={handleSearch} size="lg" className="shrink-0 px-4 sm:px-6 rounded-lg h-10">
+          {/* Search Button */}
+          <Button 
+            onClick={handleSearch} 
+            className="shrink-0 h-10 px-5 sm:px-6 rounded-full mr-2 bg-primary hover:bg-primary/90 shadow-lg"
+          >
             <Search className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Search</span>
+            <span className="hidden sm:inline font-semibold">Search</span>
           </Button>
+        </div>
+        
+        {/* AI Badge */}
+        <div className="absolute -top-2 left-4 flex items-center gap-1 bg-gradient-to-r from-violet-500 to-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+          <Sparkles className="w-3 h-3" />
+          AI-Powered
         </div>
       </div>
 

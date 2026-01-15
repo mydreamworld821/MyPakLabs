@@ -423,6 +423,8 @@ export type Database = {
           hero_border_radius: number | null
           hero_image_url: string | null
           hero_margin_bottom: number | null
+          hero_margin_left: number | null
+          hero_margin_right: number | null
           hero_margin_top: number | null
           hero_max_width: number | null
           hero_min_height: number | null
@@ -460,6 +462,8 @@ export type Database = {
           hero_border_radius?: number | null
           hero_image_url?: string | null
           hero_margin_bottom?: number | null
+          hero_margin_left?: number | null
+          hero_margin_right?: number | null
           hero_margin_top?: number | null
           hero_max_width?: number | null
           hero_min_height?: number | null
@@ -497,6 +501,8 @@ export type Database = {
           hero_border_radius?: number | null
           hero_image_url?: string | null
           hero_margin_bottom?: number | null
+          hero_margin_left?: number | null
+          hero_margin_right?: number | null
           hero_margin_top?: number | null
           hero_max_width?: number | null
           hero_min_height?: number | null

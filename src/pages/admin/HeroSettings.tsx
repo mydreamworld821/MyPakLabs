@@ -51,6 +51,8 @@ interface HeroSettings {
   hero_border_radius: number | null;
   hero_margin_top: number | null;
   hero_margin_bottom: number | null;
+  hero_margin_left: number | null;
+  hero_margin_right: number | null;
   page_background_color: string | null;
   hero_shadow_intensity: number | null;
   is_active: boolean;
@@ -123,6 +125,8 @@ const HeroSettingsPage = () => {
   const [heroBorderRadius, setHeroBorderRadius] = useState(24);
   const [heroMarginTop, setHeroMarginTop] = useState(24);
   const [heroMarginBottom, setHeroMarginBottom] = useState(0);
+  const [heroMarginLeft, setHeroMarginLeft] = useState(0);
+  const [heroMarginRight, setHeroMarginRight] = useState(0);
   const [pageBackgroundColor, setPageBackgroundColor] = useState("#0f172a");
   const [heroShadowIntensity, setHeroShadowIntensity] = useState(30);
 
@@ -171,6 +175,8 @@ const HeroSettingsPage = () => {
         setHeroBorderRadius(data.hero_border_radius ?? 24);
         setHeroMarginTop(data.hero_margin_top ?? 24);
         setHeroMarginBottom(data.hero_margin_bottom ?? 0);
+        setHeroMarginLeft(data.hero_margin_left ?? 0);
+        setHeroMarginRight(data.hero_margin_right ?? 0);
         setPageBackgroundColor(data.page_background_color || "#0f172a");
         setHeroShadowIntensity(data.hero_shadow_intensity ?? 30);
         
@@ -222,6 +228,8 @@ const HeroSettingsPage = () => {
         hero_border_radius: heroBorderRadius,
         hero_margin_top: heroMarginTop,
         hero_margin_bottom: heroMarginBottom,
+        hero_margin_left: heroMarginLeft,
+        hero_margin_right: heroMarginRight,
         page_background_color: pageBackgroundColor,
         hero_shadow_intensity: heroShadowIntensity,
         updated_at: new Date().toISOString()
@@ -551,11 +559,11 @@ const HeroSettingsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t">
               {/* Margin Top */}
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>Top Margin (Space Above Hero)</Label>
+                  <Label>Top Margin</Label>
                   <span className="text-sm text-muted-foreground">{heroMarginTop}px</span>
                 </div>
                 <Slider
@@ -571,7 +579,7 @@ const HeroSettingsPage = () => {
               {/* Margin Bottom */}
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>Bottom Margin (Space Below Hero)</Label>
+                  <Label>Bottom Margin</Label>
                   <span className="text-sm text-muted-foreground">{heroMarginBottom}px</span>
                 </div>
                 <Slider
@@ -583,33 +591,106 @@ const HeroSettingsPage = () => {
                   className="w-full"
                 />
               </div>
+
+              {/* Margin Left */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Left Margin</Label>
+                  <span className="text-sm text-muted-foreground">{heroMarginLeft}px</span>
+                </div>
+                <Slider
+                  value={[heroMarginLeft]}
+                  onValueChange={(value) => {
+                    setHeroMarginLeft(value[0]);
+                    // Reset right margin when left is set
+                    if (value[0] > 0) setHeroMarginRight(0);
+                  }}
+                  min={0}
+                  max={200}
+                  step={8}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Push hero to right</p>
+              </div>
+
+              {/* Margin Right */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Right Margin</Label>
+                  <span className="text-sm text-muted-foreground">{heroMarginRight}px</span>
+                </div>
+                <Slider
+                  value={[heroMarginRight]}
+                  onValueChange={(value) => {
+                    setHeroMarginRight(value[0]);
+                    // Reset left margin when right is set
+                    if (value[0] > 0) setHeroMarginLeft(0);
+                  }}
+                  min={0}
+                  max={200}
+                  step={8}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Push hero to left</p>
+              </div>
+            </div>
+
+            {/* Position Quick Select */}
+            <div className="pt-4 border-t">
+              <Label className="text-sm mb-3 block">Quick Position</Label>
+              <div className="grid grid-cols-3 gap-2 max-w-xs">
+                {[
+                  { label: 'Left', left: 0, right: 200 },
+                  { label: 'Center', left: 0, right: 0 },
+                  { label: 'Right', left: 200, right: 0 }
+                ].map((pos) => (
+                  <button
+                    key={pos.label}
+                    onClick={() => {
+                      setHeroMarginLeft(pos.left);
+                      setHeroMarginRight(pos.right);
+                    }}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                      (heroMarginLeft === pos.left && heroMarginRight === pos.right)
+                        ? "border-primary bg-primary/10 text-primary" 
+                        : "border-muted hover:border-primary/50"
+                    }`}
+                  >
+                    {pos.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Floating Card Preview */}
             <div className="pt-4 border-t">
-              <Label className="text-sm mb-2 block">Floating Card Preview</Label>
+              <Label className="text-sm mb-2 block">Floating Card Preview (Position)</Label>
               <div 
-                className="rounded-lg p-6 relative overflow-hidden transition-all duration-300" 
-                style={{ backgroundColor: pageBackgroundColor }}
+                className="rounded-lg p-4 relative overflow-hidden transition-all duration-300" 
+                style={{ backgroundColor: pageBackgroundColor, minHeight: '100px' }}
               >
                 <div 
-                  className={`mx-auto bg-gradient-to-r ${backgroundGradient} flex items-center justify-center text-white transition-all duration-300`}
+                  className={`bg-gradient-to-r ${backgroundGradient} flex items-center justify-center text-white transition-all duration-300`}
                   style={{ 
-                    maxWidth: '200px',
-                    height: '60px',
+                    maxWidth: '180px',
+                    height: '50px',
                     borderRadius: `${heroBorderRadius}px`,
-                    marginTop: `${heroMarginTop / 2}px`,
-                    marginBottom: `${heroMarginBottom / 2}px`,
+                    marginTop: `${heroMarginTop / 4}px`,
+                    marginBottom: `${heroMarginBottom / 4}px`,
+                    marginLeft: heroMarginLeft > 0 ? `${heroMarginLeft / 4}px` : heroMarginRight > 0 ? '0' : 'auto',
+                    marginRight: heroMarginRight > 0 ? `${heroMarginRight / 4}px` : heroMarginLeft > 0 ? 'auto' : 'auto',
                     boxShadow: heroShadowIntensity > 0 
-                      ? `0 ${heroShadowIntensity / 3}px ${heroShadowIntensity}px rgba(0, 0, 0, ${heroShadowIntensity / 100})` 
+                      ? `0 ${heroShadowIntensity / 4}px ${heroShadowIntensity / 2}px rgba(0, 0, 0, ${heroShadowIntensity / 100})` 
                       : 'none'
                   }}
                 >
-                  <span className="text-sm font-medium">Hero Card</span>
+                  <span className="text-xs font-medium">Hero Card</span>
                 </div>
-                <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  Page background visible on sides
-                </p>
+                <div className="flex justify-between text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <span>{heroMarginLeft > 0 ? `← ${heroMarginLeft}px` : ''}</span>
+                  <span>{heroMarginLeft === 0 && heroMarginRight === 0 ? 'Centered' : ''}</span>
+                  <span>{heroMarginRight > 0 ? `${heroMarginRight}px →` : ''}</span>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -421,6 +421,8 @@ export type Database = {
           hero_image_url: string | null
           id: string
           image_height: number | null
+          image_overlay_color: string | null
+          image_overlay_opacity: number | null
           image_position_x: number | null
           image_position_y: number | null
           image_width: number | null
@@ -440,6 +442,8 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           image_height?: number | null
+          image_overlay_color?: string | null
+          image_overlay_opacity?: number | null
           image_position_x?: number | null
           image_position_y?: number | null
           image_width?: number | null
@@ -459,6 +463,8 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           image_height?: number | null
+          image_overlay_color?: string | null
+          image_overlay_opacity?: number | null
           image_position_x?: number | null
           image_position_y?: number | null
           image_width?: number | null

@@ -38,6 +38,8 @@ interface HeroSettings {
   image_position_y: number | null;
   image_width: number | null;
   image_height: number | null;
+  image_overlay_opacity: number | null;
+  image_overlay_color: string | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -79,7 +81,9 @@ const HeroSection = () => {
           image_position_x: data.image_position_x ?? 50,
           image_position_y: data.image_position_y ?? 30,
           image_width: data.image_width ?? 100,
-          image_height: data.image_height ?? 100
+          image_height: data.image_height ?? 100,
+          image_overlay_opacity: data.image_overlay_opacity ?? 30,
+          image_overlay_color: data.image_overlay_color || 'from-background'
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -103,7 +107,9 @@ const HeroSection = () => {
           image_position_x: 50,
           image_position_y: 30,
           image_width: 100,
-          image_height: 100
+          image_height: 100,
+          image_overlay_opacity: 30,
+          image_overlay_color: "from-background"
         });
       } finally {
         setLoading(false);
@@ -126,6 +132,7 @@ const HeroSection = () => {
   const imagePositionY = heroSettings?.image_position_y ?? 30;
   const imageWidth = heroSettings?.image_width ?? 100;
   const imageHeight = heroSettings?.image_height ?? 100;
+  const imageOverlayOpacity = heroSettings?.image_overlay_opacity ?? 30;
 
   return (
     <section className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}>
@@ -207,10 +214,19 @@ const HeroSection = () => {
                   height: imageHeight === 100 ? '350px' : `${(imageHeight / 100) * 350}px`
                 }}
               >
-                {/* Gradient overlay for natural blending */}
-                <div className="absolute inset-0 bg-gradient-to-r from-current via-transparent to-transparent z-10 pointer-events-none" style={{ color: 'inherit' }} />
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-current/60 z-10 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-current/40 via-transparent to-transparent z-10 pointer-events-none" />
+                {/* Gradient overlays for natural blending with adjustable opacity */}
+                <div 
+                  className="absolute inset-0 bg-gradient-to-r from-current via-current/30 to-transparent z-10 pointer-events-none" 
+                  style={{ opacity: imageOverlayOpacity / 100 }} 
+                />
+                <div 
+                  className="absolute inset-0 bg-gradient-to-t from-current/60 via-transparent to-transparent z-10 pointer-events-none"
+                  style={{ opacity: imageOverlayOpacity / 100 }} 
+                />
+                <div 
+                  className="absolute inset-0 bg-gradient-to-b from-current/40 via-transparent to-transparent z-10 pointer-events-none"
+                  style={{ opacity: (imageOverlayOpacity / 100) * 0.5 }} 
+                />
                 <img
                   src={heroSettings.hero_image_url}
                   alt="Healthcare Professional"

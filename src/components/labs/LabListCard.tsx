@@ -30,6 +30,7 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
   const branches = Array.isArray(lab.branches) ? lab.branches as any[] : [];
 
   // Default values if settings not provided
+  const layoutType = settings?.layout_type ?? "list";
   const cardPadding = settings?.card_padding ?? 24;
   const cardBorderRadius = settings?.card_border_radius ?? 12;
   const cardMinHeight = settings?.card_min_height ?? 120;
@@ -45,18 +46,115 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
   const secondaryButtonText = settings?.secondary_button_text ?? "View Test Prices";
   const buttonWidth = settings?.button_width ?? 160;
 
-  const getShadowStyle = () => {
+  const getShadowClass = () => {
     switch (cardShadow) {
-      case "none": return "shadow-none";
+      case "none": return "";
       case "sm": return "shadow-sm";
       case "lg": return "shadow-lg";
       default: return "shadow-md";
     }
   };
 
+  // Compact/Grid layout - vertical card
+  if (layoutType === "compact" || layoutType === "grid") {
+    return (
+      <Card 
+        className={`hover:shadow-lg transition-shadow overflow-hidden h-full ${getShadowClass()}`}
+        style={{
+          borderRadius: `${cardBorderRadius}px`,
+        }}
+      >
+        <div className="p-4 flex flex-col h-full" style={{ padding: `${cardPadding}px` }}>
+          {/* Discount Badge */}
+          {discount > 0 && (
+            <Badge 
+              variant="outline" 
+              className="text-primary border-primary font-medium self-end mb-2 text-xs"
+            >
+              {discount}% OFF
+            </Badge>
+          )}
+
+          {/* Logo - Centered */}
+          <div className="flex justify-center mb-3">
+            <div 
+              className="bg-muted/50 flex items-center justify-center overflow-hidden"
+              style={{
+                width: `${logoSize}px`,
+                height: `${logoSize}px`,
+                borderRadius: `${logoBorderRadius}px`,
+                border: showLogoBorder ? "2px solid hsl(var(--border))" : "none",
+              }}
+            >
+              {lab.logo_url ? (
+                <img 
+                  src={lab.logo_url} 
+                  alt={lab.name}
+                  className="max-w-full max-h-full object-contain p-2"
+                />
+              ) : (
+                <Building2 
+                  className="text-muted-foreground" 
+                  style={{ 
+                    width: `${logoSize * 0.4}px`, 
+                    height: `${logoSize * 0.4}px` 
+                  }} 
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Lab Info - Centered */}
+          <div className="text-center flex-1">
+            <Link to={`/labs/${lab.id}`} className="hover:underline">
+              <h3 className="text-sm font-semibold text-primary mb-1 line-clamp-2">
+                {lab.name}
+              </h3>
+            </Link>
+            
+            {showBranchCount && branches.length > 0 && (
+              <p className="text-xs text-muted-foreground mb-1">
+                {branches.length} Branch{branches.length !== 1 ? 'es' : ''}
+              </p>
+            )}
+
+            {showRating && lab.rating && (
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <Star className="w-3 h-3 fill-medical-orange text-medical-orange" />
+                <span className="text-xs font-medium">{lab.rating}</span>
+                {lab.review_count && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({lab.review_count.toLocaleString()})
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="mt-auto pt-3 space-y-2">
+            <Link to={`/labs/${lab.id}`} className="block">
+              <Button className="w-full text-xs h-8">
+                {primaryButtonText}
+              </Button>
+            </Link>
+            {secondaryButtonText && (
+              <Link to={`/labs/${lab.id}`} className="block">
+                <Button variant="outline" className="w-full text-xs h-8">
+                  {secondaryButtonText}
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // List layout - horizontal card
   return (
     <Card 
-      className={`hover:shadow-lg transition-shadow ${getShadowStyle()}`}
+      className={`hover:shadow-lg transition-shadow ${getShadowClass()}`}
       style={{
         padding: `${cardPadding}px`,
         borderRadius: `${cardBorderRadius}px`,
@@ -65,7 +163,7 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
     >
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
         {/* Logo */}
-        <div className="flex-shrink-0 flex items-center justify-center">
+        <div className="flex-shrink-0 flex items-center justify-center sm:justify-start">
           <div 
             className="bg-muted/50 flex items-center justify-center overflow-hidden"
             style={{
@@ -134,7 +232,7 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
           {/* Description */}
           {showDescription && lab.description && (
             <p 
-              className="text-sm text-muted-foreground line-clamp-2 md:line-clamp-none"
+              className="text-sm text-muted-foreground"
               style={{
                 display: '-webkit-box',
                 WebkitLineClamp: descriptionLines,

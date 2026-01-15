@@ -103,12 +103,41 @@ export const usePageLayoutSettings = (pageKey: string) => {
     border: settings.show_logo_border ? "2px solid hsl(var(--border))" : "none",
   });
 
+  // Returns CSS custom properties for responsive grid
+  const getContainerStyle = (): React.CSSProperties => {
+    if (settings.layout_type === "list") {
+      return {
+        display: "flex",
+        flexDirection: "column",
+        gap: `${settings.items_gap}px`,
+      };
+    }
+
+    // For grid and compact layouts, use CSS grid with inline styles
+    return {
+      display: "grid",
+      gap: `${settings.items_gap}px`,
+      gridTemplateColumns: `repeat(${settings.columns_desktop}, minmax(0, 1fr))`,
+    };
+  };
+
+  // Get responsive grid classes for different breakpoints
   const getGridClasses = (): string => {
     if (settings.layout_type === "list") {
       return "flex flex-col";
     }
+
+    // For compact layout, use smaller cards with more columns
+    if (settings.layout_type === "compact") {
+      return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+    }
+
+    // Map column numbers to Tailwind classes
+    const mobileClass = settings.columns_mobile === 2 ? "grid-cols-2" : "grid-cols-1";
+    const tabletClass = settings.columns_tablet === 3 ? "md:grid-cols-3" : settings.columns_tablet === 2 ? "md:grid-cols-2" : "md:grid-cols-1";
+    const desktopClass = settings.columns_desktop === 4 ? "lg:grid-cols-4" : settings.columns_desktop === 3 ? "lg:grid-cols-3" : settings.columns_desktop === 2 ? "lg:grid-cols-2" : "lg:grid-cols-1";
     
-    return `grid grid-cols-${settings.columns_mobile} md:grid-cols-${settings.columns_tablet} lg:grid-cols-${settings.columns_desktop}`;
+    return `grid ${mobileClass} ${tabletClass} ${desktopClass}`;
   };
 
   return {
@@ -116,6 +145,7 @@ export const usePageLayoutSettings = (pageKey: string) => {
     loading,
     getCardStyle,
     getLogoStyle,
+    getContainerStyle,
     getGridClasses,
   };
 };

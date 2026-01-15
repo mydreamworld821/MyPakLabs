@@ -60,7 +60,7 @@ const FindDoctors = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState<Specialization | null>(null);
 
   // Get admin-managed layout settings
-  const { settings: layoutSettings } = usePageLayoutSettings("doctors_listing");
+  const { settings: layoutSettings, getGridClasses } = usePageLayoutSettings("doctors_listing");
 
   useEffect(() => {
     fetchSpecializations();
@@ -222,11 +222,7 @@ const FindDoctors = () => {
               </div>
             ) : (
               <div 
-                className={
-                  layoutSettings.layout_type === 'list' 
-                    ? 'flex flex-col' 
-                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-                }
+                className={getGridClasses()}
                 style={{ gap: `${layoutSettings.items_gap}px` }}
               >
                 {doctors.map((doctor) => (

@@ -29,7 +29,8 @@ interface Nurse {
 }
 
 const HomeNursingInCity = () => {
-  const { city } = useParams<{ city: string }>();
+  const params = useParams();
+  const city = (params.city ?? params["*"]) as string | undefined;
   const [nurses, setNurses] = useState<Nurse[]>([]);
   const [loading, setLoading] = useState(true);
   const [validCity, setValidCity] = useState(true);

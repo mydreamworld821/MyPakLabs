@@ -156,7 +156,6 @@ const App = () => (
               <Route path="/pharmacies-in-:city" element={<PharmaciesInCity />} />
               <Route path="/medical-tests-in-:city" element={<MedicalTestsInCity />} />
               <Route path="/:city/:specialist" element={<SpecialistInCity />} />
-              
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/labs" element={<ProtectedRoute requireAdmin><AdminLabs /></ProtectedRoute>} />

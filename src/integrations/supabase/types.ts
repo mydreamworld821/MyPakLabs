@@ -424,6 +424,7 @@ export type Database = {
           title_highlight: string
           title_line1: string
           title_line2: string
+          trust_badges: Json | null
           typing_words: string[] | null
           updated_at: string
         }
@@ -437,6 +438,7 @@ export type Database = {
           title_highlight?: string
           title_line1?: string
           title_line2?: string
+          trust_badges?: Json | null
           typing_words?: string[] | null
           updated_at?: string
         }
@@ -450,6 +452,7 @@ export type Database = {
           title_highlight?: string
           title_line1?: string
           title_line2?: string
+          trust_badges?: Json | null
           typing_words?: string[] | null
           updated_at?: string
         }

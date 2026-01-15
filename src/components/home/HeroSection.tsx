@@ -3,7 +3,25 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import GlobalSearch from "@/components/GlobalSearch";
 import TypingAnimation from "./TypingAnimation";
-import { AlertTriangle, ChevronRight, CheckCircle } from "lucide-react";
+import { 
+  AlertTriangle, 
+  ChevronRight, 
+  CheckCircle, 
+  Shield, 
+  Clock, 
+  TrendingDown,
+  Award,
+  Star,
+  Heart,
+  Zap,
+  Users,
+  BadgeCheck
+} from "lucide-react";
+
+interface TrustBadge {
+  icon: string;
+  text: string;
+}
 
 interface HeroSettings {
   id: string;
@@ -14,7 +32,21 @@ interface HeroSettings {
   hero_image_url: string | null;
   typing_words: string[];
   search_placeholder: string | null;
+  trust_badges: TrustBadge[] | null;
 }
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Shield,
+  Clock,
+  TrendingDown,
+  Award,
+  Star,
+  Heart,
+  Zap,
+  Users,
+  BadgeCheck,
+  CheckCircle,
+};
 
 const HeroSection = () => {
   const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
@@ -31,7 +63,15 @@ const HeroSection = () => {
           .single();
 
         if (error) throw error;
-        setHeroSettings(data);
+        
+        // Parse trust_badges if it's a string
+        const parsedData = {
+          ...data,
+          trust_badges: typeof data.trust_badges === 'string' 
+            ? JSON.parse(data.trust_badges) 
+            : data.trust_badges
+        };
+        setHeroSettings(parsedData);
       } catch (error) {
         console.error("Error fetching hero settings:", error);
         // Set default values if fetch fails
@@ -43,7 +83,12 @@ const HeroSection = () => {
           badge_text: "Verified Providers",
           hero_image_url: null,
           typing_words: ["Doctors", "Labs", "Hospitals", "Pharmacies", "Nurses"],
-          search_placeholder: "Search doctors, labs, hospitals..."
+          search_placeholder: "Search doctors, labs, hospitals...",
+          trust_badges: [
+            { icon: "Shield", text: "ISO Certified" },
+            { icon: "Clock", text: "Quick Results" },
+            { icon: "TrendingDown", text: "Best Prices" }
+          ]
         });
       } finally {
         setLoading(false);
@@ -60,6 +105,7 @@ const HeroSection = () => {
   }
 
   const typingWords = heroSettings?.typing_words || ["Doctors", "Labs", "Hospitals"];
+  const trustBadges = heroSettings?.trust_badges || [];
 
   return (
     <section className="pt-20 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900 text-white relative overflow-hidden">
@@ -95,6 +141,26 @@ const HeroSection = () => {
             <div className="w-full max-w-xl">
               <GlobalSearch className="w-full" />
             </div>
+
+            {/* Trust Badges */}
+            {trustBadges.length > 0 && (
+              <div className="flex flex-wrap gap-3 md:gap-4">
+                {trustBadges.map((badge, index) => {
+                  const IconComponent = iconMap[badge.icon] || Shield;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20"
+                    >
+                      <IconComponent className="w-4 h-4 text-amber-300" />
+                      <span className="text-sm text-white font-medium">
+                        {badge.text}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Emergency CTA */}
             <Link to="/emergency-nursing-request" className="inline-block">

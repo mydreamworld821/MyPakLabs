@@ -548,6 +548,8 @@ export type Database = {
           created_at: string
           custom_content: Json | null
           display_order: number | null
+          icon_container_size: number | null
+          icon_size: number | null
           id: string
           image_border_radius: number | null
           image_fit: string | null
@@ -557,11 +559,14 @@ export type Database = {
           image_width: string | null
           is_visible: boolean | null
           items_gap: number | null
+          justify_content: string | null
+          layout_mode: string | null
           max_items: number | null
           section_key: string
           section_padding_x: number | null
           section_padding_y: number | null
           section_type: string | null
+          show_labels: boolean | null
           subtitle: string | null
           text_color: string | null
           title: string
@@ -581,6 +586,8 @@ export type Database = {
           created_at?: string
           custom_content?: Json | null
           display_order?: number | null
+          icon_container_size?: number | null
+          icon_size?: number | null
           id?: string
           image_border_radius?: number | null
           image_fit?: string | null
@@ -590,11 +597,14 @@ export type Database = {
           image_width?: string | null
           is_visible?: boolean | null
           items_gap?: number | null
+          justify_content?: string | null
+          layout_mode?: string | null
           max_items?: number | null
           section_key: string
           section_padding_x?: number | null
           section_padding_y?: number | null
           section_type?: string | null
+          show_labels?: boolean | null
           subtitle?: string | null
           text_color?: string | null
           title: string
@@ -614,6 +624,8 @@ export type Database = {
           created_at?: string
           custom_content?: Json | null
           display_order?: number | null
+          icon_container_size?: number | null
+          icon_size?: number | null
           id?: string
           image_border_radius?: number | null
           image_fit?: string | null
@@ -623,11 +635,14 @@ export type Database = {
           image_width?: string | null
           is_visible?: boolean | null
           items_gap?: number | null
+          justify_content?: string | null
+          layout_mode?: string | null
           max_items?: number | null
           section_key?: string
           section_padding_x?: number | null
           section_padding_y?: number | null
           section_type?: string | null
+          show_labels?: boolean | null
           subtitle?: string | null
           text_color?: string | null
           title?: string

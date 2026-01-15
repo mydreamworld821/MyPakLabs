@@ -12,7 +12,7 @@ import ConsultSpecialists from "@/components/home/ConsultSpecialists";
 import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
-import QuickAccessServices from "@/components/home/QuickAccessServices";
+
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,6 +159,14 @@ const Index = () => {
               subtitle={serviceCardsConfig?.subtitle || "Access quality healthcare services"}
               quickAccessServices={quickAccessConfig?.is_visible !== false ? quickAccessServices : undefined}
               showQuickAccess={quickAccessConfig?.is_visible !== false}
+              quickAccessLayout={{
+                icon_container_size: quickAccessConfig?.icon_container_size,
+                icon_size: quickAccessConfig?.icon_size,
+                items_gap: quickAccessConfig?.items_gap,
+                show_labels: quickAccessConfig?.show_labels,
+                justify_content: quickAccessConfig?.justify_content,
+                layout_mode: quickAccessConfig?.layout_mode,
+              }}
             />
           )}
 

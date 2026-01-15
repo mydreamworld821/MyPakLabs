@@ -273,17 +273,27 @@ const Index = () => {
                 </>}
             </div>
 
-            {/* Quick Access Services */}
-            <div className="grid grid-cols-5 gap-1 md:gap-3">
+          </div>
+
+          {/* Quick Access Services Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-foreground">
+                Quick Access
+              </h2>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
               {quickServices.map(service => <Link key={service.id} to={service.link} className="block group">
-                  <div className="flex flex-col items-center gap-1.5 p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${service.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm`}>
-                      <service.icon className={`w-5 h-5 md:w-6 md:h-6 ${service.iconColor}`} />
-                    </div>
-                    <span className="text-[10px] md:text-xs font-medium text-foreground text-center">
-                      {service.title}
-                    </span>
-                  </div>
+                  <Card className="h-full hover:shadow-md transition-all duration-300 overflow-hidden">
+                    <CardContent className="p-3 md:p-4 flex flex-col items-center text-center">
+                      <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl ${service.bgColor} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-sm`}>
+                        <service.icon className={`w-6 h-6 md:w-7 md:h-7 ${service.iconColor}`} />
+                      </div>
+                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors">
+                        {service.title}
+                      </h3>
+                    </CardContent>
+                  </Card>
                 </Link>)}
             </div>
           </div>

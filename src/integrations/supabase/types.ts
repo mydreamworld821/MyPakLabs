@@ -417,8 +417,14 @@ export type Database = {
         Row: {
           background_gradient: string | null
           badge_text: string | null
+          content_ratio: number | null
           created_at: string
+          hero_alignment: string | null
           hero_image_url: string | null
+          hero_max_width: number | null
+          hero_min_height: number | null
+          hero_padding_x: number | null
+          hero_padding_y: number | null
           id: string
           image_blend_mode: string | null
           image_fade_intensity: number | null
@@ -443,8 +449,14 @@ export type Database = {
         Insert: {
           background_gradient?: string | null
           badge_text?: string | null
+          content_ratio?: number | null
           created_at?: string
+          hero_alignment?: string | null
           hero_image_url?: string | null
+          hero_max_width?: number | null
+          hero_min_height?: number | null
+          hero_padding_x?: number | null
+          hero_padding_y?: number | null
           id?: string
           image_blend_mode?: string | null
           image_fade_intensity?: number | null
@@ -469,8 +481,14 @@ export type Database = {
         Update: {
           background_gradient?: string | null
           badge_text?: string | null
+          content_ratio?: number | null
           created_at?: string
+          hero_alignment?: string | null
           hero_image_url?: string | null
+          hero_max_width?: number | null
+          hero_min_height?: number | null
+          hero_padding_x?: number | null
+          hero_padding_y?: number | null
           id?: string
           image_blend_mode?: string | null
           image_fade_intensity?: number | null

@@ -63,6 +63,7 @@ import AdminNurseBookings from "./pages/admin/NurseBookings";
 import AdminMedicalStores from "./pages/admin/MedicalStores";
 import AdminMedicineOrders from "./pages/admin/MedicineOrders";
 import AdminHeroSettings from "./pages/admin/HeroSettings";
+import AdminHomepageLayout from "./pages/admin/HomepageLayout";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 import EmergencyNursingRequest from "./pages/EmergencyNursingRequest";
 import EmergencyRequestStatus from "./pages/EmergencyRequestStatus";
@@ -158,6 +159,7 @@ const App = () => (
               <Route path="/admin/medical-stores" element={<ProtectedRoute requireAdmin><AdminMedicalStores /></ProtectedRoute>} />
               <Route path="/admin/medicine-orders" element={<ProtectedRoute requireAdmin><AdminMedicineOrders /></ProtectedRoute>} />
               <Route path="/admin/hero-settings" element={<ProtectedRoute requireAdmin><AdminHeroSettings /></ProtectedRoute>} />
+              <Route path="/admin/homepage-layout" element={<ProtectedRoute requireAdmin><AdminHomepageLayout /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

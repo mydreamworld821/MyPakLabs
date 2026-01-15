@@ -11,15 +11,18 @@ import HeroSection from "@/components/home/HeroSection";
 import ConsultSpecialists from "@/components/home/ConsultSpecialists";
 import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
+import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
-import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Star, Shield, Clock, ChevronRight, TrendingDown, Award, AlertTriangle, Store } from "lucide-react";
+import { Star, ChevronRight, TrendingDown, Award, AlertTriangle, FlaskConical, Shield, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 interface Profile {
   full_name: string | null;
 }
+
 interface Lab {
   id: string;
   name: string;
@@ -30,12 +33,14 @@ interface Lab {
   discount_percentage: number | null;
   cities: string[] | null;
 }
+
 interface Test {
   id: string;
   name: string;
   category: string | null;
   slug: string;
 }
+
 interface ServiceCard {
   id: string;
   title: string;
@@ -45,6 +50,9 @@ interface ServiceCard {
   bg_color: string | null;
   link: string;
   display_order: number | null;
+  card_size: string | null;
+  col_span: number | null;
+  row_span: number | null;
 }
 const Index = () => {
   const {
@@ -111,57 +119,6 @@ const Index = () => {
     fetchData();
   }, [user]);
 
-  // Icon mapping for fallback
-  const iconMap: Record<string, React.ComponentType<{
-    className?: string;
-  }>> = {
-    Video,
-    Calendar,
-    Zap,
-    FlaskConical,
-    Pill,
-    Heart,
-    Building2,
-    Stethoscope
-  };
-
-  // Quick access services
-  const quickServices = [{
-    id: "labs",
-    title: "Labs",
-    icon: FlaskConical,
-    link: "/labs",
-    bgColor: "bg-sky-100",
-    iconColor: "text-primary"
-  }, {
-    id: "pharmacies",
-    title: "Pharmacies",
-    icon: Store,
-    link: "/pharmacies",
-    bgColor: "bg-emerald-100",
-    iconColor: "text-emerald-600"
-  }, {
-    id: "doctors",
-    title: "Doctors",
-    icon: Stethoscope,
-    link: "/find-doctors",
-    bgColor: "bg-blue-100",
-    iconColor: "text-blue-600"
-  }, {
-    id: "hospitals",
-    title: "Hospitals",
-    icon: Building2,
-    link: "/hospitals",
-    bgColor: "bg-teal-100",
-    iconColor: "text-teal-600"
-  }, {
-    id: "surgeries",
-    title: "Surgeries",
-    icon: Heart,
-    link: "/surgeries",
-    bgColor: "bg-purple-100",
-    iconColor: "text-purple-600"
-  }];
   return <div className="min-h-screen bg-background">
       <Navbar />
 
@@ -170,231 +127,14 @@ const Index = () => {
 
       <main className="py-6 md:py-8 relative z-0">
         <div className="container mx-auto px-4 relative">
-          {/* Services Section - Bento Grid Layout */}
+          {/* Services Section - Dynamic Grid from Admin */}
           {serviceCardsConfig?.is_visible !== false && (
-            <div className="mb-8">
-              <div className="mb-4">
-                <h2 className="text-base md:text-lg font-semibold text-foreground">
-                  {serviceCardsConfig?.title || "How can we help you today?"}
-                </h2>
-                {serviceCardsConfig?.subtitle && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {serviceCardsConfig.subtitle}
-                  </p>
-                )}
-              </div>
-
-              {/* Bento Grid Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                {/* Left Column - Large Card (Video Consultation) */}
-                {serviceCards[0] && (
-                  <Link 
-                    to={serviceCards[0].link} 
-                    className="md:col-span-3 md:row-span-2 block group"
-                  >
-                    <Card 
-                      className={`h-full ${serviceCards[0].bg_color || 'bg-sky-100'} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden relative`}
-                      style={{ borderRadius: '12px' }}
-                    >
-                      {serviceCards[0].image_url ? (
-                        <>
-                          <img 
-                            src={serviceCards[0].image_url} 
-                            alt={serviceCards[0].title} 
-                            className="absolute inset-0 w-full h-full object-cover object-top"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-transparent to-transparent" />
-                          <CardContent className="p-4 h-full min-h-[280px] md:min-h-[320px] flex flex-col relative z-10">
-                            <div>
-                              <h3 className="font-bold text-white text-lg mb-0.5">
-                                {serviceCards[0].title}
-                              </h3>
-                              {serviceCards[0].subtitle && (
-                                <p className="text-sm text-white/90">
-                                  {serviceCards[0].subtitle}
-                                </p>
-                              )}
-                            </div>
-                          </CardContent>
-                        </>
-                      ) : (
-                        <CardContent className="p-4 h-full min-h-[280px] md:min-h-[320px] flex flex-col">
-                          <div>
-                            <h3 className="font-bold text-primary text-lg mb-0.5">
-                              {serviceCards[0].title}
-                            </h3>
-                            {serviceCards[0].subtitle && (
-                              <p className="text-sm text-muted-foreground">
-                                {serviceCards[0].subtitle}
-                              </p>
-                            )}
-                          </div>
-                        </CardContent>
-                      )}
-                    </Card>
-                  </Link>
-                )}
-
-                {/* Middle Column - Two Stacked Cards */}
-                <div className="md:col-span-4 flex flex-col gap-3">
-                  {/* In-clinic Visit */}
-                  {serviceCards[1] && (
-                    <Link to={serviceCards[1].link} className="block group flex-1">
-                      <Card 
-                        className={`h-full ${serviceCards[1].bg_color || 'bg-teal-600'} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden relative`}
-                        style={{ borderRadius: '12px' }}
-                      >
-                        {serviceCards[1].image_url ? (
-                          <>
-                            <img 
-                              src={serviceCards[1].image_url} 
-                              alt={serviceCards[1].title} 
-                              className="absolute inset-0 w-full h-full object-cover object-right"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-r from-teal-700/95 via-teal-600/60 to-transparent" />
-                            <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center relative z-10">
-                              <h3 className="font-bold text-white text-lg mb-0.5">
-                                {serviceCards[1].title}
-                              </h3>
-                              {serviceCards[1].subtitle && (
-                                <p className="text-sm text-white/90">
-                                  {serviceCards[1].subtitle}
-                                </p>
-                              )}
-                            </CardContent>
-                          </>
-                        ) : (
-                          <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center">
-                            <h3 className="font-bold text-white text-lg mb-0.5">
-                              {serviceCards[1].title}
-                            </h3>
-                            {serviceCards[1].subtitle && (
-                              <p className="text-sm text-white/90">
-                                {serviceCards[1].subtitle}
-                              </p>
-                            )}
-                          </CardContent>
-                        )}
-                      </Card>
-                    </Link>
-                  )}
-
-                  {/* Weight Loss / Additional Card */}
-                  {serviceCards[2] && (
-                    <Link to={serviceCards[2].link} className="block group flex-1">
-                      <Card 
-                        className={`h-full ${serviceCards[2].bg_color || 'bg-amber-100'} border-0 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden relative`}
-                        style={{ borderRadius: '12px' }}
-                      >
-                        {serviceCards[2].image_url ? (
-                          <>
-                            <img 
-                              src={serviceCards[2].image_url} 
-                              alt={serviceCards[2].title} 
-                              className="absolute inset-0 w-full h-full object-cover object-right"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-r from-amber-100/95 via-amber-50/60 to-transparent" />
-                            <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center relative z-10">
-                              <h3 className="font-bold text-teal-700 text-lg mb-0.5">
-                                {serviceCards[2].title}
-                              </h3>
-                              {serviceCards[2].subtitle && (
-                                <p className="text-sm text-teal-600/80">
-                                  {serviceCards[2].subtitle}
-                                </p>
-                              )}
-                            </CardContent>
-                          </>
-                        ) : (
-                          <CardContent className="p-4 h-full min-h-[140px] flex flex-col justify-center">
-                            <h3 className="font-bold text-teal-700 text-lg mb-0.5">
-                              {serviceCards[2].title}
-                            </h3>
-                            {serviceCards[2].subtitle && (
-                              <p className="text-sm text-teal-600/80">
-                                {serviceCards[2].subtitle}
-                              </p>
-                            )}
-                          </CardContent>
-                        )}
-                      </Card>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Right Column - Instant Doctor + Quick Access */}
-                <div className="md:col-span-5 flex flex-col gap-3">
-                  {/* Instant Doctor Card */}
-                  {serviceCards[3] && (
-                    <Link to={serviceCards[3].link} className="block group">
-                      <Card 
-                        className="h-full bg-gradient-to-r from-amber-50 to-white border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
-                        style={{ borderRadius: '12px' }}
-                      >
-                        <CardContent className="p-4 min-h-[100px] flex items-center gap-4">
-                          <div className="flex-shrink-0">
-                            <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
-                              <Zap className="w-6 h-6 text-white" />
-                            </div>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-amber-600 text-lg flex items-center gap-1">
-                              INSTANT <span className="text-teal-600">DOCTOR</span>
-                              <span className="text-amber-500">+</span>
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {serviceCards[3].subtitle || "Get Instant Relief in a Click"}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  )}
-
-                  {/* Quick Access Icons Grid */}
-                  <div className="grid grid-cols-5 gap-2">
-                    {quickServices.map(service => (
-                      <Link key={service.id} to={service.link} className="block group">
-                        <Card className="h-full hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100" style={{ borderRadius: '12px' }}>
-                          <CardContent className="p-2 md:p-3 flex flex-col items-center text-center">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden mb-1.5 group-hover:scale-105 transition-transform">
-                              {service.id === 'labs' && (
-                                <div className="w-full h-full bg-sky-50 flex items-center justify-center">
-                                  <FlaskConical className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                                </div>
-                              )}
-                              {service.id === 'pharmacies' && (
-                                <div className="w-full h-full bg-blue-50 flex items-center justify-center">
-                                  <Pill className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
-                                </div>
-                              )}
-                              {service.id === 'doctors' && (
-                                <div className="w-full h-full bg-red-50 flex items-center justify-center">
-                                  <Heart className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
-                                </div>
-                              )}
-                              {service.id === 'hospitals' && (
-                                <div className="w-full h-full bg-teal-50 flex items-center justify-center">
-                                  <Building2 className="w-5 h-5 md:w-6 md:h-6 text-teal-600" />
-                                </div>
-                              )}
-                              {service.id === 'surgeries' && (
-                                <div className="w-full h-full bg-purple-50 flex items-center justify-center">
-                                  <Stethoscope className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
-                                </div>
-                              )}
-                            </div>
-                            <h3 className="font-medium text-[10px] md:text-xs text-gray-700 group-hover:text-primary transition-colors">
-                              {service.title}
-                            </h3>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DynamicServicesGrid
+              cards={serviceCards}
+              loading={loading}
+              title={serviceCardsConfig?.title || "How can we help you today?"}
+              subtitle={serviceCardsConfig?.subtitle || undefined}
+            />
           )}
 
           {/* Consult Best Doctors Online - Specializations Section */}

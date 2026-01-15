@@ -25,7 +25,8 @@ interface Lab {
 }
 
 const LabsInCity = () => {
-  const { city } = useParams<{ city: string }>();
+  const params = useParams();
+  const city = (params.city ?? params["*"]) as string | undefined;
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loading, setLoading] = useState(true);
   const [validCity, setValidCity] = useState(true);

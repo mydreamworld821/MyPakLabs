@@ -321,11 +321,11 @@ const SpecialistInCity = () => {
               <div className="flex flex-wrap gap-2">
                 {(
                   [
-                    { label: `All Doctors in ${formattedCity}`, to: `/doctors-in-${city?.toLowerCase()}` },
-                    { label: `Labs in ${formattedCity}`, to: `/labs-in-${city?.toLowerCase()}` },
-                    { label: `Hospitals in ${formattedCity}`, to: `/hospitals-in-${city?.toLowerCase()}` },
-                    { label: `Pharmacies in ${formattedCity}`, to: `/pharmacies-in-${city?.toLowerCase()}` },
-                    { label: `Home Nursing in ${formattedCity}`, to: `/home-nursing-${city?.toLowerCase()}` },
+                    { label: `All Doctors in ${formattedCity}`, to: `/find-doctors?city=${encodeURIComponent(formattedCity)}` },
+                    { label: `Labs in ${formattedCity}`, to: `/labs?city=${encodeURIComponent(formattedCity)}` },
+                    { label: `Hospitals in ${formattedCity}`, to: `/hospitals?city=${encodeURIComponent(formattedCity)}` },
+                    { label: `Pharmacies in ${formattedCity}`, to: `/pharmacies?city=${encodeURIComponent(formattedCity)}` },
+                    { label: `Home Nursing in ${formattedCity}`, to: `/find-nurses?city=${encodeURIComponent(formattedCity)}` },
                   ] as const
                 ).map((item, idx) => (
                   <span key={item.to} className="flex items-center gap-2">

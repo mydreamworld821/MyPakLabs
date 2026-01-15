@@ -413,6 +413,48 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_settings: {
+        Row: {
+          badge_text: string | null
+          created_at: string
+          hero_image_url: string | null
+          id: string
+          is_active: boolean | null
+          search_placeholder: string | null
+          title_highlight: string
+          title_line1: string
+          title_line2: string
+          typing_words: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          badge_text?: string | null
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          search_placeholder?: string | null
+          title_highlight?: string
+          title_line1?: string
+          title_line2?: string
+          typing_words?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          badge_text?: string | null
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          search_placeholder?: string | null
+          title_highlight?: string
+          title_line1?: string
+          title_line2?: string
+          typing_words?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hospital_doctors: {
         Row: {
           created_at: string

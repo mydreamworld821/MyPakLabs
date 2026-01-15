@@ -32,6 +32,7 @@ import {
   ClipboardList,
   Store,
   Pill,
+  Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,8 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/hero-settings", label: "Hero Banner", icon: Image },
+  { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
   { href: "/admin/labs", label: "Labs", icon: Building2 },
   { href: "/admin/featured-labs", label: "Featured Labs", icon: Star },
   { href: "/admin/tests", label: "Tests", icon: TestTube },
@@ -60,7 +63,6 @@ const navItems = [
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
   { href: "/admin/emergency-requests", label: "Emergency Requests", icon: AlertTriangle },
-  { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
   { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/users", label: "Users", icon: Users },
 ];

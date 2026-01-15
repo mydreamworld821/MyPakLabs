@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { ChevronRight, Stethoscope, Heart, Brain, Eye, Baby, Bone, Ear, Activity, Smile, User } from "lucide-react";
 
 interface Specialization {
@@ -72,10 +73,17 @@ interface ConsultSpecialistsProps {
   maxItems?: number;
 }
 
-const ConsultSpecialists = ({ className = "", maxItems = 14 }: ConsultSpecialistsProps) => {
+const ConsultSpecialists = ({ className = "", maxItems: propMaxItems = 14 }: ConsultSpecialistsProps) => {
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { config, loading: configLoading } = useSectionConfig("consult_specialists");
+
+  // Use config max_items if available, otherwise fall back to prop
+  const maxItems = config?.max_items ?? propMaxItems;
+  const isVisible = config?.is_visible ?? true;
+  const title = config?.title || "Consult Best Doctors Online";
+  const subtitle = config?.subtitle;
 
   useEffect(() => {
     const fetchSpecializations = async () => {
@@ -104,16 +112,21 @@ const ConsultSpecialists = ({ className = "", maxItems = 14 }: ConsultSpecialist
     navigate(`/find-doctors?specialization=${slug}`);
   };
 
-  if (loading) {
+  // Don't render if section is hidden
+  if (!configLoading && !isVisible) {
+    return null;
+  }
+
+  if (loading || configLoading) {
     return (
       <div className={className}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base md:text-lg font-semibold text-foreground">
-            Consult Best Doctors Online
+            {title}
           </h2>
         </div>
         <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
-          {[...Array(14)].map((_, i) => (
+          {[...Array(7)].map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-2">
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-muted animate-pulse" />
               <div className="w-16 h-3 bg-muted rounded animate-pulse" />
@@ -127,9 +140,14 @@ const ConsultSpecialists = ({ className = "", maxItems = 14 }: ConsultSpecialist
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base md:text-lg font-semibold text-foreground">
-          Consult Best Doctors Online
-        </h2>
+        <div>
+          <h2 className="text-base md:text-lg font-semibold text-foreground">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
         <Link 
           to="/find-doctors" 
           className="text-primary text-sm font-medium flex items-center gap-1 hover:underline"

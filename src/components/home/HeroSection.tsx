@@ -52,6 +52,12 @@ interface HeroSettings {
   hero_padding_y: number | null;
   content_ratio: number | null;
   hero_alignment: string | null;
+  // Floating card styling
+  hero_border_radius: number | null;
+  hero_margin_top: number | null;
+  hero_margin_bottom: number | null;
+  page_background_color: string | null;
+  hero_shadow_intensity: number | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -106,7 +112,13 @@ const HeroSection = () => {
           hero_padding_x: data.hero_padding_x ?? 16,
           hero_padding_y: data.hero_padding_y ?? 48,
           content_ratio: data.content_ratio ?? 50,
-          hero_alignment: data.hero_alignment || 'center'
+          hero_alignment: data.hero_alignment || 'center',
+          // Floating card styling
+          hero_border_radius: data.hero_border_radius ?? 24,
+          hero_margin_top: data.hero_margin_top ?? 24,
+          hero_margin_bottom: data.hero_margin_bottom ?? 0,
+          page_background_color: data.page_background_color || '#0f172a',
+          hero_shadow_intensity: data.hero_shadow_intensity ?? 30
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -143,7 +155,13 @@ const HeroSection = () => {
           hero_padding_x: 16,
           hero_padding_y: 48,
           content_ratio: 50,
-          hero_alignment: "center"
+          hero_alignment: "center",
+          // Floating card styling
+          hero_border_radius: 24,
+          hero_margin_top: 24,
+          hero_margin_bottom: 0,
+          page_background_color: "#0f172a",
+          hero_shadow_intensity: 30
         });
       } finally {
         setLoading(false);
@@ -179,6 +197,13 @@ const HeroSection = () => {
   const heroPaddingY = heroSettings?.hero_padding_y ?? 48;
   const contentRatio = heroSettings?.content_ratio ?? 50;
   const heroAlignment = heroSettings?.hero_alignment || 'center';
+  
+  // Floating card styling
+  const heroBorderRadius = heroSettings?.hero_border_radius ?? 24;
+  const heroMarginTop = heroSettings?.hero_margin_top ?? 24;
+  const heroMarginBottom = heroSettings?.hero_margin_bottom ?? 0;
+  const pageBackgroundColor = heroSettings?.page_background_color || '#0f172a';
+  const heroShadowIntensity = heroSettings?.hero_shadow_intensity ?? 30;
 
   // Generate mask gradient based on settings
   const getMaskGradient = () => {
@@ -201,37 +226,56 @@ const HeroSection = () => {
   const imageRatio = 100 - contentRatio;
 
   return (
-    <section 
-      className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}
-      style={{ minHeight: `${heroMinHeight}px` }}
-    >
-      {/* Dynamic CSS for responsive grid ratio */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @media (min-width: 1024px) {
-            .hero-content-grid {
-              grid-template-columns: ${contentRatio}fr ${imageRatio}fr !important;
-            }
-          }
-        `
-      }} />
-      
-      <div 
-        className="mx-auto w-full"
+    <>
+      {/* Page Background - Shows when hero is smaller than full width */}
+      <section 
+        className="pt-16 relative"
         style={{ 
-          maxWidth: `${heroMaxWidth}px`,
-          paddingLeft: `${heroPaddingX}px`,
-          paddingRight: `${heroPaddingX}px`,
-          paddingTop: `${heroPaddingY}px`,
-          paddingBottom: `${heroPaddingY}px`
+          backgroundColor: pageBackgroundColor,
+          paddingTop: `calc(4rem + ${heroMarginTop}px)`,
+          paddingBottom: `${heroMarginBottom}px`,
+          paddingLeft: '16px',
+          paddingRight: '16px'
         }}
       >
+        {/* Dynamic CSS for responsive grid ratio */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @media (min-width: 1024px) {
+              .hero-content-grid {
+                grid-template-columns: ${contentRatio}fr ${imageRatio}fr !important;
+              }
+            }
+          `
+        }} />
+        
+        {/* Floating Hero Card */}
         <div 
-          className={`hero-content-grid grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${
-            heroAlignment === 'left' ? 'justify-start' : 
-            heroAlignment === 'right' ? 'justify-end' : 'justify-center'
-          }`}
+          className={`mx-auto bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}
+          style={{ 
+            maxWidth: `${heroMaxWidth}px`,
+            minHeight: `${heroMinHeight}px`,
+            borderRadius: `${heroBorderRadius}px`,
+            boxShadow: heroShadowIntensity > 0 
+              ? `0 ${heroShadowIntensity / 3}px ${heroShadowIntensity}px rgba(0, 0, 0, ${heroShadowIntensity / 100})` 
+              : 'none'
+          }}
         >
+          <div 
+            className="w-full h-full"
+            style={{ 
+              paddingLeft: `${heroPaddingX}px`,
+              paddingRight: `${heroPaddingX}px`,
+              paddingTop: `${heroPaddingY}px`,
+              paddingBottom: `${heroPaddingY}px`
+            }}
+          >
+            <div 
+              className={`hero-content-grid grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${
+                heroAlignment === 'left' ? 'justify-start' : 
+                heroAlignment === 'right' ? 'justify-end' : 'justify-center'
+              }`}
+            >
           {/* Left Content */}
           <div className="text-left space-y-4 z-10">
             {/* Title with Typing Animation */}
@@ -369,9 +413,11 @@ const HeroSection = () => {
               </div>
             )}
           </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
 

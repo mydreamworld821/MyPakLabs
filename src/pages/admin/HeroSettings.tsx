@@ -47,6 +47,12 @@ interface HeroSettings {
   hero_padding_y: number | null;
   content_ratio: number | null;
   hero_alignment: string | null;
+  // Floating card styling
+  hero_border_radius: number | null;
+  hero_margin_top: number | null;
+  hero_margin_bottom: number | null;
+  page_background_color: string | null;
+  hero_shadow_intensity: number | null;
   is_active: boolean;
 }
 
@@ -113,6 +119,12 @@ const HeroSettingsPage = () => {
   const [heroPaddingY, setHeroPaddingY] = useState(48);
   const [contentRatio, setContentRatio] = useState(50);
   const [heroAlignment, setHeroAlignment] = useState("center");
+  // Floating card styling state
+  const [heroBorderRadius, setHeroBorderRadius] = useState(24);
+  const [heroMarginTop, setHeroMarginTop] = useState(24);
+  const [heroMarginBottom, setHeroMarginBottom] = useState(0);
+  const [pageBackgroundColor, setPageBackgroundColor] = useState("#0f172a");
+  const [heroShadowIntensity, setHeroShadowIntensity] = useState(30);
 
   useEffect(() => {
     fetchSettings();
@@ -155,6 +167,12 @@ const HeroSettingsPage = () => {
         setHeroPaddingY(data.hero_padding_y ?? 48);
         setContentRatio(data.content_ratio ?? 50);
         setHeroAlignment(data.hero_alignment || "center");
+        // Floating card styling
+        setHeroBorderRadius(data.hero_border_radius ?? 24);
+        setHeroMarginTop(data.hero_margin_top ?? 24);
+        setHeroMarginBottom(data.hero_margin_bottom ?? 0);
+        setPageBackgroundColor(data.page_background_color || "#0f172a");
+        setHeroShadowIntensity(data.hero_shadow_intensity ?? 30);
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -200,6 +218,12 @@ const HeroSettingsPage = () => {
         hero_padding_y: heroPaddingY,
         content_ratio: contentRatio,
         hero_alignment: heroAlignment,
+        // Floating card styling
+        hero_border_radius: heroBorderRadius,
+        hero_margin_top: heroMarginTop,
+        hero_margin_bottom: heroMarginBottom,
+        page_background_color: pageBackgroundColor,
+        hero_shadow_intensity: heroShadowIntensity,
         updated_at: new Date().toISOString()
       };
 
@@ -422,12 +446,20 @@ const HeroSettingsPage = () => {
             {/* Layout Preview */}
             <div className="pt-4 border-t">
               <Label className="text-sm mb-2 block">Layout Preview</Label>
-              <div className="bg-muted rounded-lg p-4 relative overflow-hidden" style={{ minHeight: '120px' }}>
+              <div 
+                className="rounded-lg p-4 relative overflow-hidden" 
+                style={{ minHeight: '140px', backgroundColor: pageBackgroundColor }}
+              >
                 <div 
-                  className={`mx-auto bg-gradient-to-r ${backgroundGradient} rounded-lg p-3 flex gap-2`}
+                  className={`mx-auto bg-gradient-to-r ${backgroundGradient} p-3 flex gap-2`}
                   style={{ 
-                    maxWidth: `${Math.min(heroMaxWidth / 4, 300)}px`,
-                    minHeight: `${heroMinHeight / 5}px`
+                    maxWidth: `${Math.min(heroMaxWidth / 4, 280)}px`,
+                    minHeight: `${heroMinHeight / 5}px`,
+                    borderRadius: `${heroBorderRadius / 4}px`,
+                    marginTop: `${heroMarginTop / 4}px`,
+                    boxShadow: heroShadowIntensity > 0 
+                      ? `0 ${heroShadowIntensity / 6}px ${heroShadowIntensity / 2}px rgba(0, 0, 0, ${heroShadowIntensity / 100})` 
+                      : 'none'
                   }}
                 >
                   <div 
@@ -443,6 +475,141 @@ const HeroSettingsPage = () => {
                     Image {100 - contentRatio}%
                   </div>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Floating Card Styling - NEW SECTION */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Floating Card Styling</CardTitle>
+            <CardDescription>
+              Control how the hero card floats on the page background - adjust border radius, margins, shadow, and page background color
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Page Background Color */}
+              <div className="space-y-2">
+                <Label>Page Background Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={pageBackgroundColor}
+                    onChange={(e) => setPageBackgroundColor(e.target.value)}
+                    className="w-16 h-10 p-1 cursor-pointer"
+                  />
+                  <Input
+                    value={pageBackgroundColor}
+                    onChange={(e) => setPageBackgroundColor(e.target.value)}
+                    placeholder="#0f172a"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Background visible around the hero card</p>
+              </div>
+
+              {/* Border Radius */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Border Radius</Label>
+                  <span className="text-sm text-muted-foreground">{heroBorderRadius}px</span>
+                </div>
+                <Slider
+                  value={[heroBorderRadius]}
+                  onValueChange={(value) => setHeroBorderRadius(value[0])}
+                  min={0}
+                  max={48}
+                  step={4}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Square</span>
+                  <span>Rounded</span>
+                </div>
+              </div>
+
+              {/* Shadow Intensity */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Shadow Intensity</Label>
+                  <span className="text-sm text-muted-foreground">{heroShadowIntensity}%</span>
+                </div>
+                <Slider
+                  value={[heroShadowIntensity]}
+                  onValueChange={(value) => setHeroShadowIntensity(value[0])}
+                  min={0}
+                  max={80}
+                  step={5}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>None</span>
+                  <span>Strong</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+              {/* Margin Top */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Top Margin (Space Above Hero)</Label>
+                  <span className="text-sm text-muted-foreground">{heroMarginTop}px</span>
+                </div>
+                <Slider
+                  value={[heroMarginTop]}
+                  onValueChange={(value) => setHeroMarginTop(value[0])}
+                  min={0}
+                  max={80}
+                  step={4}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Margin Bottom */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Bottom Margin (Space Below Hero)</Label>
+                  <span className="text-sm text-muted-foreground">{heroMarginBottom}px</span>
+                </div>
+                <Slider
+                  value={[heroMarginBottom]}
+                  onValueChange={(value) => setHeroMarginBottom(value[0])}
+                  min={0}
+                  max={80}
+                  step={4}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {/* Floating Card Preview */}
+            <div className="pt-4 border-t">
+              <Label className="text-sm mb-2 block">Floating Card Preview</Label>
+              <div 
+                className="rounded-lg p-6 relative overflow-hidden transition-all duration-300" 
+                style={{ backgroundColor: pageBackgroundColor }}
+              >
+                <div 
+                  className={`mx-auto bg-gradient-to-r ${backgroundGradient} flex items-center justify-center text-white transition-all duration-300`}
+                  style={{ 
+                    maxWidth: '200px',
+                    height: '60px',
+                    borderRadius: `${heroBorderRadius}px`,
+                    marginTop: `${heroMarginTop / 2}px`,
+                    marginBottom: `${heroMarginBottom / 2}px`,
+                    boxShadow: heroShadowIntensity > 0 
+                      ? `0 ${heroShadowIntensity / 3}px ${heroShadowIntensity}px rgba(0, 0, 0, ${heroShadowIntensity / 100})` 
+                      : 'none'
+                  }}
+                >
+                  <span className="text-sm font-medium">Hero Card</span>
+                </div>
+                <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  Page background visible on sides
+                </p>
               </div>
             </div>
           </CardContent>

@@ -89,6 +89,7 @@ import HospitalsInCity from "./pages/seo/HospitalsInCity";
 import HomeNursingInCity from "./pages/seo/HomeNursingInCity";
 import PharmaciesInCity from "./pages/seo/PharmaciesInCity";
 import MedicalTestsInCity from "./pages/seo/MedicalTestsInCity";
+import SpecialistInCity from "./pages/seo/SpecialistInCity";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -152,6 +153,7 @@ const App = () => (
               <Route path="/home-nursing-:city" element={<HomeNursingInCity />} />
               <Route path="/pharmacies-in-:city" element={<PharmaciesInCity />} />
               <Route path="/medical-tests-in-:city" element={<MedicalTestsInCity />} />
+              <Route path="/:city/:specialist" element={<SpecialistInCity />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

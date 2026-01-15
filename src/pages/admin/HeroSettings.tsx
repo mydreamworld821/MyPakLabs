@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { Loader2, Save, Plus, X, Image as ImageIcon, Eye, Shield, Clock, TrendingDown, Award, Star, Heart, Zap, Users, BadgeCheck, CheckCircle } from "lucide-react";
 import ImageUpload from "@/components/admin/ImageUpload";
@@ -28,6 +29,8 @@ interface HeroSettings {
   search_placeholder: string | null;
   trust_badges: TrustBadge[] | null;
   background_gradient: string | null;
+  image_position_x: number | null;
+  image_position_y: number | null;
   is_active: boolean;
 }
 
@@ -66,6 +69,8 @@ const HeroSettingsPage = () => {
   const [newBadgeIcon, setNewBadgeIcon] = useState("Shield");
   const [newBadgeText, setNewBadgeText] = useState("");
   const [backgroundGradient, setBackgroundGradient] = useState("from-amber-800 via-amber-700 to-blue-900");
+  const [imagePositionX, setImagePositionX] = useState(50);
+  const [imagePositionY, setImagePositionY] = useState(30);
 
   useEffect(() => {
     fetchSettings();
@@ -91,6 +96,8 @@ const HeroSettingsPage = () => {
         setTypingWords(data.typing_words || []);
         setSearchPlaceholder(data.search_placeholder || "");
         setBackgroundGradient(data.background_gradient || "from-amber-800 via-amber-700 to-blue-900");
+        setImagePositionX(data.image_position_x ?? 50);
+        setImagePositionY(data.image_position_y ?? 30);
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -119,6 +126,8 @@ const HeroSettingsPage = () => {
         search_placeholder: searchPlaceholder || null,
         trust_badges: trustBadges as unknown as Json,
         background_gradient: backgroundGradient,
+        image_position_x: imagePositionX,
+        image_position_y: imagePositionY,
         updated_at: new Date().toISOString()
       };
 
@@ -401,7 +410,7 @@ const HeroSettingsPage = () => {
                 Upload an image for the right side of the hero section (recommended: 800x600px or larger)
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <ImageUpload
                 label="Hero Banner Image"
                 currentUrl={heroImageUrl}
@@ -411,15 +420,75 @@ const HeroSettingsPage = () => {
                 aspectRatio="banner"
               />
               {heroImageUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => setHeroImageUrl("")}
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Remove Image
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHeroImageUrl("")}
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Remove Image
+                  </Button>
+                  
+                  {/* Image Position Controls */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <h4 className="font-medium text-sm">Image Focal Point</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label>Horizontal Position (X)</Label>
+                          <span className="text-sm text-muted-foreground">{imagePositionX}%</span>
+                        </div>
+                        <Slider
+                          value={[imagePositionX]}
+                          onValueChange={(value) => setImagePositionX(value[0])}
+                          min={0}
+                          max={100}
+                          step={1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Left</span>
+                          <span>Center</span>
+                          <span>Right</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label>Vertical Position (Y)</Label>
+                          <span className="text-sm text-muted-foreground">{imagePositionY}%</span>
+                        </div>
+                        <Slider
+                          value={[imagePositionY]}
+                          onValueChange={(value) => setImagePositionY(value[0])}
+                          min={0}
+                          max={100}
+                          step={1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Top</span>
+                          <span>Center</span>
+                          <span>Bottom</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Image Position Preview */}
+                    <div className="mt-4">
+                      <Label className="text-sm">Position Preview</Label>
+                      <div className="relative mt-2 h-32 w-48 rounded-lg overflow-hidden border">
+                        <img
+                          src={heroImageUrl}
+                          alt="Position preview"
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
+                        />
+                        <div className="absolute inset-0 border-2 border-dashed border-primary/50 pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -482,6 +551,7 @@ const HeroSettingsPage = () => {
                       src={heroImageUrl}
                       alt="Hero Preview"
                       className="w-full h-48 object-cover rounded-lg"
+                      style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
                     />
                   ) : (
                     <div className="w-full h-48 bg-blue-800/30 rounded-lg flex items-center justify-center">

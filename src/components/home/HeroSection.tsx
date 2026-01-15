@@ -283,7 +283,7 @@ const HeroSection = () => {
             }}
           >
             <div 
-              className={`hero-content-grid grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${
+              className={`hero-content-grid grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-center ${
                 heroAlignment === 'left' ? 'justify-start' : 
                 heroAlignment === 'right' ? 'justify-end' : 'justify-center'
               }`}

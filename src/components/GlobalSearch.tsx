@@ -38,6 +38,8 @@ import {
 interface GlobalSearchProps {
   className?: string;
   position?: 'inline' | 'bottom-fixed';
+  externalOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface SearchResult {
@@ -89,7 +91,7 @@ const POPULAR_SPECIALIZATIONS = [
   { text: "Cardiologist", type: "specialization" as const },
 ];
 
-const GlobalSearch = ({ className, position = 'inline' }: GlobalSearchProps) => {
+const GlobalSearch = ({ className, position = 'inline', externalOpen, onOpenChange }: GlobalSearchProps) => {
   const { isNative } = useNativePlatform();
   const navigate = useNavigate();
   const { cities: dbCities, loading: citiesLoading } = useCities();
@@ -98,7 +100,17 @@ const GlobalSearch = ({ className, position = 'inline' }: GlobalSearchProps) => 
   const [categorizedResults, setCategorizedResults] = useState<CategorizedResults | null>(null);
   const [searchIntent, setSearchIntent] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use external control if provided, otherwise use internal state
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    } else {
+      setInternalOpen(open);
+    }
+  };
   const inputRef = useRef<HTMLInputElement>(null);
   const modalInputRef = useRef<HTMLInputElement>(null);
   
@@ -464,10 +476,15 @@ const GlobalSearch = ({ className, position = 'inline' }: GlobalSearchProps) => 
     </div>
   );
 
+  // If externally controlled, don't render trigger bar
+  const isExternallyControlled = externalOpen !== undefined;
+
   return (
     <>
-      {/* Render trigger based on position */}
-      {actualPosition === 'bottom-fixed' ? <BottomFixedBar /> : <InlineTriggerBar />}
+      {/* Render trigger based on position - skip if externally controlled */}
+      {!isExternallyControlled && (
+        actualPosition === 'bottom-fixed' ? <BottomFixedBar /> : <InlineTriggerBar />
+      )}
 
       {/* Search Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

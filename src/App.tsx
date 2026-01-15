@@ -78,7 +78,7 @@ import OrderMedicine from "./pages/OrderMedicine";
 import NurseActiveJob from "./pages/NurseActiveJob";
 import AITools from "./pages/AITools";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
-import NativeBottomSearch from "./components/NativeBottomSearch";
+import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
 const queryClient = new QueryClient();
 
@@ -171,7 +171,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <HealthChatbot />
-            <NativeBottomSearch />
+            <NativeMobileWrapper />
           </BrowserRouter>
         </TooltipProvider>
       </NotificationProvider>

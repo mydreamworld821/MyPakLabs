@@ -1811,6 +1811,51 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          admin_notes: string | null
+          comment: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: Database["public"]["Enums"]["review_entity_type"]
+          id: string
+          rating: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["review_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          comment?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: Database["public"]["Enums"]["review_entity_type"]
+          id?: string
+          rating: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["review_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          comment?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: Database["public"]["Enums"]["review_entity_type"]
+          id?: string
+          rating?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["review_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_cards: {
         Row: {
           bg_color: string | null
@@ -2068,6 +2113,14 @@ export type Database = {
       nurse_offer_status: "pending" | "accepted" | "rejected" | "expired"
       order_status: "pending" | "confirmed" | "completed" | "cancelled"
       prescription_status: "pending_review" | "approved" | "rejected"
+      review_entity_type:
+        | "doctor"
+        | "lab"
+        | "hospital"
+        | "nurse"
+        | "pharmacy"
+        | "platform"
+      review_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2222,6 +2275,15 @@ export const Constants = {
       nurse_offer_status: ["pending", "accepted", "rejected", "expired"],
       order_status: ["pending", "confirmed", "completed", "cancelled"],
       prescription_status: ["pending_review", "approved", "rejected"],
+      review_entity_type: [
+        "doctor",
+        "lab",
+        "hospital",
+        "nurse",
+        "pharmacy",
+        "platform",
+      ],
+      review_status: ["pending", "approved", "rejected"],
     },
   },
 } as const

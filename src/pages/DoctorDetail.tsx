@@ -29,6 +29,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import HospitalBadges from "@/components/HospitalBadges";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 
 interface Doctor {
   id: string;
@@ -609,13 +610,11 @@ const DoctorDetail = () => {
                 <TabsContent value="reviews" className="mt-4">
                   <Card>
                     <CardContent className="p-4">
-                      <div className="text-center py-8">
-                        <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                        <p className="text-sm text-muted-foreground">No reviews yet</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Be the first to review Dr. {doctor.full_name}
-                        </p>
-                      </div>
+                      <ReviewsSection
+                        entityType="doctor"
+                        entityId={doctor.id}
+                        entityName={`Dr. ${doctor.full_name}`}
+                      />
                     </CardContent>
                   </Card>
                 </TabsContent>

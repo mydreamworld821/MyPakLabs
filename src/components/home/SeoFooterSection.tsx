@@ -64,10 +64,10 @@ export const SeoFooterSection = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-black mb-3">
             🏥 Find the Best Doctors & Medical Specialists in {city}
           </h2>
-          <p className="text-muted-foreground max-w-3xl mx-auto text-sm md:text-base">
+          <p className="text-black/80 max-w-3xl mx-auto text-sm md:text-base">
             Looking for trusted and experienced medical professionals in {city}? MyPakLabs helps you connect with the best doctors, hospitals, diagnostic labs, nurses, and pharmacies. Compare consultation fees, read patient reviews, and book appointments with verified specialists near you.
           </p>
         </div>
@@ -78,7 +78,7 @@ export const SeoFooterSection = () => {
           <div className="space-y-4">
             <Link to="/find-doctors" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
               <Stethoscope className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg text-black hover:text-primary transition-colors">
                 👨‍⚕️ Top Medical Specialists
               </h3>
             </Link>
@@ -87,7 +87,7 @@ export const SeoFooterSection = () => {
                 <li key={specialist.slug}>
                   <Link
                     to={`/islamabad/best-${specialist.slug}`}
-                    className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                    className="text-sm text-black/70 hover:text-primary hover:underline transition-colors"
                   >
                     Best {specialist.name} in {city}
                   </Link>
@@ -100,7 +100,7 @@ export const SeoFooterSection = () => {
           <div className="space-y-4">
             <Link to="/find-doctors" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
               <Building2 className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg text-black hover:text-primary transition-colors">
                 👨‍⚕️ More Specialists
               </h3>
             </Link>
@@ -109,7 +109,7 @@ export const SeoFooterSection = () => {
                 <li key={specialist.slug}>
                   <Link
                     to={`/islamabad/best-${specialist.slug}`}
-                    className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                    className="text-sm text-black/70 hover:text-primary hover:underline transition-colors"
                   >
                     Best {specialist.name} in {city}
                   </Link>
@@ -122,7 +122,7 @@ export const SeoFooterSection = () => {
           <div className="space-y-4">
             <Link to="/labs" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
               <FlaskConical className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg text-black hover:text-primary transition-colors">
                 🧪 Diagnostic Labs & Services
               </h3>
             </Link>
@@ -131,7 +131,7 @@ export const SeoFooterSection = () => {
                 <li key={index}>
                   <Link
                     to={service.link}
-                    className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                    className="text-sm text-black/70 hover:text-primary hover:underline transition-colors"
                   >
                     {service.name} in {city}
                   </Link>
@@ -145,7 +145,7 @@ export const SeoFooterSection = () => {
             <div>
               <Link to="/find-pharmacies" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                 <Pill className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
+                <h3 className="font-semibold text-lg text-black hover:text-primary transition-colors">
                   💊 Pharmacies & Medicines
                 </h3>
               </Link>
@@ -154,7 +154,7 @@ export const SeoFooterSection = () => {
                   <li key={index}>
                     <Link
                       to={service.link}
-                      className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                      className="text-sm text-black/70 hover:text-primary hover:underline transition-colors"
                     >
                       {service.name} in {city}
                     </Link>
@@ -166,7 +166,7 @@ export const SeoFooterSection = () => {
             <div>
               <Link to="/find-nurses" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                 <Heart className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
+                <h3 className="font-semibold text-lg text-black hover:text-primary transition-colors">
                   👩‍⚕️ Home & Emergency Care
                 </h3>
               </Link>
@@ -175,7 +175,7 @@ export const SeoFooterSection = () => {
                   <li key={index}>
                     <Link
                       to={service.link}
-                      className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                      className="text-sm text-black/70 hover:text-primary hover:underline transition-colors"
                     >
                       {service.name} in {city}
                     </Link>
@@ -190,7 +190,7 @@ export const SeoFooterSection = () => {
         <div className="mt-10 pt-8 border-t border-border">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <Search className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-lg text-foreground">
+            <h3 className="font-semibold text-lg text-black">
               🔍 Popular Medical Searches in {city}
             </h3>
           </div>
@@ -198,7 +198,7 @@ export const SeoFooterSection = () => {
             {popularSearches.map((search, index) => (
               <span
                 key={index}
-                className="px-3 py-1.5 bg-background rounded-full text-xs text-muted-foreground border border-border hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-background rounded-full text-xs text-black/70 border border-border hover:border-primary hover:text-primary transition-colors cursor-pointer"
               >
                 {search}
               </span>

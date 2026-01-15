@@ -313,7 +313,7 @@ const HeroSection = () => {
             )}
 
             {/* Search Bar */}
-            <div className="w-full max-w-xl">
+            <div className="w-full max-w-2xl lg:max-w-full lg:pr-4">
               <GlobalSearch className="w-full" />
             </div>
 

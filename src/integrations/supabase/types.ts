@@ -420,11 +420,15 @@ export type Database = {
           content_ratio: number | null
           created_at: string
           hero_alignment: string | null
+          hero_border_radius: number | null
           hero_image_url: string | null
+          hero_margin_bottom: number | null
+          hero_margin_top: number | null
           hero_max_width: number | null
           hero_min_height: number | null
           hero_padding_x: number | null
           hero_padding_y: number | null
+          hero_shadow_intensity: number | null
           id: string
           image_blend_mode: string | null
           image_fade_intensity: number | null
@@ -438,6 +442,7 @@ export type Database = {
           image_soft_edges: boolean | null
           image_width: number | null
           is_active: boolean | null
+          page_background_color: string | null
           search_placeholder: string | null
           title_highlight: string
           title_line1: string
@@ -452,11 +457,15 @@ export type Database = {
           content_ratio?: number | null
           created_at?: string
           hero_alignment?: string | null
+          hero_border_radius?: number | null
           hero_image_url?: string | null
+          hero_margin_bottom?: number | null
+          hero_margin_top?: number | null
           hero_max_width?: number | null
           hero_min_height?: number | null
           hero_padding_x?: number | null
           hero_padding_y?: number | null
+          hero_shadow_intensity?: number | null
           id?: string
           image_blend_mode?: string | null
           image_fade_intensity?: number | null
@@ -470,6 +479,7 @@ export type Database = {
           image_soft_edges?: boolean | null
           image_width?: number | null
           is_active?: boolean | null
+          page_background_color?: string | null
           search_placeholder?: string | null
           title_highlight?: string
           title_line1?: string
@@ -484,11 +494,15 @@ export type Database = {
           content_ratio?: number | null
           created_at?: string
           hero_alignment?: string | null
+          hero_border_radius?: number | null
           hero_image_url?: string | null
+          hero_margin_bottom?: number | null
+          hero_margin_top?: number | null
           hero_max_width?: number | null
           hero_min_height?: number | null
           hero_padding_x?: number | null
           hero_padding_y?: number | null
+          hero_shadow_intensity?: number | null
           id?: string
           image_blend_mode?: string | null
           image_fade_intensity?: number | null
@@ -502,6 +516,7 @@ export type Database = {
           image_soft_edges?: boolean | null
           image_width?: number | null
           is_active?: boolean | null
+          page_background_color?: string | null
           search_placeholder?: string | null
           title_highlight?: string
           title_line1?: string

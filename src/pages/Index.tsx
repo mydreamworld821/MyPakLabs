@@ -152,21 +152,22 @@ const Index = () => {
         <div className="container mx-auto px-4 relative">
           {/* Services Section - Dynamic Grid from Admin */}
           {serviceCardsConfig?.is_visible !== false && (
-            <DynamicServicesGrid
-              cards={serviceCards}
-              loading={loading}
-              title={serviceCardsConfig?.title || "How can we help you today?"}
-              subtitle={serviceCardsConfig?.subtitle || undefined}
-            />
-          )}
-
-          {/* Quick Access Services - Badge Style Icons */}
-          {quickAccessConfig?.is_visible !== false && (
-            <QuickAccessServices
-              services={quickAccessServices}
-              loading={loading}
-              title={quickAccessConfig?.title || "Access quality healthcare services"}
-            />
+            <div className="mb-6">
+              <DynamicServicesGrid
+                cards={serviceCards}
+                loading={loading}
+                title={serviceCardsConfig?.title || "Our Services"}
+                subtitle={serviceCardsConfig?.subtitle || "Access quality healthcare services"}
+              />
+              
+              {/* Quick Access Services - Badge Style Icons - Below Service Cards */}
+              {quickAccessConfig?.is_visible !== false && (
+                <QuickAccessServices
+                  services={quickAccessServices}
+                  loading={loading}
+                />
+              )}
+            </div>
           )}
 
           {/* Consult Best Doctors Online - Specializations Section */}

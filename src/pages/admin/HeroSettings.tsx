@@ -33,6 +33,8 @@ interface HeroSettings {
   image_position_y: number | null;
   image_width: number | null;
   image_height: number | null;
+  image_overlay_opacity: number | null;
+  image_overlay_color: string | null;
   is_active: boolean;
 }
 
@@ -52,6 +54,17 @@ const availableIcons = [
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Shield, Clock, TrendingDown, Award, Star, Heart, Zap, Users, BadgeCheck, CheckCircle
 };
+
+const gradientPresets = [
+  { name: "Amber Blue", value: "from-amber-800 via-amber-700 to-blue-900", colors: ["#92400e", "#d97706", "#1e3a8a"] },
+  { name: "Ocean Blue", value: "from-blue-900 via-blue-800 to-cyan-700", colors: ["#1e3a8a", "#1e40af", "#0e7490"] },
+  { name: "Forest Green", value: "from-emerald-900 via-green-800 to-teal-700", colors: ["#064e3b", "#166534", "#0f766e"] },
+  { name: "Royal Purple", value: "from-purple-900 via-violet-800 to-indigo-700", colors: ["#581c87", "#5b21b6", "#4338ca"] },
+  { name: "Sunset Orange", value: "from-orange-800 via-red-700 to-rose-600", colors: ["#9a3412", "#b91c1c", "#e11d48"] },
+  { name: "Dark Slate", value: "from-slate-900 via-gray-800 to-zinc-700", colors: ["#0f172a", "#1f2937", "#3f3f46"] },
+  { name: "Teal Cyan", value: "from-teal-900 via-cyan-800 to-sky-700", colors: ["#134e4a", "#155e75", "#0369a1"] },
+  { name: "Pink Fuchsia", value: "from-pink-800 via-fuchsia-700 to-purple-600", colors: ["#9d174d", "#a21caf", "#9333ea"] },
+];
 
 const HeroSettingsPage = () => {
   const [settings, setSettings] = useState<HeroSettings | null>(null);
@@ -75,6 +88,8 @@ const HeroSettingsPage = () => {
   const [imagePositionY, setImagePositionY] = useState(30);
   const [imageWidth, setImageWidth] = useState(100);
   const [imageHeight, setImageHeight] = useState(100);
+  const [imageOverlayOpacity, setImageOverlayOpacity] = useState(30);
+  const [imageOverlayColor, setImageOverlayColor] = useState("from-background");
 
   useEffect(() => {
     fetchSettings();
@@ -104,6 +119,8 @@ const HeroSettingsPage = () => {
         setImagePositionY(data.image_position_y ?? 30);
         setImageWidth(data.image_width ?? 100);
         setImageHeight(data.image_height ?? 100);
+        setImageOverlayOpacity(data.image_overlay_opacity ?? 30);
+        setImageOverlayColor(data.image_overlay_color || "from-background");
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -136,6 +153,8 @@ const HeroSettingsPage = () => {
         image_position_y: imagePositionY,
         image_width: imageWidth,
         image_height: imageHeight,
+        image_overlay_opacity: imageOverlayOpacity,
+        image_overlay_color: imageOverlayColor,
         updated_at: new Date().toISOString()
       };
 
@@ -280,17 +299,41 @@ const HeroSettingsPage = () => {
                   placeholder="Search doctors, labs, hospitals..."
                 />
               </div>
-              <div>
-                <Label htmlFor="backgroundGradient">Background Gradient (Tailwind classes)</Label>
-                <Input
-                  id="backgroundGradient"
-                  value={backgroundGradient}
-                  onChange={(e) => setBackgroundGradient(e.target.value)}
-                  placeholder="from-amber-800 via-amber-700 to-blue-900"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Use Tailwind gradient classes (e.g., from-blue-900 via-blue-800 to-indigo-900)
-                </p>
+              <div className="space-y-3">
+                <Label>Background Theme</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {gradientPresets.map((preset) => (
+                    <button
+                      key={preset.name}
+                      onClick={() => setBackgroundGradient(preset.value)}
+                      className={`relative p-3 rounded-lg border-2 transition-all ${
+                        backgroundGradient === preset.value 
+                          ? "border-primary ring-2 ring-primary/20" 
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                    >
+                      <div 
+                        className="h-8 rounded-md mb-2"
+                        style={{ 
+                          background: `linear-gradient(to right, ${preset.colors.join(", ")})`
+                        }}
+                      />
+                      <span className="text-xs font-medium">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="pt-2">
+                  <Label htmlFor="backgroundGradient" className="text-xs text-muted-foreground">
+                    Or enter custom Tailwind gradient:
+                  </Label>
+                  <Input
+                    id="backgroundGradient"
+                    value={backgroundGradient}
+                    onChange={(e) => setBackgroundGradient(e.target.value)}
+                    placeholder="from-amber-800 via-amber-700 to-blue-900"
+                    className="mt-1"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -524,20 +567,58 @@ const HeroSettingsPage = () => {
                       </div>
                     </div>
                     
+                    {/* Image Blend Controls */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <h4 className="font-medium text-sm">Image Blending</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Adjust how the image blends with the background gradient
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label>Overlay Strength</Label>
+                          <span className="text-sm text-muted-foreground">{imageOverlayOpacity}%</span>
+                        </div>
+                        <Slider
+                          value={[imageOverlayOpacity]}
+                          onValueChange={(value) => setImageOverlayOpacity(value[0])}
+                          min={0}
+                          max={100}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>No Blend</span>
+                          <span>Medium</span>
+                          <span>Full Blend</span>
+                        </div>
+                      </div>
+                    </div>
+                    
                     {/* Image Preview with all settings */}
-                    <div className="mt-4">
-                      <Label className="text-sm">Size & Position Preview</Label>
-                      <div className="relative mt-2 bg-muted/50 rounded-lg p-4 flex justify-end">
+                    <div className="mt-4 pt-4 border-t">
+                      <Label className="text-sm">Final Preview</Label>
+                      <div 
+                        className={`relative mt-2 bg-gradient-to-r ${backgroundGradient} rounded-lg p-4 flex justify-end`}
+                      >
                         <div 
-                          className="relative rounded-lg overflow-hidden border-2 border-dashed border-primary/50"
+                          className="relative rounded-lg overflow-hidden"
                           style={{ 
                             width: `${imageWidth * 2}px`,
                             height: `${imageHeight * 1.5}px`
                           }}
                         >
+                          {/* Overlay effect preview */}
+                          <div 
+                            className="absolute inset-0 bg-gradient-to-r from-current via-current/30 to-transparent z-10 pointer-events-none" 
+                            style={{ opacity: imageOverlayOpacity / 100 }} 
+                          />
+                          <div 
+                            className="absolute inset-0 bg-gradient-to-t from-current/60 via-transparent to-transparent z-10 pointer-events-none"
+                            style={{ opacity: imageOverlayOpacity / 100 }} 
+                          />
                           <img
                             src={heroImageUrl}
-                            alt="Size preview"
+                            alt="Blend preview"
                             className="w-full h-full object-cover"
                             style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
                           />

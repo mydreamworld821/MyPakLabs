@@ -12,6 +12,7 @@ import ConsultSpecialists from "@/components/home/ConsultSpecialists";
 import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
+import QuickAccessServices from "@/components/home/QuickAccessServices";
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,17 @@ interface ServiceCard {
   col_span: number | null;
   row_span: number | null;
 }
+
+interface QuickAccessService {
+  id: string;
+  title: string;
+  icon_name: string;
+  icon_color: string | null;
+  icon_size: number | null;
+  bg_color: string | null;
+  link: string;
+  display_order: number | null;
+}
 const Index = () => {
   const {
     user
@@ -63,10 +75,13 @@ const Index = () => {
   const [featuredLabs, setFeaturedLabs] = useState<Lab[]>([]);
   const [popularTests, setPopularTests] = useState<Test[]>([]);
   const [serviceCards, setServiceCards] = useState<ServiceCard[]>([]);
+  const [quickAccessServices, setQuickAccessServices] = useState<QuickAccessService[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Get service cards section config from admin
   const { config: serviceCardsConfig } = useSectionConfig('service_cards');
+  const { config: quickAccessConfig } = useSectionConfig('quick_access');
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -110,6 +125,14 @@ const Index = () => {
           ascending: true
         });
         if (cardsData) setServiceCards(cardsData);
+
+        // Fetch quick access services
+        const {
+          data: quickAccessData
+        } = await supabase.from("quick_access_services").select("*").eq("is_active", true).order("display_order", {
+          ascending: true
+        });
+        if (quickAccessData) setQuickAccessServices(quickAccessData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -134,6 +157,15 @@ const Index = () => {
               loading={loading}
               title={serviceCardsConfig?.title || "How can we help you today?"}
               subtitle={serviceCardsConfig?.subtitle || undefined}
+            />
+          )}
+
+          {/* Quick Access Services - Badge Style Icons */}
+          {quickAccessConfig?.is_visible !== false && (
+            <QuickAccessServices
+              services={quickAccessServices}
+              loading={loading}
+              title={quickAccessConfig?.title || "Access quality healthcare services"}
             />
           )}
 

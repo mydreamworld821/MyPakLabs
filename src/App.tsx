@@ -67,6 +67,7 @@ import AdminMedicineOrders from "./pages/admin/MedicineOrders";
 import AdminHeroSettings from "./pages/admin/HeroSettings";
 import AdminHomepageLayout from "./pages/admin/HomepageLayout";
 import AdminPageLayouts from "./pages/admin/PageLayouts";
+import AdminReviews from "./pages/admin/Reviews";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 import EmergencyNursingRequest from "./pages/EmergencyNursingRequest";
 import EmergencyRequestStatus from "./pages/EmergencyRequestStatus";
@@ -79,6 +80,7 @@ import PharmacyDashboard from "./pages/PharmacyDashboard";
 import OrderMedicine from "./pages/OrderMedicine";
 import NurseActiveJob from "./pages/NurseActiveJob";
 import AITools from "./pages/AITools";
+import Reviews from "./pages/Reviews";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
@@ -145,7 +147,7 @@ const App = () => (
               <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
               <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
               <Route path="/ai-tools" element={<AITools />} />
-              
+              <Route path="/reviews" element={<Reviews />} />
               {/* SEO City Pages */}
               <Route path="/doctors-in-:city" element={<DoctorsInCity />} />
               <Route path="/labs-in-:city" element={<LabsInCity />} />
@@ -184,6 +186,7 @@ const App = () => (
               <Route path="/admin/hero-settings" element={<ProtectedRoute requireAdmin><AdminHeroSettings /></ProtectedRoute>} />
               <Route path="/admin/homepage-layout" element={<ProtectedRoute requireAdmin><AdminHomepageLayout /></ProtectedRoute>} />
               <Route path="/admin/page-layouts" element={<ProtectedRoute requireAdmin><AdminPageLayouts /></ProtectedRoute>} />
+              <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

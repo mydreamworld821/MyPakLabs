@@ -13,6 +13,7 @@ import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
 import SeoFooterSection from "@/components/home/SeoFooterSection";
+import { PatientTestimonials } from "@/components/home/PatientTestimonials";
 
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
@@ -309,6 +310,9 @@ const Index = () => {
           <CustomSections />
         </div>
       </main>
+
+      {/* Patient Testimonials Section */}
+      <PatientTestimonials />
 
       {/* SEO Footer Section - Above Footer */}
       <SeoFooterSection />

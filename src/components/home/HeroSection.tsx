@@ -34,6 +34,8 @@ interface HeroSettings {
   search_placeholder: string | null;
   trust_badges: TrustBadge[] | null;
   background_gradient: string | null;
+  image_position_x: number | null;
+  image_position_y: number | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -71,7 +73,9 @@ const HeroSection = () => {
           trust_badges: typeof data.trust_badges === 'string' 
             ? JSON.parse(data.trust_badges) 
             : data.trust_badges,
-          background_gradient: data.background_gradient || 'from-amber-800 via-amber-700 to-blue-900'
+          background_gradient: data.background_gradient || 'from-amber-800 via-amber-700 to-blue-900',
+          image_position_x: data.image_position_x ?? 50,
+          image_position_y: data.image_position_y ?? 30
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -91,7 +95,9 @@ const HeroSection = () => {
             { icon: "Clock", text: "Quick Results" },
             { icon: "TrendingDown", text: "Best Prices" }
           ],
-          background_gradient: "from-amber-800 via-amber-700 to-blue-900"
+          background_gradient: "from-amber-800 via-amber-700 to-blue-900",
+          image_position_x: 50,
+          image_position_y: 30
         });
       } finally {
         setLoading(false);
@@ -110,6 +116,8 @@ const HeroSection = () => {
   const typingWords = heroSettings?.typing_words || ["Doctors", "Labs", "Hospitals"];
   const trustBadges = heroSettings?.trust_badges || [];
   const backgroundGradient = heroSettings?.background_gradient || "from-amber-800 via-amber-700 to-blue-900";
+  const imagePositionX = heroSettings?.image_position_x ?? 50;
+  const imagePositionY = heroSettings?.image_position_y ?? 30;
 
   return (
     <section className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}>
@@ -192,7 +200,8 @@ const HeroSection = () => {
                 <img
                   src={heroSettings.hero_image_url}
                   alt="Healthcare Professional"
-                  className="w-full h-full object-cover object-top rounded-l-3xl"
+                  className="w-full h-full object-cover rounded-l-3xl"
+                  style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
                 />
               </div>
             ) : (

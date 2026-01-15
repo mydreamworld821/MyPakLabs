@@ -420,6 +420,8 @@ export type Database = {
           created_at: string
           hero_image_url: string | null
           id: string
+          image_position_x: number | null
+          image_position_y: number | null
           is_active: boolean | null
           search_placeholder: string | null
           title_highlight: string
@@ -435,6 +437,8 @@ export type Database = {
           created_at?: string
           hero_image_url?: string | null
           id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
           is_active?: boolean | null
           search_placeholder?: string | null
           title_highlight?: string
@@ -450,6 +454,8 @@ export type Database = {
           created_at?: string
           hero_image_url?: string | null
           id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
           is_active?: boolean | null
           search_placeholder?: string | null
           title_highlight?: string

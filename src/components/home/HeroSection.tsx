@@ -33,6 +33,7 @@ interface HeroSettings {
   typing_words: string[];
   search_placeholder: string | null;
   trust_badges: TrustBadge[] | null;
+  background_gradient: string | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -69,7 +70,8 @@ const HeroSection = () => {
           ...data,
           trust_badges: typeof data.trust_badges === 'string' 
             ? JSON.parse(data.trust_badges) 
-            : data.trust_badges
+            : data.trust_badges,
+          background_gradient: data.background_gradient || 'from-amber-800 via-amber-700 to-blue-900'
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -88,7 +90,8 @@ const HeroSection = () => {
             { icon: "Shield", text: "ISO Certified" },
             { icon: "Clock", text: "Quick Results" },
             { icon: "TrendingDown", text: "Best Prices" }
-          ]
+          ],
+          background_gradient: "from-amber-800 via-amber-700 to-blue-900"
         });
       } finally {
         setLoading(false);
@@ -100,27 +103,28 @@ const HeroSection = () => {
 
   if (loading) {
     return (
-      <section className="pt-20 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900 min-h-[400px] animate-pulse" />
+      <section className="pt-16 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900 min-h-[280px] animate-pulse" />
     );
   }
 
   const typingWords = heroSettings?.typing_words || ["Doctors", "Labs", "Hospitals"];
   const trustBadges = heroSettings?.trust_badges || [];
+  const backgroundGradient = heroSettings?.background_gradient || "from-amber-800 via-amber-700 to-blue-900";
 
   return (
-    <section className="pt-20 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900 text-white relative overflow-hidden">
-      <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+    <section className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}>
+      <div className="container mx-auto px-4 py-8 md:py-10 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
           {/* Left Content */}
-          <div className="text-left space-y-6 z-10">
+          <div className="text-left space-y-4 z-10">
             {/* Title with Typing Animation */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
               <span className="text-white">{heroSettings?.title_line1} </span>
               <br />
               <span className="text-amber-400">
                 <TypingAnimation 
                   words={typingWords} 
-                  className="inline-block min-w-[120px]"
+                  className="inline-block min-w-[100px]"
                 />
               </span>
               <br />
@@ -180,18 +184,21 @@ const HeroSection = () => {
           {/* Right Image */}
           <div className="relative hidden lg:block">
             {heroSettings?.hero_image_url ? (
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-amber-800/50 z-10" />
+              <div className="relative h-[300px] lg:h-[350px]">
+                {/* Gradient overlay for natural blending */}
+                <div className="absolute inset-0 bg-gradient-to-r from-current via-transparent to-transparent z-10 pointer-events-none" style={{ color: 'inherit' }} />
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-current/60 z-10 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-current/40 via-transparent to-transparent z-10 pointer-events-none" />
                 <img
                   src={heroSettings.hero_image_url}
                   alt="Healthcare Professional"
-                  className="w-full h-[400px] lg:h-[500px] object-cover object-top rounded-l-3xl"
+                  className="w-full h-full object-cover object-top rounded-l-3xl"
                 />
               </div>
             ) : (
-              <div className="w-full h-[400px] lg:h-[500px] bg-gradient-to-br from-blue-800/30 to-blue-900/50 rounded-l-3xl flex items-center justify-center">
+              <div className="w-full h-[300px] lg:h-[350px] bg-gradient-to-br from-blue-800/30 to-blue-900/50 rounded-l-3xl flex items-center justify-center">
                 <div className="text-center text-white/50">
-                  <p className="text-lg">Add hero image from admin</p>
+                  <p className="text-sm">Add hero image from admin</p>
                 </div>
               </div>
             )}

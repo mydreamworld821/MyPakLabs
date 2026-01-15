@@ -27,6 +27,7 @@ interface HeroSettings {
   typing_words: string[];
   search_placeholder: string | null;
   trust_badges: TrustBadge[] | null;
+  background_gradient: string | null;
   is_active: boolean;
 }
 
@@ -64,6 +65,7 @@ const HeroSettingsPage = () => {
   const [trustBadges, setTrustBadges] = useState<TrustBadge[]>([]);
   const [newBadgeIcon, setNewBadgeIcon] = useState("Shield");
   const [newBadgeText, setNewBadgeText] = useState("");
+  const [backgroundGradient, setBackgroundGradient] = useState("from-amber-800 via-amber-700 to-blue-900");
 
   useEffect(() => {
     fetchSettings();
@@ -88,6 +90,7 @@ const HeroSettingsPage = () => {
         setHeroImageUrl(data.hero_image_url || "");
         setTypingWords(data.typing_words || []);
         setSearchPlaceholder(data.search_placeholder || "");
+        setBackgroundGradient(data.background_gradient || "from-amber-800 via-amber-700 to-blue-900");
         
         // Parse trust_badges
         const badges = typeof data.trust_badges === 'string' 
@@ -115,6 +118,7 @@ const HeroSettingsPage = () => {
         typing_words: typingWords,
         search_placeholder: searchPlaceholder || null,
         trust_badges: trustBadges as unknown as Json,
+        background_gradient: backgroundGradient,
         updated_at: new Date().toISOString()
       };
 
@@ -258,6 +262,18 @@ const HeroSettingsPage = () => {
                   onChange={(e) => setSearchPlaceholder(e.target.value)}
                   placeholder="Search doctors, labs, hospitals..."
                 />
+              </div>
+              <div>
+                <Label htmlFor="backgroundGradient">Background Gradient (Tailwind classes)</Label>
+                <Input
+                  id="backgroundGradient"
+                  value={backgroundGradient}
+                  onChange={(e) => setBackgroundGradient(e.target.value)}
+                  placeholder="from-amber-800 via-amber-700 to-blue-900"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Use Tailwind gradient classes (e.g., from-blue-900 via-blue-800 to-indigo-900)
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -418,7 +434,7 @@ const HeroSettingsPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900 rounded-lg p-6 text-white">
+            <div className={`bg-gradient-to-r ${backgroundGradient} rounded-lg p-4 text-white`}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
                 <div className="space-y-4">
                   <h1 className="text-2xl md:text-3xl font-bold leading-tight">

@@ -4,11 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Safe area for mobile bottom navigation */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
 @layer base {
   :root {
     --background: 200 30% 98%;

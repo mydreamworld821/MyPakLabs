@@ -1,63 +1,99 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/layout/Navbar";
-import BottomNav from "@/components/layout/BottomNav";
+import Footer from "@/components/layout/Footer";
 import GlobalSearch from "@/components/GlobalSearch";
-import ServiceGrid from "@/components/home/ServiceGrid";
-import LabCarousel from "@/components/home/LabCarousel";
-import DoctorCarousel from "@/components/home/DoctorCarousel";
-import NurseCarousel from "@/components/home/NurseCarousel";
-import PromoCard from "@/components/home/PromoCard";
+import FeaturedDoctors from "@/components/home/FeaturedDoctors";
+import FeaturedNurses from "@/components/home/FeaturedNurses";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
-import { 
-  AlertTriangle, 
-  BarChart3, 
-  TrendingDown, 
-  Shield, 
-  Clock,
-  Award,
-  ChevronRight,
-  Sparkles
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-
+import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Star, Shield, Clock, ChevronRight, TrendingDown, Award, AlertTriangle, Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
 interface Profile {
   full_name: string | null;
 }
-
+interface Lab {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  rating: number | null;
+  review_count: number | null;
+  discount_percentage: number | null;
+  cities: string[] | null;
+}
 interface Test {
   id: string;
   name: string;
   category: string | null;
   slug: string;
 }
-
+interface ServiceCard {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+  icon_name: string | null;
+  bg_color: string | null;
+  link: string;
+  display_order: number | null;
+}
 const Index = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [featuredLabs, setFeaturedLabs] = useState<Lab[]>([]);
   const [popularTests, setPopularTests] = useState<Test[]>([]);
+  const [serviceCards, setServiceCards] = useState<ServiceCard[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch profile if user is logged in
         if (user) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("user_id", user.id)
-            .single();
+          const {
+            data
+          } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).single();
           setProfile(data);
         }
 
-        const { data: testsData } = await supabase
-          .from("tests")
-          .select("id, name, category, slug")
-          .eq("is_active", true)
-          .limit(8);
+        // Fetch featured labs (prioritize is_featured, then by order)
+        const {
+          data: labsData
+        } = await supabase.from("labs").select("id, name, slug, logo_url, rating, review_count, discount_percentage, cities, is_featured, featured_order").eq("is_active", true).eq("is_featured", true).order("featured_order", {
+          ascending: true
+        }).limit(6);
+
+        // If no featured labs, fallback to top rated
+        if (labsData && labsData.length > 0) {
+          setFeaturedLabs(labsData);
+        } else {
+          const {
+            data: fallbackLabs
+          } = await supabase.from("labs").select("id, name, slug, logo_url, rating, review_count, discount_percentage, cities").eq("is_active", true).order("rating", {
+            ascending: false
+          }).limit(6);
+          if (fallbackLabs) setFeaturedLabs(fallbackLabs);
+        }
+
+        // Fetch popular tests
+        const {
+          data: testsData
+        } = await supabase.from("tests").select("id, name, category, slug").eq("is_active", true).limit(8);
         if (testsData) setPopularTests(testsData);
+
+        // Fetch service cards
+        const {
+          data: cardsData
+        } = await supabase.from("service_cards").select("*").eq("is_active", true).order("display_order", {
+          ascending: true
+        });
+        if (cardsData) setServiceCards(cardsData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -67,196 +103,322 @@ const Index = () => {
     fetchData();
   }, [user]);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
+  // Icon mapping for fallback
+  const iconMap: Record<string, React.ComponentType<{
+    className?: string;
+  }>> = {
+    Video,
+    Calendar,
+    Zap,
+    FlaskConical,
+    Pill,
+    Heart,
+    Building2,
+    Stethoscope
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-0">
+  // Quick access services
+  const quickServices = [{
+    id: "labs",
+    title: "Labs",
+    icon: FlaskConical,
+    link: "/labs",
+    bgColor: "bg-sky-100",
+    iconColor: "text-primary"
+  }, {
+    id: "pharmacies",
+    title: "Pharmacies",
+    icon: Store,
+    link: "/pharmacies",
+    bgColor: "bg-emerald-100",
+    iconColor: "text-emerald-600"
+  }, {
+    id: "doctors",
+    title: "Doctors",
+    icon: Stethoscope,
+    link: "/find-doctors",
+    bgColor: "bg-blue-100",
+    iconColor: "text-blue-600"
+  }, {
+    id: "hospitals",
+    title: "Hospitals",
+    icon: Building2,
+    link: "/hospitals",
+    bgColor: "bg-teal-100",
+    iconColor: "text-teal-600"
+  }, {
+    id: "surgeries",
+    title: "Surgeries",
+    icon: Heart,
+    link: "/surgeries",
+    bgColor: "bg-purple-100",
+    iconColor: "text-purple-600"
+  }];
+  return <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Section - Modern & Clean */}
-      <section className="pt-16 pb-6 bg-gradient-to-br from-primary via-primary to-cyan-600 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-cyan-400/20 rounded-full blur-2xl" />
+      {/* Hero Section */}
+      <section className="pt-20 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground relative z-10 overflow-visible">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-24 h-24 rounded-full bg-white/20" />
+          <div className="absolute bottom-10 right-10 w-32 h-32 rounded-full bg-white/20" />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          {/* User Greeting */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30">
+        <div className="container md:py-16 relative z-10 text-center gap-0 mx-0 my-0 px-[16px] py-[60px] items-center justify-start flex flex-col">
+          {/* Greeting */}
+          <div className="mb-4 flex-row flex items-center justify-center gap-3 my-0 mx-0">
+            <div className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-sm flex items-center justify-center text-black font-semibold text-xl border border-black/20 transition-all duration-300 hover:scale-110 hover:bg-black/20 hover:shadow-lg cursor-pointer">
               {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "G"}
             </div>
-            <div>
-              <p className="text-white/80 text-xs">{getGreeting()}</p>
-              <p className="text-white font-semibold text-sm">
-                {profile?.full_name || (user ? user.email?.split('@')[0] : "Guest")}
-              </p>
-            </div>
+            <span className="text-black/80 text-base">
+              Hello, {profile?.full_name || (user ? "User" : "Guest")}!
+            </span>
           </div>
 
-          {/* Main Headline */}
-          <div className="mb-5">
-            <div className="flex items-center gap-2 mb-1">
-              <img src={myPakLabsLogo} alt="Logo" className="w-7 h-7 rounded-lg" />
-              <span className="text-white font-bold text-xl">MyPakLabs</span>
-            </div>
-            <h1 className="text-white/90 text-sm leading-relaxed max-w-sm">
-              Verified doctors, labs & pharmacies with <span className="font-bold text-white">exclusive discounts</span>
-            </h1>
-          </div>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight text-black">
+            <span className="text-white text-3xl md:text-4xl lg:text-5xl font-extrabold">MyPakLabs</span> Verified Providers with Special Offers & Smart Savings on Medical Care
+          </h1>
+          <p className="text-black/80 text-sm md:text-base mb-8 max-w-xl">
+            Access trusted doctors, labs, hospitals, and pharmacies with exclusive discounts—save time and money without compromising on quality.
+          </p>
 
-          {/* Search Bar */}
-          <GlobalSearch className="w-full max-w-lg" />
+          {/* Global Search Bar */}
+          <GlobalSearch className="w-full max-w-2xl" />
 
           {/* Trust Badges */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            <Badge variant="secondary" className="bg-white/15 text-white border-0 text-[10px] gap-1 backdrop-blur-sm">
-              <Shield className="w-3 h-3" /> Verified
-            </Badge>
-            <Badge variant="secondary" className="bg-white/15 text-white border-0 text-[10px] gap-1 backdrop-blur-sm">
-              <TrendingDown className="w-3 h-3" /> Best Prices
-            </Badge>
-            <Badge variant="secondary" className="bg-white/15 text-white border-0 text-[10px] gap-1 backdrop-blur-sm">
-              <Clock className="w-3 h-3" /> Quick Results
-            </Badge>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-8">
+            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
+              <Shield className="w-4 h-4 text-black" />
+              <span className="text-sm text-black font-medium">ISO Certified</span>
+            </div>
+            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
+              <Clock className="w-4 h-4 text-black" />
+              <span className="text-sm text-black font-medium">Quick Results</span>
+            </div>
+            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
+              <TrendingDown className="w-4 h-4 text-black" />
+              <span className="text-sm text-black font-medium">Best Prices</span>
+            </div>
           </div>
+
+          {/* Emergency Nursing CTA */}
+          <Link to="/emergency-nursing-request" className="block mt-6">
+            <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-4 text-white flex items-center justify-between hover:from-red-700 hover:to-red-600 transition-all shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">🚨 Emergency Home Nursing</h3>
+                  <p className="text-sm text-white/90">Get a nurse at your doorstep in minutes</p>
+                </div>
+              </div>
+              <ChevronRight className="w-6 h-6" />
+            </div>
+          </Link>
         </div>
       </section>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-5 space-y-6">
-        
-        {/* Emergency Banner */}
-        <PromoCard 
-          href="/emergency-nursing-request"
-          title="🚨 Emergency Nursing"
-          subtitle="Get a nurse at your doorstep"
-          icon={AlertTriangle}
-          gradient="bg-gradient-to-r from-red-600 to-red-500"
-        />
+      <main className="py-6 md:py-8 relative z-0">
+        <div className="container mx-auto px-4 relative">
+          {/* Services Section */}
+          <div className="mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-foreground mb-4">
+              How can we help you today?
+            </h2>
 
-        {/* Service Grid */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-foreground">Our Services</h2>
-          </div>
-          <ServiceGrid />
-        </section>
-
-        {/* Compare Prices CTA */}
-        <PromoCard 
-          href="/compare"
-          title="Compare Lab Prices"
-          subtitle="Find the best deals across labs"
-          icon={BarChart3}
-          gradient="bg-gradient-to-r from-indigo-600 to-purple-600"
-        />
-
-        {/* Featured Labs Carousel */}
-        <LabCarousel />
-
-        {/* Top Doctors Carousel */}
-        <DoctorCarousel />
-
-        {/* Home Nurses Carousel */}
-        <NurseCarousel />
-
-        {/* Popular Tests */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-foreground">Popular Tests</h2>
-            <Link 
-              to="/labs" 
-              className="text-xs font-medium text-primary flex items-center gap-0.5 hover:underline"
-            >
-              See all <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          
-          {loading ? (
-            <div className="grid grid-cols-2 gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-12 bg-muted rounded-xl animate-pulse" />
-              ))}
+            {/* Main Service Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              {serviceCards.length > 0 ? serviceCards.map(card => {
+              const IconComponent = card.icon_name ? iconMap[card.icon_name] : null;
+              return <Link key={card.id} to={card.link} className="block">
+                      <Card className={`h-full ${card.bg_color || 'bg-primary/10'} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden relative`}>
+                        {card.image_url ? <>
+                            <img src={card.image_url} alt={card.title} className="absolute inset-0 w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                            <CardContent className="p-4 h-full flex flex-col justify-end min-h-[160px] relative z-10">
+                              <div>
+                                <h3 className="font-bold text-white text-lg mb-0.5 drop-shadow-lg">
+                                  {card.title}
+                                </h3>
+                                {card.subtitle && <p className="text-sm text-white/90 drop-shadow">
+                                    {card.subtitle}
+                                  </p>}
+                              </div>
+                            </CardContent>
+                          </> : <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
+                            <div>
+                              <h3 className="font-semibold text-primary text-base mb-0.5">
+                                {card.title}
+                              </h3>
+                              {card.subtitle && <p className="text-xs text-muted-foreground">
+                                  {card.subtitle}
+                                </p>}
+                            </div>
+                            {IconComponent && <div className="flex justify-center mt-2">
+                                <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                  <IconComponent className="w-7 h-7 text-primary" />
+                                </div>
+                              </div>}
+                          </CardContent>}
+                      </Card>
+                    </Link>;
+            }) :
+            // Fallback skeleton while loading
+            <>
+                  {[1, 2, 3].map(i => <Card key={i} className="h-full bg-muted/50 border-0 animate-pulse">
+                      <CardContent className="p-4 h-full min-h-[140px]" />
+                    </Card>)}
+                </>}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {popularTests.map((test) => (
-                <Link
-                  key={test.id}
-                  to={`/labs?test=${test.slug}`}
-                  className="p-3 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
-                >
-                  <p className="font-medium text-xs line-clamp-1 text-foreground">
-                    {test.name}
+
+            {/* Quick Access Services */}
+            <div className="grid grid-cols-5 gap-1 md:gap-3">
+              {quickServices.map(service => <Link key={service.id} to={service.link} className="block group">
+                  <div className="flex flex-col items-center gap-1.5 p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${service.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm`}>
+                      <service.icon className={`w-5 h-5 md:w-6 md:h-6 ${service.iconColor}`} />
+                    </div>
+                    <span className="text-[10px] md:text-xs font-medium text-foreground text-center">
+                      {service.title}
+                    </span>
+                  </div>
+                </Link>)}
+            </div>
+          </div>
+
+          {/* Featured Labs Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-foreground">
+                Featured Labs
+              </h2>
+              <Link to="/labs" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
+                View All <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {loading ? <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+                {[...Array(6)].map((_, i) => <div key={i} className="bg-muted rounded-lg h-28 animate-pulse" />)}
+              </div> : <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+                {featuredLabs.map(lab => <Link key={lab.id} to={`/lab/${lab.slug}`} className="block group">
+                    <Card className="h-full hover:shadow-md transition-all duration-300 overflow-hidden">
+                      <CardContent className="p-2 md:p-3 flex flex-col items-center text-center">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-muted flex items-center justify-center mb-2 overflow-hidden">
+                          {lab.logo_url ? <img src={lab.logo_url} alt={lab.name} className="w-full h-full object-cover" onError={e => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }} /> : null}
+                          <FlaskConical className={`w-5 h-5 md:w-6 md:h-6 text-primary ${lab.logo_url ? 'hidden' : ''}`} />
+                        </div>
+                        <h3 className="font-medium text-xs md:text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                          {lab.name}
+                        </h3>
+                        {lab.rating && <div className="flex items-center gap-0.5 text-[10px] md:text-xs text-muted-foreground">
+                            <Star className="w-2.5 h-2.5 md:w-3 md:h-3 fill-yellow-400 text-yellow-400" />
+                            <span>{lab.rating}</span>
+                          </div>}
+                        {lab.discount_percentage && lab.discount_percentage > 0 && <Badge variant="secondary" className="mt-1 text-[10px] md:text-xs px-1.5 py-0 bg-green-100 text-green-700">
+                            {lab.discount_percentage}% OFF
+                          </Badge>}
+                      </CardContent>
+                    </Card>
+                  </Link>)}
+              </div>}
+          </div>
+
+          {/* Featured Doctors Section */}
+          <FeaturedDoctors className="mb-8" />
+
+          {/* Featured Nurses Section */}
+          <FeaturedNurses className="mb-8" />
+
+          {/* Popular Tests Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-foreground">
+                Popular Tests
+              </h2>
+              <Link to="/labs" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
+                View All <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {loading ? <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                {[...Array(8)].map((_, i) => <div key={i} className="bg-muted rounded-lg h-14 animate-pulse" />)}
+              </div> : <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                {popularTests.map(test => <Link key={test.id} to={`/labs?test=${test.slug}`} className="block group">
+                    <Card className="h-full hover:shadow-sm hover:border-primary/30 transition-all duration-300">
+                      <CardContent className="p-2 md:p-3">
+                        <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-2">
+                          {test.name}
+                        </h3>
+                        {test.category && <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
+                            {test.category}
+                          </p>}
+                      </CardContent>
+                    </Card>
+                  </Link>)}
+              </div>}
+          </div>
+
+          {/* Why Choose Us Section */}
+          <div className="mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-foreground mb-4 text-center">
+              Why Choose MyPakLabs?
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+              <Card className="text-center border-0 shadow-sm">
+                <CardContent className="p-3 md:p-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-xs md:text-sm mb-1">Best Prices</h3>
+                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
+                    Save up to 35% on tests
                   </p>
-                  {test.category && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {test.category}
-                    </p>
-                  )}
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Why Choose Us */}
-        <section className="bg-gradient-to-br from-muted/50 to-muted rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-bold text-foreground">Why MyPakLabs?</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { icon: TrendingDown, title: "Best Prices", desc: "Save up to 35%" },
-              { icon: Award, title: "PMC Verified", desc: "Trusted doctors" },
-              { icon: Shield, title: "Authentic", desc: "Updated info" },
-              { icon: Clock, title: "Quick", desc: "Priority processing" },
-            ].map((item, idx) => (
-              <div 
-                key={idx} 
-                className="flex items-center gap-2.5 p-2.5 bg-card rounded-xl border border-border/30"
-              >
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <item.icon className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold text-xs text-foreground">{item.title}</p>
-                  <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* App Download CTA (optional future feature) */}
-        <section className="bg-gradient-to-r from-primary to-cyan-600 rounded-2xl p-4 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-sm mb-1">Get Health Updates</h3>
-              <p className="text-xs text-white/80">
-                Save this app to your home screen
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <img src={myPakLabsLogo} alt="App" className="w-8 h-8 rounded-lg" />
+                </CardContent>
+              </Card>
+              <Card className="text-center border-0 shadow-sm">
+                <CardContent className="p-3 md:p-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <Award className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-xs md:text-sm mb-1">PMC Verified</h3>
+                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
+                    PMC verified doctors
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="text-center border-0 shadow-sm">
+                <CardContent className="p-3 md:p-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-xs md:text-sm mb-1">Authentic Info</h3>
+                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
+                    Updated information
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="text-center border-0 shadow-sm">
+                <CardContent className="p-3 md:p-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <Clock className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-xs md:text-sm mb-1">Quick Results</h3>
+                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
+                    Priority processing
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </section>
-
+        </div>
       </main>
 
-      {/* Bottom Navigation (Mobile Only) */}
-      <BottomNav />
-    </div>
-  );
+      <Footer />
+    </div>;
 };
-
 export default Index;

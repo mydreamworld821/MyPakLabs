@@ -231,24 +231,6 @@ export const SeoFooterSection = () => {
             ))}
           </div>
         </div>
-
-        {/* Cities Navigation */}
-        <div className="mt-8 pt-6 border-t border-border text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            Also available in other cities:
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {["Rawalpindi", "Lahore", "Karachi", "Peshawar", "Faisalabad", "Multan"].map((cityName) => (
-              <Link
-                key={cityName}
-                to={`/doctors-in-${cityName.toLowerCase()}`}
-                className="text-sm text-primary hover:underline"
-              >
-                {cityName}
-              </Link>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

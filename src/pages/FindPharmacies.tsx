@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { CitySelect } from "@/components/ui/city-select";
 import NearbyPharmaciesMap from "@/components/pharmacy/NearbyPharmaciesMap";
+import { usePageLayoutSettings } from "@/hooks/usePageLayoutSettings";
+import PharmacyListCard from "@/components/directory/PharmacyListCard";
 import { 
   Dialog,
   DialogContent,
@@ -55,6 +57,9 @@ const FindPharmacies = () => {
   const [medicineSearch, setMedicineSearch] = useState("");
   const [showMedicineSearch, setShowMedicineSearch] = useState(false);
 
+  // Get admin-managed layout settings
+  const { settings: layoutSettings } = usePageLayoutSettings("pharmacies_listing");
+
   useEffect(() => {
     fetchStores();
   }, [selectedCity]);
@@ -97,72 +102,6 @@ const FindPharmacies = () => {
     navigate(`/order-medicine/${storeId}?medicine=${encodeURIComponent(medicineSearch)}`);
     setShowMedicineSearch(false);
   };
-
-  const StoreCard = ({ store }: { store: MedicalStore }) => (
-    <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => navigate(`/pharmacy/${store.id}`)}
-    >
-      <CardContent className="p-4">
-        <div className="flex gap-3">
-          <div className="w-16 h-16 rounded-lg bg-emerald-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-            {store.logo_url ? (
-              <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
-            ) : (
-              <Store className="w-6 h-6 text-emerald-600" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-sm truncate">{store.name}</h3>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {store.area}, {store.city}
-                </p>
-              </div>
-              {store.is_featured && (
-                <Badge className="bg-amber-100 text-amber-700 text-[10px]">Featured</Badge>
-              )}
-            </div>
-            
-            <div className="flex flex-wrap gap-2 mt-2">
-              {store.delivery_available && (
-                <Badge variant="outline" className="text-[10px] bg-blue-50">
-                  <Truck className="w-3 h-3 mr-1" />
-                  Delivery
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-[10px]">
-                <Clock className="w-3 h-3 mr-1" />
-                {store.is_24_hours ? "24/7" : `${store.opening_time} - ${store.closing_time}`}
-              </Badge>
-              {store.rating > 0 && (
-                <Badge variant="outline" className="text-[10px]">
-                  <Star className="w-3 h-3 mr-1 fill-amber-400 text-amber-400" />
-                  {store.rating.toFixed(1)}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-3 flex justify-between items-center">
-          <a 
-            href={`tel:${store.phone}`} 
-            className="text-xs text-primary flex items-center gap-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Phone className="w-3 h-3" />
-            {store.phone}
-          </a>
-          <Button size="sm" className="h-7 text-xs">
-            Order Medicine
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,9 +187,16 @@ const FindPharmacies = () => {
                     <Star className="w-5 h-5 text-amber-500" />
                     Featured Pharmacies
                   </h2>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div 
+                    className={
+                      layoutSettings.layout_type === 'list' 
+                        ? 'flex flex-col' 
+                        : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+                    }
+                    style={{ gap: `${layoutSettings.items_gap}px` }}
+                  >
                     {featuredStores.map((store) => (
-                      <StoreCard key={store.id} store={store} />
+                      <PharmacyListCard key={store.id} store={store} settings={layoutSettings} />
                     ))}
                   </div>
                 </div>
@@ -261,9 +207,16 @@ const FindPharmacies = () => {
                 {featuredStores.length > 0 && (
                   <h2 className="text-lg font-semibold mb-4">All Pharmacies</h2>
                 )}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div 
+                  className={
+                    layoutSettings.layout_type === 'list' 
+                      ? 'flex flex-col' 
+                      : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+                  }
+                  style={{ gap: `${layoutSettings.items_gap}px` }}
+                >
                   {regularStores.map((store) => (
-                    <StoreCard key={store.id} store={store} />
+                    <PharmacyListCard key={store.id} store={store} settings={layoutSettings} />
                   ))}
                 </div>
               </div>

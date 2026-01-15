@@ -1,15 +1,21 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, X, Image as ImageIcon, Eye } from "lucide-react";
+import { Loader2, Save, Plus, X, Image as ImageIcon, Eye, Shield, Clock, TrendingDown, Award, Star, Heart, Zap, Users, BadgeCheck, CheckCircle } from "lucide-react";
 import ImageUpload from "@/components/admin/ImageUpload";
+
+interface TrustBadge {
+  icon: string;
+  text: string;
+}
 
 interface HeroSettings {
   id: string;
@@ -20,8 +26,26 @@ interface HeroSettings {
   hero_image_url: string | null;
   typing_words: string[];
   search_placeholder: string | null;
+  trust_badges: TrustBadge[] | null;
   is_active: boolean;
 }
+
+const availableIcons = [
+  { value: "Shield", label: "Shield", icon: Shield },
+  { value: "Clock", label: "Clock", icon: Clock },
+  { value: "TrendingDown", label: "Trending Down", icon: TrendingDown },
+  { value: "Award", label: "Award", icon: Award },
+  { value: "Star", label: "Star", icon: Star },
+  { value: "Heart", label: "Heart", icon: Heart },
+  { value: "Zap", label: "Zap", icon: Zap },
+  { value: "Users", label: "Users", icon: Users },
+  { value: "BadgeCheck", label: "Badge Check", icon: BadgeCheck },
+  { value: "CheckCircle", label: "Check Circle", icon: CheckCircle },
+];
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Shield, Clock, TrendingDown, Award, Star, Heart, Zap, Users, BadgeCheck, CheckCircle
+};
 
 const HeroSettingsPage = () => {
   const [settings, setSettings] = useState<HeroSettings | null>(null);
@@ -37,6 +61,9 @@ const HeroSettingsPage = () => {
   const [heroImageUrl, setHeroImageUrl] = useState("");
   const [typingWords, setTypingWords] = useState<string[]>([]);
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
+  const [trustBadges, setTrustBadges] = useState<TrustBadge[]>([]);
+  const [newBadgeIcon, setNewBadgeIcon] = useState("Shield");
+  const [newBadgeText, setNewBadgeText] = useState("");
 
   useEffect(() => {
     fetchSettings();
@@ -53,7 +80,7 @@ const HeroSettingsPage = () => {
       if (error && error.code !== "PGRST116") throw error;
 
       if (data) {
-        setSettings(data);
+        setSettings(data as unknown as HeroSettings);
         setTitleLine1(data.title_line1 || "");
         setTitleHighlight(data.title_highlight || "");
         setTitleLine2(data.title_line2 || "");
@@ -61,6 +88,12 @@ const HeroSettingsPage = () => {
         setHeroImageUrl(data.hero_image_url || "");
         setTypingWords(data.typing_words || []);
         setSearchPlaceholder(data.search_placeholder || "");
+        
+        // Parse trust_badges
+        const badges = typeof data.trust_badges === 'string' 
+          ? JSON.parse(data.trust_badges) 
+          : (data.trust_badges || []);
+        setTrustBadges(badges as TrustBadge[]);
       }
     } catch (error) {
       console.error("Error fetching hero settings:", error);
@@ -81,6 +114,7 @@ const HeroSettingsPage = () => {
         hero_image_url: heroImageUrl || null,
         typing_words: typingWords,
         search_placeholder: searchPlaceholder || null,
+        trust_badges: trustBadges as unknown as Json,
         updated_at: new Date().toISOString()
       };
 
@@ -118,6 +152,18 @@ const HeroSettingsPage = () => {
 
   const removeTypingWord = (word: string) => {
     setTypingWords(typingWords.filter((w) => w !== word));
+  };
+
+  const addTrustBadge = () => {
+    if (newBadgeText.trim()) {
+      setTrustBadges([...trustBadges, { icon: newBadgeIcon, text: newBadgeText.trim() }]);
+      setNewBadgeText("");
+      setNewBadgeIcon("Shield");
+    }
+  };
+
+  const removeTrustBadge = (index: number) => {
+    setTrustBadges(trustBadges.filter((_, i) => i !== index));
   };
 
   if (loading) {
@@ -196,7 +242,7 @@ const HeroSettingsPage = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="badgeText">Badge Text</Label>
+                <Label htmlFor="badgeText">Badge Text (green badge)</Label>
                 <Input
                   id="badgeText"
                   value={badgeText}
@@ -261,6 +307,76 @@ const HeroSettingsPage = () => {
             </CardContent>
           </Card>
 
+          {/* Trust Badges */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Trust Badges</CardTitle>
+              <CardDescription>
+                Add trust indicators that appear below the search bar (e.g., "ISO Certified", "Best Prices")
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2 flex-wrap">
+                <Select value={newBadgeIcon} onValueChange={setNewBadgeIcon}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Select icon" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableIcons.map((iconOption) => {
+                      const IconComp = iconOption.icon;
+                      return (
+                        <SelectItem key={iconOption.value} value={iconOption.value}>
+                          <div className="flex items-center gap-2">
+                            <IconComp className="w-4 h-4" />
+                            {iconOption.label}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={newBadgeText}
+                  onChange={(e) => setNewBadgeText(e.target.value)}
+                  placeholder="Badge text (e.g., ISO Certified)"
+                  className="flex-1 min-w-[200px]"
+                  onKeyDown={(e) => e.key === "Enter" && addTrustBadge()}
+                />
+                <Button onClick={addTrustBadge}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Badge
+                </Button>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {trustBadges.map((badge, index) => {
+                  const IconComp = iconMap[badge.icon] || Shield;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-muted px-3 py-2 rounded-full"
+                    >
+                      <IconComp className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">{badge.text}</span>
+                      <button
+                        onClick={() => removeTrustBadge(index)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {trustBadges.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No trust badges added. Add badges like "ISO Certified", "Quick Results", "Best Prices".
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Hero Image */}
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -316,6 +432,7 @@ const HeroSettingsPage = () => {
                   </h1>
                   {badgeText && (
                     <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-400/30 px-3 py-1.5 rounded-full">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
                       <span className="text-green-300 text-sm">{badgeText}</span>
                     </div>
                   )}
@@ -324,6 +441,24 @@ const HeroSettingsPage = () => {
                       {searchPlaceholder || "Search doctors, labs, hospitals..."}
                     </span>
                   </div>
+                  
+                  {/* Trust Badges Preview */}
+                  {trustBadges.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {trustBadges.map((badge, index) => {
+                        const IconComp = iconMap[badge.icon] || Shield;
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20"
+                          >
+                            <IconComp className="w-3 h-3 text-amber-300" />
+                            <span className="text-xs text-white font-medium">{badge.text}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div className="hidden lg:block">
                   {heroImageUrl ? (

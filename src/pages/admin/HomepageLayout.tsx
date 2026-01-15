@@ -159,7 +159,7 @@ const HomepageLayoutPage = () => {
 
   const deleteSection = async (id: string, sectionKey: string) => {
     // Prevent deleting core sections
-    const coreSections = ['service_cards', 'featured_labs', 'featured_doctors', 'featured_nurses', 'surgeries'];
+    const coreSections = ['service_cards', 'featured_labs', 'featured_doctors', 'featured_nurses', 'surgeries', 'consult_specialists', 'search_by_condition'];
     if (coreSections.includes(sectionKey)) {
       toast.error("Cannot delete core sections. You can hide them instead.");
       return;
@@ -293,7 +293,7 @@ const HomepageLayoutPage = () => {
                     >
                       <Settings2 className="w-5 h-5" />
                     </Button>
-                    {!['service_cards', 'featured_labs', 'featured_doctors', 'featured_nurses', 'surgeries'].includes(section.section_key) && (
+                    {!['service_cards', 'featured_labs', 'featured_doctors', 'featured_nurses', 'surgeries', 'consult_specialists', 'search_by_condition'].includes(section.section_key) && (
                       <Button
                         variant="ghost"
                         size="icon"

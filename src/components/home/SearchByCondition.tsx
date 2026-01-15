@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useSectionConfig } from "@/hooks/useHomepageSections";
 
 interface HealthCondition {
   id: string;
@@ -42,9 +42,16 @@ interface SearchByConditionProps {
   maxItems?: number;
 }
 
-const SearchByCondition = ({ className = "", maxItems = 7 }: SearchByConditionProps) => {
+const SearchByCondition = ({ className = "", maxItems: propMaxItems = 7 }: SearchByConditionProps) => {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { config, loading: configLoading } = useSectionConfig("search_by_condition");
+
+  // Use config max_items if available, otherwise fall back to prop
+  const maxItems = config?.max_items ?? propMaxItems;
+  const isVisible = config?.is_visible ?? true;
+  const title = config?.title || "Search Doctor by Condition";
+  const subtitle = config?.subtitle;
   
   const displayedConditions = healthConditions.slice(0, maxItems);
 
@@ -54,12 +61,40 @@ const SearchByCondition = ({ className = "", maxItems = 7 }: SearchByConditionPr
     setDialogOpen(false);
   };
 
+  // Don't render if section is hidden
+  if (!configLoading && !isVisible) {
+    return null;
+  }
+
+  if (configLoading) {
+    return (
+      <div className={className}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-6 w-48 bg-muted animate-pulse rounded" />
+        </div>
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">
+          {[...Array(7)].map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-muted animate-pulse" />
+              <div className="w-16 h-3 bg-muted rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base md:text-lg font-semibold text-foreground">
-          Search Doctor by Condition
-        </h2>
+        <div>
+          <h2 className="text-base md:text-lg font-semibold text-foreground">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <button className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">

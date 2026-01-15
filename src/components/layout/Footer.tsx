@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
+import { useNativePlatform } from "@/hooks/useNativePlatform";
+import { cn } from "@/lib/utils";
 
 const Footer = () => {
+  const { isNative } = useNativePlatform();
+  
   return (
-    <footer className="bg-foreground text-background">
+    <footer className={cn(
+      "bg-foreground text-background",
+      isNative && "pb-20" // Extra padding for native bottom nav
+    )}>
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}

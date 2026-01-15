@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import GlobalSearch from "@/components/GlobalSearch";
 import FeaturedDoctors from "@/components/home/FeaturedDoctors";
 import FeaturedNurses from "@/components/home/FeaturedNurses";
+import HeroSection from "@/components/home/HeroSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
@@ -158,67 +159,7 @@ const Index = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-20 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground relative z-10 overflow-visible">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-24 h-24 rounded-full bg-white/20" />
-          <div className="absolute bottom-10 right-10 w-32 h-32 rounded-full bg-white/20" />
-        </div>
-
-        <div className="container md:py-16 relative z-10 text-center gap-0 mx-0 my-0 px-[16px] py-[60px] flex-col flex items-center justify-center">
-          {/* Greeting */}
-          <div className="mb-4 flex-row flex items-center justify-center gap-3 my-0 mx-0">
-            <div className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-sm flex items-center justify-center text-black font-semibold text-xl border border-black/20 transition-all duration-300 hover:scale-110 hover:bg-black/20 hover:shadow-lg cursor-pointer">
-              {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "G"}
-            </div>
-            <span className="text-black/80 text-base">
-              Hello, {profile?.full_name || (user ? "User" : "Guest")}!
-            </span>
-          </div>
-
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 max-w-3xl leading-tight text-black">
-            <span className="text-white text-3xl md:text-4xl lg:text-5xl font-extrabold">MyPakLabs</span> Verified Providers with Special Offers & Smart Savings on Medical Care
-          </h1>
-          <p className="text-black/80 text-sm md:text-base mb-8 max-w-xl">
-            Access trusted doctors, labs, hospitals, and pharmacies with exclusive discounts—save time and money without compromising on quality.
-          </p>
-
-          {/* Global Search Bar */}
-          <GlobalSearch className="w-full max-w-2xl" />
-
-          {/* Trust Badges */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-8">
-            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
-              <Shield className="w-4 h-4 text-black" />
-              <span className="text-sm text-black font-medium">ISO Certified</span>
-            </div>
-            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
-              <Clock className="w-4 h-4 text-black" />
-              <span className="text-sm text-black font-medium">Quick Results</span>
-            </div>
-            <div className="flex items-center gap-2 bg-black/5 backdrop-blur-sm px-4 py-2 rounded-full border border-black/10">
-              <TrendingDown className="w-4 h-4 text-black" />
-              <span className="text-sm text-black font-medium">Best Prices</span>
-            </div>
-          </div>
-
-          {/* Emergency Nursing CTA */}
-          <Link to="/emergency-nursing-request" className="block mt-6">
-            <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-4 text-white flex items-center justify-between hover:from-red-700 hover:to-red-600 transition-all shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">🚨 Emergency Home Nursing</h3>
-                  <p className="text-sm text-white/90">Get a nurse at your doorstep in minutes</p>
-                </div>
-              </div>
-              <ChevronRight className="w-6 h-6" />
-            </div>
-          </Link>
-        </div>
-      </section>
+      <HeroSection />
 
       <main className="py-6 md:py-8 relative z-0">
         <div className="container mx-auto px-4 relative">

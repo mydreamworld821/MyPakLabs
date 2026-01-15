@@ -83,12 +83,12 @@ export const SeoFooterSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Specialists Column */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
+            <Link to="/find-doctors" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
               <Stethoscope className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-foreground">
+              <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
                 👨‍⚕️ Top Medical Specialists
               </h3>
-            </div>
+            </Link>
             <ul className="space-y-2">
               {specialists.slice(0, 10).map((specialist) => (
                 <li key={specialist.slug}>
@@ -105,12 +105,12 @@ export const SeoFooterSection = () => {
 
           {/* More Specialists Column */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
+            <Link to="/find-doctors" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
               <Building2 className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-foreground">
+              <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
                 👨‍⚕️ More Specialists
               </h3>
-            </div>
+            </Link>
             <ul className="space-y-2">
               {specialists.slice(10).map((specialist) => (
                 <li key={specialist.slug}>
@@ -128,12 +128,12 @@ export const SeoFooterSection = () => {
           {/* Labs & Diagnostics Column */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-4">
+              <Link to="/labs" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                 <FlaskConical className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg text-foreground">
+                <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
                   🧪 Diagnostic Labs & Services
                 </h3>
-              </div>
+              </Link>
               <ul className="space-y-2">
                 {labServices.map((service, index) => (
                   <li key={index}>
@@ -149,12 +149,12 @@ export const SeoFooterSection = () => {
             </div>
 
             <div>
-              <div className="flex items-center gap-2 mb-4">
+              <Link to="/find-nurses" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                 <Heart className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg text-foreground">
+                <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors">
                   👩‍⚕️ Home & Emergency Care
                 </h3>
-              </div>
+              </Link>
               <ul className="space-y-2">
                 {nursingServices.map((service, index) => (
                   <li key={index}>

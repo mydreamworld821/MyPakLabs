@@ -221,15 +221,64 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
       const importResults: ImportResult[] = [];
       const toInsert: any[] = [];
       const toUpdate: { id: string; data: any }[] = [];
+      
+      // First, create any missing tests in the system
+      const missingTests: string[] = [];
+      for (const row of rows) {
+        if (!testNameToId.has(row.test_name.toLowerCase())) {
+          missingTests.push(row.test_name);
+        }
+      }
+
+      // Batch create missing tests
+      if (missingTests.length > 0) {
+        const testsToCreate = missingTests.map(name => ({
+          name,
+          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+          is_active: true
+        }));
+
+        const { data: createdTests, error: createError } = await supabase
+          .from("tests")
+          .insert(testsToCreate)
+          .select("id, name");
+
+        if (createError) {
+          console.error("Error creating tests:", createError);
+          // Try inserting one by one for tests with unique slug conflicts
+          for (const testData of testsToCreate) {
+            try {
+              // Generate a unique slug with timestamp
+              const uniqueSlug = `${testData.slug}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+              const { data: singleTest, error: singleError } = await supabase
+                .from("tests")
+                .insert({ ...testData, slug: uniqueSlug })
+                .select("id, name")
+                .single();
+              
+              if (singleTest) {
+                testNameToId.set(singleTest.name.toLowerCase(), singleTest.id);
+              }
+            } catch (e) {
+              console.error("Failed to create test:", testData.name, e);
+            }
+          }
+        } else if (createdTests) {
+          // Add newly created tests to our map
+          createdTests.forEach(t => {
+            testNameToId.set(t.name.toLowerCase(), t.id);
+          });
+        }
+      }
 
       for (const row of rows) {
-        const testId = testNameToId.get(row.test_name.toLowerCase());
+        let testId = testNameToId.get(row.test_name.toLowerCase());
         
         if (!testId) {
           importResults.push({
             success: false,
             test_name: row.test_name,
-            message: "Test not found in system"
+            message: "Failed to create test in system"
           });
           continue;
         }

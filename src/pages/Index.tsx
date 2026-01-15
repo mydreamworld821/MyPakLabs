@@ -11,6 +11,7 @@ import HeroSection from "@/components/home/HeroSection";
 import ConsultSpecialists from "@/components/home/ConsultSpecialists";
 import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
+import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
@@ -55,6 +56,9 @@ const Index = () => {
   const [popularTests, setPopularTests] = useState<Test[]>([]);
   const [serviceCards, setServiceCards] = useState<ServiceCard[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get service cards section config from admin
+  const { config: serviceCardsConfig } = useSectionConfig('service_cards');
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -166,58 +170,139 @@ const Index = () => {
 
       <main className="py-6 md:py-8 relative z-0">
         <div className="container mx-auto px-4 relative">
-          {/* Services Section */}
-          <div className="mb-8">
-            <h2 className="text-base md:text-lg font-semibold text-foreground mb-4">
-              How can we help you today?
-            </h2>
+          {/* Services Section - Admin Managed */}
+          {serviceCardsConfig?.is_visible !== false && (
+            <div 
+              className="mb-8"
+              style={{
+                backgroundColor: serviceCardsConfig?.background_color || 'transparent',
+                padding: serviceCardsConfig ? `${serviceCardsConfig.section_padding_y || 0}px ${serviceCardsConfig.section_padding_x || 0}px` : undefined,
+                borderRadius: serviceCardsConfig?.card_border_radius ? `${serviceCardsConfig.card_border_radius}px` : undefined,
+              }}
+            >
+              <div className="mb-4">
+                <h2 className="text-base md:text-lg font-semibold text-foreground">
+                  {serviceCardsConfig?.title || "How can we help you today?"}
+                </h2>
+                {serviceCardsConfig?.subtitle && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {serviceCardsConfig.subtitle}
+                  </p>
+                )}
+              </div>
 
-            {/* Main Service Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              {serviceCards.length > 0 ? serviceCards.map(card => {
-              const IconComponent = card.icon_name ? iconMap[card.icon_name] : null;
-              return <Link key={card.id} to={card.link} className="block">
-                      <Card className={`h-full ${card.bg_color || 'bg-primary/10'} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden relative`}>
-                        {card.image_url ? <>
-                            <img src={card.image_url} alt={card.title} className="absolute inset-0 w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                            <CardContent className="p-4 h-full flex flex-col justify-end min-h-[160px] relative z-10">
+              {/* Main Service Cards Grid - Uses admin columns config */}
+              <div 
+                className="grid gap-3 mb-4"
+                style={{
+                  gridTemplateColumns: `repeat(${serviceCardsConfig?.columns_mobile || 1}, minmax(0, 1fr))`,
+                }}
+              >
+                <style>
+                  {`
+                    @media (min-width: 768px) {
+                      .service-cards-grid {
+                        grid-template-columns: repeat(${serviceCardsConfig?.columns_tablet || 2}, minmax(0, 1fr)) !important;
+                      }
+                    }
+                    @media (min-width: 1024px) {
+                      .service-cards-grid {
+                        grid-template-columns: repeat(${serviceCardsConfig?.columns_desktop || 3}, minmax(0, 1fr)) !important;
+                      }
+                    }
+                  `}
+                </style>
+                <div 
+                  className="service-cards-grid grid gap-3"
+                  style={{ gap: serviceCardsConfig?.items_gap ? `${serviceCardsConfig.items_gap}px` : '12px' }}
+                >
+                  {serviceCards.length > 0 ? serviceCards.slice(0, serviceCardsConfig?.max_items || 8).map(card => {
+                    const IconComponent = card.icon_name ? iconMap[card.icon_name] : null;
+                    const cardHeight = serviceCardsConfig?.card_height || 160;
+                    const cardBorderRadius = serviceCardsConfig?.card_border_radius || 12;
+                    
+                    return (
+                      <Link key={card.id} to={card.link} className="block">
+                        <Card 
+                          className={`h-full ${card.bg_color || 'bg-primary/10'} border-0 hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden relative`}
+                          style={{ 
+                            borderRadius: `${cardBorderRadius}px`,
+                            boxShadow: serviceCardsConfig?.card_shadow === 'none' ? 'none' : 
+                                       serviceCardsConfig?.card_shadow === 'sm' ? '0 1px 2px rgba(0,0,0,0.05)' :
+                                       serviceCardsConfig?.card_shadow === 'lg' ? '0 10px 15px rgba(0,0,0,0.1)' :
+                                       '0 4px 6px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {card.image_url ? (
+                            <>
+                              <img 
+                                src={card.image_url} 
+                                alt={card.title} 
+                                className="absolute inset-0 w-full h-full"
+                                style={{
+                                  objectFit: (serviceCardsConfig?.image_fit as any) || 'cover',
+                                  objectPosition: `${serviceCardsConfig?.image_position_x || 50}% ${serviceCardsConfig?.image_position_y || 50}%`,
+                                  borderRadius: `${serviceCardsConfig?.image_border_radius || 8}px`
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                              <CardContent 
+                                className="p-4 h-full flex flex-col justify-end relative z-10"
+                                style={{ minHeight: `${cardHeight}px` }}
+                              >
+                                <div>
+                                  <h3 className="font-bold text-white text-lg mb-0.5 drop-shadow-lg">
+                                    {card.title}
+                                  </h3>
+                                  {card.subtitle && (
+                                    <p className="text-sm text-white/90 drop-shadow">
+                                      {card.subtitle}
+                                    </p>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </>
+                          ) : (
+                            <CardContent 
+                              className="p-4 h-full flex flex-col justify-between"
+                              style={{ minHeight: `${cardHeight - 20}px` }}
+                            >
                               <div>
-                                <h3 className="font-bold text-white text-lg mb-0.5 drop-shadow-lg">
+                                <h3 className="font-semibold text-primary text-base mb-0.5">
                                   {card.title}
                                 </h3>
-                                {card.subtitle && <p className="text-sm text-white/90 drop-shadow">
+                                {card.subtitle && (
+                                  <p className="text-xs text-muted-foreground">
                                     {card.subtitle}
-                                  </p>}
+                                  </p>
+                                )}
                               </div>
-                            </CardContent>
-                          </> : <CardContent className="p-4 h-full flex flex-col justify-between min-h-[140px]">
-                            <div>
-                              <h3 className="font-semibold text-primary text-base mb-0.5">
-                                {card.title}
-                              </h3>
-                              {card.subtitle && <p className="text-xs text-muted-foreground">
-                                  {card.subtitle}
-                                </p>}
-                            </div>
-                            {IconComponent && <div className="flex justify-center mt-2">
-                                <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                  <IconComponent className="w-7 h-7 text-primary" />
+                              {IconComponent && (
+                                <div className="flex justify-center mt-2">
+                                  <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <IconComponent className="w-7 h-7 text-primary" />
+                                  </div>
                                 </div>
-                              </div>}
-                          </CardContent>}
-                      </Card>
-                    </Link>;
-            }) :
-            // Fallback skeleton while loading
-            <>
-                  {[1, 2, 3].map(i => <Card key={i} className="h-full bg-muted/50 border-0 animate-pulse">
-                      <CardContent className="p-4 h-full min-h-[140px]" />
-                    </Card>)}
-                </>}
+                              )}
+                            </CardContent>
+                          )}
+                        </Card>
+                      </Link>
+                    );
+                  }) : (
+                    // Fallback skeleton while loading
+                    <>
+                      {[1, 2, 3].map(i => (
+                        <Card key={i} className="h-full bg-muted/50 border-0 animate-pulse">
+                          <CardContent className="p-4 h-full min-h-[140px]" />
+                        </Card>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-
-          </div>
+          )}
 
           {/* Quick Access Services Section */}
           <div className="mb-8">

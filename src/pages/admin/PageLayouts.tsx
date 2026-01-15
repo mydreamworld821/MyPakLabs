@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, LayoutGrid, Settings2, Type, Square, Loader2 } from "lucide-react";
+import { Save, LayoutGrid, Settings2, Type, Square, Loader2, ExternalLink } from "lucide-react";
 
 interface PageLayoutSettings {
   id: string;
@@ -44,10 +44,25 @@ interface PageLayoutSettings {
   button_width: number;
 }
 
+const pageRouteMap: Record<string, string> = {
+  labs_listing: "/labs",
+  doctors_listing: "/find-doctors",
+  hospitals_listing: "/hospitals",
+  nurses_listing: "/find-nurses",
+  pharmacies_listing: "/find-pharmacies",
+};
+
 const PageLayouts = () => {
   const queryClient = useQueryClient();
   const [selectedPage, setSelectedPage] = useState<string>("labs_listing");
   const [settings, setSettings] = useState<PageLayoutSettings | null>(null);
+
+  const handlePreviewInNewTab = () => {
+    const route = pageRouteMap[selectedPage];
+    if (route) {
+      window.open(route, "_blank");
+    }
+  };
 
   const { data: pages, isLoading } = useQuery({
     queryKey: ["page-layout-settings"],
@@ -146,6 +161,10 @@ const PageLayouts = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Button variant="outline" onClick={handlePreviewInNewTab}>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Preview Page
+            </Button>
             <Button onClick={handleSave} disabled={saveMutation.isPending}>
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? "Saving..." : "Save Changes"}

@@ -10,6 +10,7 @@ import FeaturedNurses from "@/components/home/FeaturedNurses";
 import HeroSection from "@/components/home/HeroSection";
 import ConsultSpecialists from "@/components/home/ConsultSpecialists";
 import SearchByCondition from "@/components/home/SearchByCondition";
+import CustomSections from "@/components/home/CustomSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
@@ -374,6 +375,9 @@ const Index = () => {
               </Card>
             </div>
           </div>
+
+          {/* Custom Sections from Admin */}
+          <CustomSections />
         </div>
       </main>
 

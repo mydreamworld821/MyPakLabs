@@ -56,6 +56,8 @@ interface HeroSettings {
   hero_border_radius: number | null;
   hero_margin_top: number | null;
   hero_margin_bottom: number | null;
+  hero_margin_left: number | null;
+  hero_margin_right: number | null;
   page_background_color: string | null;
   hero_shadow_intensity: number | null;
 }
@@ -117,6 +119,8 @@ const HeroSection = () => {
           hero_border_radius: data.hero_border_radius ?? 24,
           hero_margin_top: data.hero_margin_top ?? 24,
           hero_margin_bottom: data.hero_margin_bottom ?? 0,
+          hero_margin_left: data.hero_margin_left ?? 0,
+          hero_margin_right: data.hero_margin_right ?? 0,
           page_background_color: data.page_background_color || '#0f172a',
           hero_shadow_intensity: data.hero_shadow_intensity ?? 30
         };
@@ -160,6 +164,8 @@ const HeroSection = () => {
           hero_border_radius: 24,
           hero_margin_top: 24,
           hero_margin_bottom: 0,
+          hero_margin_left: 0,
+          hero_margin_right: 0,
           page_background_color: "#0f172a",
           hero_shadow_intensity: 30
         });
@@ -202,6 +208,8 @@ const HeroSection = () => {
   const heroBorderRadius = heroSettings?.hero_border_radius ?? 24;
   const heroMarginTop = heroSettings?.hero_margin_top ?? 24;
   const heroMarginBottom = heroSettings?.hero_margin_bottom ?? 0;
+  const heroMarginLeft = heroSettings?.hero_margin_left ?? 0;
+  const heroMarginRight = heroSettings?.hero_margin_right ?? 0;
   const pageBackgroundColor = heroSettings?.page_background_color || '#0f172a';
   const heroShadowIntensity = heroSettings?.hero_shadow_intensity ?? 30;
 
@@ -251,14 +259,16 @@ const HeroSection = () => {
         
         {/* Floating Hero Card */}
         <div 
-          className={`mx-auto bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}
+          className={`bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}
           style={{ 
             maxWidth: `${heroMaxWidth}px`,
             minHeight: `${heroMinHeight}px`,
             borderRadius: `${heroBorderRadius}px`,
             boxShadow: heroShadowIntensity > 0 
               ? `0 ${heroShadowIntensity / 3}px ${heroShadowIntensity}px rgba(0, 0, 0, ${heroShadowIntensity / 100})` 
-              : 'none'
+              : 'none',
+            marginLeft: heroMarginLeft > 0 ? `${heroMarginLeft}px` : heroMarginRight > 0 ? '0' : 'auto',
+            marginRight: heroMarginRight > 0 ? `${heroMarginRight}px` : heroMarginLeft > 0 ? 'auto' : 'auto'
           }}
         >
           <div 

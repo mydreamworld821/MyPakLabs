@@ -479,6 +479,108 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_sections: {
+        Row: {
+          accent_color: string | null
+          background_color: string | null
+          background_gradient: string | null
+          card_border_radius: number | null
+          card_height: number | null
+          card_shadow: string | null
+          card_width: string | null
+          columns_desktop: number | null
+          columns_mobile: number | null
+          columns_tablet: number | null
+          created_at: string
+          custom_content: Json | null
+          display_order: number | null
+          id: string
+          image_border_radius: number | null
+          image_fit: string | null
+          image_height: number | null
+          image_position_x: number | null
+          image_position_y: number | null
+          image_width: string | null
+          is_visible: boolean | null
+          items_gap: number | null
+          max_items: number | null
+          section_key: string
+          section_padding_x: number | null
+          section_padding_y: number | null
+          section_type: string | null
+          subtitle: string | null
+          text_color: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string | null
+          background_color?: string | null
+          background_gradient?: string | null
+          card_border_radius?: number | null
+          card_height?: number | null
+          card_shadow?: string | null
+          card_width?: string | null
+          columns_desktop?: number | null
+          columns_mobile?: number | null
+          columns_tablet?: number | null
+          created_at?: string
+          custom_content?: Json | null
+          display_order?: number | null
+          id?: string
+          image_border_radius?: number | null
+          image_fit?: string | null
+          image_height?: number | null
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_width?: string | null
+          is_visible?: boolean | null
+          items_gap?: number | null
+          max_items?: number | null
+          section_key: string
+          section_padding_x?: number | null
+          section_padding_y?: number | null
+          section_type?: string | null
+          subtitle?: string | null
+          text_color?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string | null
+          background_color?: string | null
+          background_gradient?: string | null
+          card_border_radius?: number | null
+          card_height?: number | null
+          card_shadow?: string | null
+          card_width?: string | null
+          columns_desktop?: number | null
+          columns_mobile?: number | null
+          columns_tablet?: number | null
+          created_at?: string
+          custom_content?: Json | null
+          display_order?: number | null
+          id?: string
+          image_border_radius?: number | null
+          image_fit?: string | null
+          image_height?: number | null
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_width?: string | null
+          is_visible?: boolean | null
+          items_gap?: number | null
+          max_items?: number | null
+          section_key?: string
+          section_padding_x?: number | null
+          section_padding_y?: number | null
+          section_type?: string | null
+          subtitle?: string | null
+          text_color?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hospital_doctors: {
         Row: {
           created_at: string

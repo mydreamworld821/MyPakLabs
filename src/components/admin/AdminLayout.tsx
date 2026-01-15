@@ -42,6 +42,7 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/homepage-layout", label: "Homepage Layout", icon: LayoutGrid },
   { href: "/admin/hero-settings", label: "Hero Banner", icon: Image },
   { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
   { href: "/admin/labs", label: "Labs", icon: Building2 },

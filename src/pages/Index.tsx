@@ -12,6 +12,7 @@ import ConsultSpecialists from "@/components/home/ConsultSpecialists";
 import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
+import SeoFooterSection from "@/components/home/SeoFooterSection";
 
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
@@ -308,6 +309,9 @@ const Index = () => {
           <CustomSections />
         </div>
       </main>
+
+      {/* SEO Footer Section - Above Footer */}
+      <SeoFooterSection />
 
       <Footer />
     </div>;

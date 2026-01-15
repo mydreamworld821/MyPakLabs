@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Store } from "lucide-react";
+import { Video, Calendar, Zap, FlaskConical, Pill, Heart, Building2, Stethoscope, Store, Syringe, FileText, Clipboard, Activity, UserRound, Thermometer, Microscope } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface ServiceCard {
   id: string;
@@ -17,14 +18,27 @@ interface ServiceCard {
   row_span: number | null;
 }
 
+interface QuickAccessService {
+  id: string;
+  title: string;
+  icon_name: string;
+  icon_color: string | null;
+  icon_size: number | null;
+  bg_color: string | null;
+  link: string;
+  display_order: number | null;
+}
+
 interface DynamicServicesGridProps {
   cards: ServiceCard[];
   loading?: boolean;
   title?: string;
   subtitle?: string;
+  quickAccessServices?: QuickAccessService[];
+  showQuickAccess?: boolean;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const iconMap: Record<string, LucideIcon> = {
   Video,
   Calendar,
   Zap,
@@ -34,9 +48,16 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Building2,
   Stethoscope,
   Store,
+  Syringe,
+  FileText,
+  Clipboard,
+  Activity,
+  UserRound,
+  Thermometer,
+  Microscope,
 };
 
-const DynamicServicesGrid = ({ cards, loading, title, subtitle }: DynamicServicesGridProps) => {
+const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServices, showQuickAccess = true }: DynamicServicesGridProps) => {
   if (loading) {
     return (
       <div className="mb-8">
@@ -181,6 +202,38 @@ const DynamicServicesGrid = ({ cards, loading, title, subtitle }: DynamicService
           );
         })}
       </div>
+
+      {/* Quick Access Services - Badge Style Icons */}
+      {showQuickAccess && quickAccessServices && quickAccessServices.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-3 md:gap-4 justify-center md:justify-start">
+          {quickAccessServices.map((service) => {
+            const IconComponent = iconMap[service.icon_name] || FlaskConical;
+            const bgColor = service.bg_color || "bg-muted";
+            const iconColor = service.icon_color || "text-primary";
+            const iconSize = service.icon_size || 24;
+
+            return (
+              <Link
+                key={service.id}
+                to={service.link}
+                className="flex flex-col items-center min-w-[64px] md:min-w-[72px] group"
+              >
+                <div
+                  className={`w-12 h-12 md:w-14 md:h-14 rounded-xl ${bgColor} flex items-center justify-center mb-1.5 transition-all duration-200 group-hover:shadow-md group-hover:scale-105`}
+                >
+                  <IconComponent 
+                    className={iconColor} 
+                    size={iconSize} 
+                  />
+                </div>
+                <span className="text-xs font-medium text-foreground text-center line-clamp-1">
+                  {service.title}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

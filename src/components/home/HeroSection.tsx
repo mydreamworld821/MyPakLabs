@@ -36,6 +36,8 @@ interface HeroSettings {
   background_gradient: string | null;
   image_position_x: number | null;
   image_position_y: number | null;
+  image_width: number | null;
+  image_height: number | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -75,7 +77,9 @@ const HeroSection = () => {
             : data.trust_badges,
           background_gradient: data.background_gradient || 'from-amber-800 via-amber-700 to-blue-900',
           image_position_x: data.image_position_x ?? 50,
-          image_position_y: data.image_position_y ?? 30
+          image_position_y: data.image_position_y ?? 30,
+          image_width: data.image_width ?? 100,
+          image_height: data.image_height ?? 100
         };
         setHeroSettings(parsedData);
       } catch (error) {
@@ -97,7 +101,9 @@ const HeroSection = () => {
           ],
           background_gradient: "from-amber-800 via-amber-700 to-blue-900",
           image_position_x: 50,
-          image_position_y: 30
+          image_position_y: 30,
+          image_width: 100,
+          image_height: 100
         });
       } finally {
         setLoading(false);
@@ -118,6 +124,8 @@ const HeroSection = () => {
   const backgroundGradient = heroSettings?.background_gradient || "from-amber-800 via-amber-700 to-blue-900";
   const imagePositionX = heroSettings?.image_position_x ?? 50;
   const imagePositionY = heroSettings?.image_position_y ?? 30;
+  const imageWidth = heroSettings?.image_width ?? 100;
+  const imageHeight = heroSettings?.image_height ?? 100;
 
   return (
     <section className={`pt-16 bg-gradient-to-r ${backgroundGradient} text-white relative overflow-hidden`}>
@@ -190,9 +198,15 @@ const HeroSection = () => {
           </div>
 
           {/* Right Image */}
-          <div className="relative hidden lg:block">
+          <div className="relative hidden lg:flex items-center justify-end">
             {heroSettings?.hero_image_url ? (
-              <div className="relative h-[300px] lg:h-[350px]">
+              <div 
+                className="relative rounded-l-3xl overflow-hidden"
+                style={{ 
+                  width: `${imageWidth}%`,
+                  height: imageHeight === 100 ? '350px' : `${(imageHeight / 100) * 350}px`
+                }}
+              >
                 {/* Gradient overlay for natural blending */}
                 <div className="absolute inset-0 bg-gradient-to-r from-current via-transparent to-transparent z-10 pointer-events-none" style={{ color: 'inherit' }} />
                 <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-current/60 z-10 pointer-events-none" />
@@ -200,7 +214,7 @@ const HeroSection = () => {
                 <img
                   src={heroSettings.hero_image_url}
                   alt="Healthcare Professional"
-                  className="w-full h-full object-cover rounded-l-3xl"
+                  className="w-full h-full object-cover"
                   style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
                 />
               </div>

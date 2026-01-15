@@ -319,25 +319,30 @@ const SpecialistInCity = () => {
 
               <h3 className="text-lg font-medium mb-3">Related Medical Services in {formattedCity}</h3>
               <div className="flex flex-wrap gap-2">
-                <a href={`/doctors-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
-                  All Doctors in {formattedCity}
-                </a>
-                <span className="text-muted-foreground">•</span>
-                <a href={`/labs-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
-                  Labs in {formattedCity}
-                </a>
-                <span className="text-muted-foreground">•</span>
-                <a href={`/hospitals-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
-                  Hospitals in {formattedCity}
-                </a>
-                <span className="text-muted-foreground">•</span>
-                <a href={`/pharmacies-in-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
-                  Pharmacies in {formattedCity}
-                </a>
-                <span className="text-muted-foreground">•</span>
-                <a href={`/home-nursing-${city?.toLowerCase()}`} className="text-primary hover:underline text-sm">
-                  Home Nursing in {formattedCity}
-                </a>
+                {(
+                  [
+                    { label: `All Doctors in ${formattedCity}`, href: `/doctors-in-${city?.toLowerCase()}` },
+                    { label: `Labs in ${formattedCity}`, href: `/labs-in-${city?.toLowerCase()}` },
+                    { label: `Hospitals in ${formattedCity}`, href: `/hospitals-in-${city?.toLowerCase()}` },
+                    { label: `Pharmacies in ${formattedCity}`, href: `/pharmacies-in-${city?.toLowerCase()}` },
+                    { label: `Home Nursing in ${formattedCity}`, href: `/home-nursing-${city?.toLowerCase()}` },
+                  ] as const
+                ).map((item, idx) => (
+                  <span key={item.href} className="flex items-center gap-2">
+                    <a
+                      href={item.href}
+                      className="text-primary hover:underline text-sm"
+                      onClick={(e) => {
+                        // Force navigation even if a click overlay/selection mode interferes
+                        e.preventDefault();
+                        window.location.assign(item.href);
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                    {idx < 4 && <span className="text-muted-foreground">•</span>}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

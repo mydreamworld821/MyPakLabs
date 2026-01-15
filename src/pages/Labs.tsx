@@ -169,13 +169,12 @@ const Labs = () => {
                 Showing {filteredLabs.length} lab{filteredLabs.length !== 1 ? "s" : ""}
               </p>
               <div 
-                className={layoutSettings.layout_type === 'list' ? 'flex flex-col' : 'grid'}
-                style={{ 
-                  gap: `${layoutSettings.items_gap}px`,
-                  gridTemplateColumns: layoutSettings.layout_type !== 'list' 
-                    ? `repeat(${layoutSettings.columns_desktop}, minmax(0, 1fr))` 
-                    : undefined 
-                }}
+                className={
+                  layoutSettings.layout_type === 'list' 
+                    ? 'flex flex-col' 
+                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
+                }
+                style={{ gap: `${layoutSettings.items_gap}px` }}
               >
                 {filteredLabs.map((lab) => (
                   <LabListCard key={lab.id} lab={lab} settings={layoutSettings} />

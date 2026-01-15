@@ -58,7 +58,7 @@ const FindPharmacies = () => {
   const [showMedicineSearch, setShowMedicineSearch] = useState(false);
 
   // Get admin-managed layout settings
-  const { settings: layoutSettings } = usePageLayoutSettings("pharmacies_listing");
+  const { settings: layoutSettings, getGridClasses } = usePageLayoutSettings("pharmacies_listing");
 
   useEffect(() => {
     fetchStores();
@@ -188,11 +188,7 @@ const FindPharmacies = () => {
                     Featured Pharmacies
                   </h2>
                   <div 
-                    className={
-                      layoutSettings.layout_type === 'list' 
-                        ? 'flex flex-col' 
-                        : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-                    }
+                    className={getGridClasses()}
                     style={{ gap: `${layoutSettings.items_gap}px` }}
                   >
                     {featuredStores.map((store) => (
@@ -208,11 +204,7 @@ const FindPharmacies = () => {
                   <h2 className="text-lg font-semibold mb-4">All Pharmacies</h2>
                 )}
                 <div 
-                  className={
-                    layoutSettings.layout_type === 'list' 
-                      ? 'flex flex-col' 
-                      : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-                  }
+                  className={getGridClasses()}
                   style={{ gap: `${layoutSettings.items_gap}px` }}
                 >
                   {regularStores.map((store) => (

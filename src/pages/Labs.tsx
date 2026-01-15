@@ -40,7 +40,7 @@ const Labs = () => {
   const [sortBy, setSortBy] = useState("discount");
   
   // Get admin-managed layout settings
-  const { settings: layoutSettings, loading: layoutLoading } = usePageLayoutSettings("labs_listing");
+  const { settings: layoutSettings, loading: layoutLoading, getGridClasses } = usePageLayoutSettings("labs_listing");
 
   useEffect(() => {
     fetchLabs();
@@ -169,11 +169,7 @@ const Labs = () => {
                 Showing {filteredLabs.length} lab{filteredLabs.length !== 1 ? "s" : ""}
               </p>
               <div 
-                className={
-                  layoutSettings.layout_type === 'list' 
-                    ? 'flex flex-col' 
-                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-                }
+                className={getGridClasses()}
                 style={{ gap: `${layoutSettings.items_gap}px` }}
               >
                 {filteredLabs.map((lab) => (

@@ -73,7 +73,7 @@ const Hospitals = () => {
   const [citiesWithCounts, setCitiesWithCounts] = useState<CityData[]>(topCities);
 
   // Get admin-managed layout settings
-  const { settings: layoutSettings } = usePageLayoutSettings("hospitals_listing");
+  const { settings: layoutSettings, getGridClasses } = usePageLayoutSettings("hospitals_listing");
 
   useEffect(() => {
     fetchHospitals();
@@ -203,11 +203,7 @@ const Hospitals = () => {
                 />
               </div>
               <div 
-                className={
-                  layoutSettings.layout_type === 'list' 
-                    ? 'flex flex-col' 
-                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-                }
+                className={getGridClasses()}
                 style={{ gap: `${layoutSettings.items_gap}px` }}
               >
                 {hospitals
@@ -278,11 +274,7 @@ const Hospitals = () => {
             </div>
           ) : (
             <div 
-              className={
-                layoutSettings.layout_type === 'list' 
-                  ? 'flex flex-col' 
-                  : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-              }
+              className={getGridClasses()}
               style={{ gap: `${layoutSettings.items_gap}px` }}
             >
               {filteredCityHospitals.map((hospital) => (

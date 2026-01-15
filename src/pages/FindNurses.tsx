@@ -85,7 +85,7 @@ const FindNurses = () => {
   const [emergencyOnly, setEmergencyOnly] = useState(false);
 
   // Get admin-managed layout settings
-  const { settings: layoutSettings } = usePageLayoutSettings("nurses_listing");
+  const { settings: layoutSettings, getGridClasses } = usePageLayoutSettings("nurses_listing");
 
   useEffect(() => {
     fetchNurses();
@@ -337,11 +337,7 @@ const FindNurses = () => {
                 {nurses.length} nurse{nurses.length !== 1 ? "s" : ""} found
               </p>
               <div 
-                className={
-                  layoutSettings.layout_type === 'list' 
-                    ? 'flex flex-col' 
-                    : `grid grid-cols-${layoutSettings.columns_mobile} md:grid-cols-${layoutSettings.columns_tablet} lg:grid-cols-${layoutSettings.columns_desktop}`
-                }
+                className={getGridClasses()}
                 style={{ gap: `${layoutSettings.items_gap}px` }}
               >
                 {nurses.map((nurse) => (

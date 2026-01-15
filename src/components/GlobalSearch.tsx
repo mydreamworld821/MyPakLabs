@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import useCities from "@/hooks/useCities";
 import {
   Search,
@@ -22,8 +25,6 @@ import {
   Clock,
   Trash2,
   TrendingUp,
-  Sparkles,
-  Brain,
 } from "lucide-react";
 import {
   Select,
@@ -72,24 +73,16 @@ interface GlobalSearchProps {
 const RECENT_SEARCHES_KEY = "mypaklabs_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
 
-// Popular/trending search suggestions
-const TRENDING_SUGGESTIONS = [
-  { text: "Blood Test", type: "test" as const },
+// Popular specializations for suggestions
+const POPULAR_SPECIALIZATIONS = [
+  { text: "Gynecologist", type: "specialization" as const },
+  { text: "Skin Specialist", type: "specialization" as const },
+  { text: "Child Specialist", type: "specialization" as const },
+  { text: "Neurologist", type: "specialization" as const },
+  { text: "Orthopedic Surgeon", type: "specialization" as const },
+  { text: "Gastroenterologist", type: "specialization" as const },
+  { text: "Endocrinologist", type: "specialization" as const },
   { text: "Cardiologist", type: "specialization" as const },
-  { text: "COVID Test", type: "test" as const },
-  { text: "Home Nursing", type: "nurse" as const },
-  { text: "X-Ray", type: "test" as const },
-  { text: "General Physician", type: "specialization" as const },
-  { text: "Diabetes Test", type: "test" as const },
-  { text: "Dentist", type: "specialization" as const },
-];
-
-const POPULAR_CATEGORIES = [
-  { text: "Doctors", icon: "doctor", route: "/find-doctors" },
-  { text: "Nurses", icon: "nurse", route: "/find-nurses" },
-  { text: "Lab Tests", icon: "test", route: "/labs" },
-  { text: "Hospitals", icon: "hospital", route: "/hospitals" },
-  { text: "Surgeries", icon: "surgery", route: "/surgeries" },
 ];
 
 const GlobalSearch = ({ className }: GlobalSearchProps) => {
@@ -99,13 +92,10 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   const [selectedCity, setSelectedCity] = useState("");
   const [categorizedResults, setCategorizedResults] = useState<CategorizedResults | null>(null);
   const [searchIntent, setSearchIntent] = useState<string>("");
-  const [expandedKeywords, setExpandedKeywords] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const dropdownMenuRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalInputRef = useRef<HTMLInputElement>(null);
   
   // Voice search state
   const [isListening, setIsListening] = useState(false);
@@ -115,7 +105,6 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
   
   // Recent searches state
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
-  const [showRecent, setShowRecent] = useState(false);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -167,6 +156,15 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       console.error('Error loading recent searches:', error);
     }
   }, []);
+
+  // Focus input when modal opens
+  useEffect(() => {
+    if (isOpen && modalInputRef.current) {
+      setTimeout(() => {
+        modalInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
 
   // Save recent searches to localStorage
   const saveRecentSearch = useCallback((query: string) => {
@@ -227,57 +225,14 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
     }
   }, [isListening]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      const inSearch = dropdownRef.current?.contains(target);
-      const inMenu = dropdownMenuRef.current?.contains(target);
-      if (!inSearch && !inMenu) {
-        setShowDropdown(false);
-        setShowRecent(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Keep dropdown positioned above everything
-  useEffect(() => {
-    const updatePos = () => {
-      const el = dropdownRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setDropdownPos({
-        top: rect.bottom + 8,
-        left: rect.left,
-        width: rect.width,
-      });
-    };
-
-    if (showDropdown || showRecent) {
-      updatePos();
-      window.addEventListener("scroll", updatePos, true);
-      window.addEventListener("resize", updatePos);
-      return () => {
-        window.removeEventListener("scroll", updatePos, true);
-        window.removeEventListener("resize", updatePos);
-      };
-    }
-  }, [showDropdown, showRecent, categorizedResults]);
-
   // Debounced intelligent search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
         performIntelligentSearch(searchQuery.trim());
-        setShowRecent(false);
       } else {
         setCategorizedResults(null);
         setSearchIntent("");
-        setExpandedKeywords([]);
-        setShowDropdown(false);
       }
     }, 400);
 
@@ -312,8 +267,6 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       
       setCategorizedResults(data.results);
       setSearchIntent(data.intent);
-      setExpandedKeywords(data.expanded_keywords || []);
-      setShowDropdown(data.total_results > 0);
     } catch (error) {
       console.error("Search error:", error);
     } finally {
@@ -336,8 +289,7 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
   const handleResultClick = (result: SearchResult) => {
     saveRecentSearch(result.name);
-    setShowDropdown(false);
-    setShowRecent(false);
+    setIsOpen(false);
     setSearchQuery("");
 
     switch (result.type) {
@@ -367,27 +319,12 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
 
   const handleRecentSearchClick = (query: string) => {
     setSearchQuery(query);
-    setShowRecent(false);
-    inputRef.current?.focus();
+    modalInputRef.current?.focus();
   };
 
-  const getIcon = (type: SearchResult["type"]) => {
-    switch (type) {
-      case "doctor":
-        return <User className="w-4 h-4" />;
-      case "specialization":
-        return <Stethoscope className="w-4 h-4" />;
-      case "surgery":
-        return <Scissors className="w-4 h-4" />;
-      case "test":
-        return <TestTube className="w-4 h-4" />;
-      case "lab":
-        return <FlaskConical className="w-4 h-4" />;
-      case "hospital":
-        return <Building2 className="w-4 h-4" />;
-      case "nurse":
-        return <Heart className="w-4 h-4" />;
-    }
+  const handleSuggestionClick = (suggestion: { text: string; type: string }) => {
+    setSearchQuery(suggestion.text);
+    modalInputRef.current?.focus();
   };
 
   const getTypeBadge = (type: SearchResult["type"]) => {
@@ -425,12 +362,10 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
           navigate(`/surgeries?search=${encodeURIComponent(searchQuery)}`);
           break;
         default:
-          // Fallback to doctors as most common intent
           navigate(`/find-doctors?search=${encodeURIComponent(searchQuery)}`);
       }
       
-      setShowDropdown(false);
-      setShowRecent(false);
+      setIsOpen(false);
     }
   };
 
@@ -439,261 +374,198 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
       handleSearch();
     }
     if (e.key === "Escape") {
-      setShowDropdown(false);
-      setShowRecent(false);
-    }
-  };
-
-  const handleInputFocus = () => {
-    if (categorizedResults && getAllResults().length > 0) {
-      setShowDropdown(true);
-    } else if (searchQuery.trim().length < 2 && recentSearches.length > 0) {
-      setShowRecent(true);
-    }
-  };
-
-  const handleTrendingClick = (suggestion: { text: string; type: string }) => {
-    setSearchQuery(suggestion.text);
-    setShowRecent(false);
-    inputRef.current?.focus();
-  };
-
-  const handleCategoryClick = (category: { route: string }) => {
-    navigate(category.route);
-    setShowRecent(false);
-  };
-
-  const getIconForCategory = (icon: string) => {
-    switch (icon) {
-      case "doctor": return <User className="w-4 h-4" />;
-      case "nurse": return <Heart className="w-4 h-4" />;
-      case "test": return <TestTube className="w-4 h-4" />;
-      case "hospital": return <Building2 className="w-4 h-4" />;
-      case "surgery": return <Scissors className="w-4 h-4" />;
-      default: return <Search className="w-4 h-4" />;
+      setIsOpen(false);
     }
   };
 
   const allResults = getAllResults();
-  const shouldShowDropdown = showDropdown && allResults.length > 0 && dropdownPos;
-  const shouldShowRecent = showRecent && !showDropdown && dropdownPos;
-
-  // Render categorized results section
-  const renderCategorySection = (title: string, results: SearchResult[], icon: React.ReactNode) => {
-    if (results.length === 0) return null;
-    return (
-      <div className="mb-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {icon}
-          {title}
-          <span className="ml-auto bg-muted px-1.5 py-0.5 rounded-full text-[10px]">
-            {results.length}
-          </span>
-        </div>
-        {results.slice(0, 5).map((result) => {
-          const badge = getTypeBadge(result.type);
-          return (
-            <button
-              key={`${result.type}-${result.id}`}
-              onClick={() => handleResultClick(result)}
-              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-muted/50 rounded-lg transition-colors text-left"
-            >
-              <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                {getIcon(result.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm truncate">{result.name}</span>
-                  <Badge className={`text-[10px] px-1.5 py-0 ${badge.color}`}>
-                    {badge.label}
-                  </Badge>
-                </div>
-                {result.subtitle && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {result.subtitle}
-                  </p>
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
+  const hasResults = allResults.length > 0;
+  const showSuggestions = !hasResults && searchQuery.trim().length < 2;
 
   return (
-    <div className={`relative z-[100] ${className}`} ref={dropdownRef}>
-      {/* Wide Search Bar - Similar to Reference */}
-      <div className="flex items-stretch bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-        {/* City Selector Section */}
-        <div className="flex items-center border-r border-gray-200 bg-gray-50/50">
-          <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="border-0 shadow-none bg-transparent w-[120px] h-12 focus:ring-0 text-gray-800 text-sm font-medium px-4 rounded-none">
-              <SelectValue placeholder={citiesLoading ? "..." : "Select City"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px] bg-white z-[9999]">
-              <SelectItem value="all">All Cities</SelectItem>
-              {dbCities.map((city) => (
-                <SelectItem key={city.id} value={city.name}>
-                  {city.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Detect Location Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 mr-2 text-primary border border-primary/30 rounded-full text-xs font-medium hover:bg-primary/10"
-            onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(() => {
-                  // Could integrate with reverse geocoding
-                  setSelectedCity("all");
-                });
-              }
-            }}
-          >
-            <MapPin className="w-3 h-3 mr-1" />
-            Detect
-          </Button>
-        </div>
-        
-        {/* Search Input Section - Takes Most Space */}
-        <div className="flex-1 flex items-center px-4 min-w-0">
-          {loading ? (
-            <Loader2 className="w-5 h-5 text-gray-400 animate-spin shrink-0 mr-3" />
-          ) : (
-            <Search className="w-5 h-5 text-gray-400 shrink-0 mr-3" />
-          )}
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Doctors, Hospitals, Lab Tests, Nurses, Surgeries..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onFocus={handleInputFocus}
-            className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-black placeholder:text-gray-400 h-12 text-base flex-1 min-w-0 caret-primary font-medium"
-          />
-          
-          {/* Clear Button */}
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 rounded-full hover:bg-gray-100"
-              onClick={() => {
-                setSearchQuery("");
-                setCategorizedResults(null);
-                setShowDropdown(false);
-              }}
-            >
-              <X className="w-4 h-4 text-gray-500" />
-            </Button>
-          )}
-          
-          {/* Voice Search Button */}
-          {voiceSupported && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-8 w-8 shrink-0 rounded-full transition-colors ml-1 ${isListening ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'hover:bg-gray-100 text-gray-500'}`}
-              onClick={toggleVoiceSearch}
-              title={isListening ? "Stop listening" : "Voice search"}
-            >
-              {isListening ? (
-                <MicOff className="w-4 h-4 animate-pulse" />
-              ) : (
-                <Mic className="w-4 h-4" />
-              )}
-            </Button>
-          )}
-        </div>
-        
-        {/* Search Button */}
-        <Button 
-          onClick={handleSearch} 
-          className="shrink-0 h-auto px-8 rounded-none bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base"
+    <>
+      {/* Trigger Search Bar */}
+      <div className={`relative z-[100] ${className}`}>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full flex items-center bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow cursor-text"
         >
-          Search
-        </Button>
+          {/* City Preview */}
+          <div className="flex items-center border-r border-gray-200 bg-gray-50/50 px-4 py-3">
+            <MapPin className="w-4 h-4 text-primary mr-2" />
+            <span className="text-sm text-gray-700 font-medium">
+              {selectedCity || "All Cities"}
+            </span>
+          </div>
+          
+          {/* Search Placeholder */}
+          <div className="flex-1 flex items-center px-4 py-3">
+            <Search className="w-5 h-5 text-gray-400 mr-3" />
+            <span className="text-gray-400 text-base">
+              Search for doctors, hospitals, specialties, services...
+            </span>
+          </div>
+          
+          {/* Search Button */}
+          <div className="shrink-0 px-6 py-3 bg-amber-500 text-white font-semibold">
+            Search
+          </div>
+        </button>
       </div>
 
-      {/* AI-Powered Search Results Dropdown */}
-      {shouldShowDropdown && categorizedResults
-        ? createPortal(
-            <div
-              ref={dropdownMenuRef}
-              className="fixed bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] max-h-[500px] overflow-y-auto"
-              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+      {/* Search Modal */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-white">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-800">Search for doctors</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={() => setIsOpen(false)}
             >
-              <div className="p-3">
-                {/* AI Intent Badge */}
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                  <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    AI-Powered Search
-                  </div>
-                  {searchIntent && (
-                    <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-                      Intent: {searchIntent}
-                    </Badge>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* City Selector */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
+                <SelectTrigger className="flex-1 border-0 shadow-none bg-transparent h-auto p-0 focus:ring-0 text-gray-800 text-sm font-medium">
+                  <SelectValue placeholder={citiesLoading ? "Loading..." : "Select City"} />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] bg-white z-[9999]">
+                  <SelectItem value="all">All Cities</SelectItem>
+                  {dbCities.map((city) => (
+                    <SelectItem key={city.id} value={city.name}>
+                      {city.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Detect Location Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-primary border-primary/30 rounded-full text-xs font-medium hover:bg-primary/10"
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(() => {
+                      setSelectedCity("all");
+                    });
+                  }
+                }}
+              >
+                <MapPin className="w-3 h-3 mr-1" />
+                Detect
+              </Button>
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              {loading ? (
+                <Loader2 className="w-5 h-5 text-gray-400 animate-spin shrink-0" />
+              ) : (
+                <Search className="w-5 h-5 text-gray-400 shrink-0" />
+              )}
+              <Input
+                ref={modalInputRef}
+                type="text"
+                placeholder="Search for doctors, hospitals, specialties, services, diseases"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyPress}
+                className="border-0 shadow-none bg-transparent focus-visible:ring-0 text-black placeholder:text-gray-400 h-10 text-base flex-1 p-0 caret-primary font-medium"
+              />
+              
+              {/* Clear Button */}
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 rounded-full hover:bg-gray-100"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCategorizedResults(null);
+                  }}
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </Button>
+              )}
+              
+              {/* Voice Search Button */}
+              {voiceSupported && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 shrink-0 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'hover:bg-gray-100 text-gray-500'}`}
+                  onClick={toggleVoiceSearch}
+                  title={isListening ? "Stop listening" : "Voice search"}
+                >
+                  {isListening ? (
+                    <MicOff className="w-4 h-4 animate-pulse" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
                   )}
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {allResults.length} results
-                  </span>
-                </div>
+                </Button>
+              )}
+            </div>
+          </div>
 
-                {/* Expanded Keywords */}
-                {expandedKeywords.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {expandedKeywords.slice(0, 6).map((keyword, idx) => (
-                      <Badge 
-                        key={idx} 
-                        variant="outline" 
-                        className="text-[10px] px-2 py-0.5 bg-muted/50"
-                      >
-                        {keyword}
+          {/* Results / Suggestions Area */}
+          <div className="max-h-[400px] overflow-y-auto">
+            {/* Show Search Results */}
+            {hasResults && (
+              <div className="divide-y divide-gray-50">
+                {allResults.slice(0, 10).map((result) => {
+                  const badge = getTypeBadge(result.type);
+                  return (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      onClick={() => handleResultClick(result)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="flex-1 text-sm font-medium text-gray-800">
+                        {result.name}
+                      </span>
+                      <Badge className={`text-xs px-2 py-0.5 ${badge.color}`}>
+                        {badge.label}
                       </Badge>
-                    ))}
-                  </div>
-                )}
-
-                {/* Categorized Results */}
-                {renderCategorySection("Doctors", categorizedResults.doctors, <User className="w-3 h-3" />)}
-                {renderCategorySection("Specializations", categorizedResults.specializations, <Stethoscope className="w-3 h-3" />)}
-                {renderCategorySection("Labs & Tests", categorizedResults.labs_tests, <TestTube className="w-3 h-3" />)}
-                {renderCategorySection("Hospitals", categorizedResults.hospitals, <Building2 className="w-3 h-3" />)}
-                {renderCategorySection("Nurses", categorizedResults.nurses, <Heart className="w-3 h-3" />)}
-                {renderCategorySection("Surgeries", categorizedResults.surgeries, <Scissors className="w-3 h-3" />)}
+                    </button>
+                  );
+                })}
               </div>
-            </div>,
-            document.body,
-          )
-        : null}
+            )}
 
-      {/* Recent Searches & Trending Dropdown */}
-      {shouldShowRecent
-        ? createPortal(
-            <div
-              ref={dropdownMenuRef}
-              className="fixed bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] max-h-[500px] overflow-y-auto"
-              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
-            >
-              <div className="p-2">
-                {/* Recent Searches Section */}
+            {/* Loading State */}
+            {loading && (
+              <div className="px-4 py-8 text-center text-gray-500">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                <p className="text-sm">Searching...</p>
+              </div>
+            )}
+
+            {/* Show Suggestions when no results or empty query */}
+            {showSuggestions && !loading && (
+              <div className="py-2">
+                {/* Recent Searches */}
                 {recentSearches.length > 0 && (
-                  <>
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between px-4 py-2">
+                      <span className="text-xs text-gray-500 flex items-center gap-1.5">
                         <Clock className="w-3 h-3" />
                         Recent Searches
                       </span>
                       <button
                         onClick={clearRecentSearches}
-                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                        className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
                       >
                         <Trash2 className="w-3 h-3" />
                         Clear
@@ -702,75 +574,67 @@ const GlobalSearch = ({ className }: GlobalSearchProps) => {
                     {recentSearches.map((recent, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50 rounded-lg group"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 group"
                       >
                         <button
                           onClick={() => handleRecentSearchClick(recent.query)}
                           className="flex-1 flex items-center gap-3 text-left"
                         >
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm">{recent.query}</span>
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{recent.query}</span>
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             removeRecentSearch(recent.query);
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
                         >
-                          <X className="w-3 h-3 text-muted-foreground" />
+                          <X className="w-3 h-3 text-gray-400" />
                         </button>
                       </div>
                     ))}
                     <div className="border-t border-gray-100 my-2" />
-                  </>
+                  </div>
                 )}
 
-                {/* Trending Searches */}
-                <div className="px-3 py-2">
-                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                {/* Popular Specializations */}
+                <div className="px-4 py-2">
+                  <span className="text-xs text-gray-500 flex items-center gap-1.5">
                     <TrendingUp className="w-3 h-3" />
-                    Trending Searches
+                    Popular Specialties
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-2 px-3 pb-2">
-                  {TRENDING_SUGGESTIONS.map((suggestion, index) => (
+                <div className="divide-y divide-gray-50">
+                  {POPULAR_SPECIALIZATIONS.map((suggestion, index) => (
                     <button
                       key={index}
-                      onClick={() => handleTrendingClick(suggestion)}
-                      className="px-3 py-1.5 text-sm bg-muted/50 hover:bg-muted rounded-full transition-colors"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                     >
-                      {suggestion.text}
+                      <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="flex-1 text-sm font-medium text-blue-600">
+                        {suggestion.text}
+                      </span>
+                      <span className="text-xs text-gray-400">Specialty</span>
                     </button>
                   ))}
                 </div>
-
-                {/* Quick Categories */}
-                <div className="border-t border-gray-100 mt-2 pt-2">
-                  <div className="px-3 py-2">
-                    <span className="text-xs text-muted-foreground">Browse Categories</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 px-2 pb-2">
-                    {POPULAR_CATEGORIES.map((category, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleCategoryClick(category)}
-                        className="flex flex-col items-center gap-1.5 p-3 hover:bg-muted/50 rounded-lg transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          {getIconForCategory(category.icon)}
-                        </div>
-                        <span className="text-xs font-medium">{category.text}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
-            </div>,
-            document.body,
-          )
-        : null}
-    </div>
+            )}
+
+            {/* No Results State */}
+            {!loading && !hasResults && searchQuery.trim().length >= 2 && (
+              <div className="px-4 py-8 text-center text-gray-500">
+                <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No results found for "{searchQuery}"</p>
+                <p className="text-xs text-gray-400 mt-1">Try different keywords</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

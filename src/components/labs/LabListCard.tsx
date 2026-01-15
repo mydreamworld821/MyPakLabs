@@ -134,7 +134,7 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
           {/* Description */}
           {showDescription && lab.description && (
             <p 
-              className="hidden md:block text-sm text-muted-foreground"
+              className="text-sm text-muted-foreground line-clamp-2 md:line-clamp-none"
               style={{
                 display: '-webkit-box',
                 WebkitLineClamp: descriptionLines,
@@ -157,8 +157,8 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
           
           <Link to={`/labs/${lab.id}`} className="w-full sm:w-auto">
             <Button 
-              className="w-full"
-              style={{ width: window.innerWidth >= 640 ? `${buttonWidth}px` : '100%' }}
+              className="w-full sm:w-auto"
+              style={{ minWidth: `${buttonWidth}px` }}
             >
               {primaryButtonText}
             </Button>
@@ -168,8 +168,8 @@ const LabListCard = ({ lab, settings }: LabListCardProps) => {
             <Link to={`/labs/${lab.id}`} className="w-full sm:w-auto">
               <Button 
                 variant="outline" 
-                className="w-full"
-                style={{ width: window.innerWidth >= 640 ? `${buttonWidth}px` : '100%' }}
+                className="w-full sm:w-auto"
+                style={{ minWidth: `${buttonWidth}px` }}
               >
                 {secondaryButtonText}
               </Button>

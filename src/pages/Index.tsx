@@ -8,6 +8,8 @@ import GlobalSearch from "@/components/GlobalSearch";
 import FeaturedDoctors from "@/components/home/FeaturedDoctors";
 import FeaturedNurses from "@/components/home/FeaturedNurses";
 import HeroSection from "@/components/home/HeroSection";
+import ConsultSpecialists from "@/components/home/ConsultSpecialists";
+import SearchByCondition from "@/components/home/SearchByCondition";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
@@ -238,6 +240,12 @@ const Index = () => {
                 </Link>)}
             </div>
           </div>
+
+          {/* Consult Best Doctors Online - Specializations Section */}
+          <ConsultSpecialists className="mb-8" maxItems={14} />
+
+          {/* Search by Condition Section */}
+          <SearchByCondition className="mb-8" maxItems={7} />
 
           {/* Featured Labs Section */}
           <div className="mb-8">

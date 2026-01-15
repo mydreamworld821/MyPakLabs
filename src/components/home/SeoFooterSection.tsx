@@ -143,7 +143,7 @@ export const SeoFooterSection = () => {
           {/* Pharmacy & Nursing Column */}
           <div className="space-y-6">
             <div>
-              <Link to="/find-pharmacies" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+              <Link to="/pharmacies" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                 <Pill className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-lg text-black hover:text-primary transition-colors">
                   💊 Pharmacies & Medicines

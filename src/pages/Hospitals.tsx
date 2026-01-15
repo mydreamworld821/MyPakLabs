@@ -44,23 +44,8 @@ interface Hospital {
 interface CityData {
   name: string;
   hospitalCount: number;
-  doctorCount: string;
+  doctorCount: number;
 }
-
-// Top cities with approximate doctor counts (for display)
-const topCities: CityData[] = [
-  { name: "Lahore", hospitalCount: 0, doctorCount: "15,481" },
-  { name: "Karachi", hospitalCount: 0, doctorCount: "14,901" },
-  { name: "Islamabad", hospitalCount: 0, doctorCount: "5,598" },
-  { name: "Rawalpindi", hospitalCount: 0, doctorCount: "3,582" },
-  { name: "Faisalabad", hospitalCount: 0, doctorCount: "2,373" },
-  { name: "Peshawar", hospitalCount: 0, doctorCount: "2,174" },
-  { name: "Multan", hospitalCount: 0, doctorCount: "2,026" },
-  { name: "Gujranwala", hospitalCount: 0, doctorCount: "1,079" },
-  { name: "Sargodha", hospitalCount: 0, doctorCount: "733" },
-  { name: "Sialkot", hospitalCount: 0, doctorCount: "606" },
-  { name: "Quetta", hospitalCount: 0, doctorCount: "890" },
-];
 
 const Hospitals = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -70,7 +55,7 @@ const Hospitals = () => {
   const [cityHospitals, setCityHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [citiesWithCounts, setCitiesWithCounts] = useState<CityData[]>(topCities);
+  const [citiesWithCounts, setCitiesWithCounts] = useState<CityData[]>([]);
 
   // Get admin-managed layout settings
   const { settings: layoutSettings, getGridClasses } = usePageLayoutSettings("hospitals_listing");
@@ -87,32 +72,56 @@ const Hospitals = () => {
 
   const fetchHospitals = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch hospitals
+      const { data: hospitalsData, error: hospitalsError } = await supabase
         .from("hospitals")
         .select("*")
         .eq("is_active", true)
         .order("is_featured", { ascending: false })
         .order("rating", { ascending: false });
 
-      if (error) throw error;
+      if (hospitalsError) throw hospitalsError;
 
-      if (data) {
-        setHospitals(data);
+      // Fetch doctors count per city
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from("doctors")
+        .select("city")
+        .eq("status", "approved");
+
+      if (doctorsError) throw doctorsError;
+
+      if (hospitalsData) {
+        setHospitals(hospitalsData);
         
         // Calculate hospital counts per city
-        const cityCounts: Record<string, number> = {};
-        data.forEach((h) => {
+        const hospitalCounts: Record<string, number> = {};
+        hospitalsData.forEach((h) => {
           if (h.city) {
-            cityCounts[h.city] = (cityCounts[h.city] || 0) + 1;
+            hospitalCounts[h.city] = (hospitalCounts[h.city] || 0) + 1;
           }
         });
 
-        // Update city data with actual counts
-        const updatedCities = topCities.map((city) => ({
-          ...city,
-          hospitalCount: cityCounts[city.name] || 0,
-        }));
-        setCitiesWithCounts(updatedCities);
+        // Calculate doctor counts per city
+        const doctorCounts: Record<string, number> = {};
+        (doctorsData || []).forEach((d) => {
+          if (d.city) {
+            doctorCounts[d.city] = (doctorCounts[d.city] || 0) + 1;
+          }
+        });
+
+        // Build city data from actual database records
+        const allCities = new Set<string>();
+        hospitalsData.forEach((h) => h.city && allCities.add(h.city));
+        
+        const citiesArray: CityData[] = Array.from(allCities)
+          .map((cityName) => ({
+            name: cityName,
+            hospitalCount: hospitalCounts[cityName] || 0,
+            doctorCount: doctorCounts[cityName] || 0,
+          }))
+          .sort((a, b) => b.hospitalCount - a.hospitalCount);
+
+        setCitiesWithCounts(citiesArray);
       }
     } catch (error) {
       console.error("Error fetching hospitals:", error);
@@ -161,6 +170,12 @@ const Hospitals = () => {
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
+            ) : citiesWithCounts.length === 0 ? (
+              <div className="text-center py-16">
+                <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No hospitals found</h3>
+                <p className="text-muted-foreground">Hospitals will appear here once added by admin</p>
+              </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {citiesWithCounts.map((city) => (
@@ -179,10 +194,12 @@ const Hospitals = () => {
                       <p className="text-xs text-muted-foreground mb-1">
                         {city.hospitalCount} Hospital{city.hospitalCount !== 1 ? "s" : ""}
                       </p>
-                      <div className="flex items-center justify-center gap-1 text-xs text-primary">
-                        <Users className="w-3 h-3" />
-                        <span>{city.doctorCount} Doctors</span>
-                      </div>
+                      {city.doctorCount > 0 && (
+                        <div className="flex items-center justify-center gap-1 text-xs text-primary">
+                          <Users className="w-3 h-3" />
+                          <span>{city.doctorCount} Doctor{city.doctorCount !== 1 ? "s" : ""}</span>
+                        </div>
+                      )}
                       <ChevronRight className="w-4 h-4 mx-auto mt-2 text-muted-foreground group-hover:text-primary transition-colors" />
                     </CardContent>
                   </Card>

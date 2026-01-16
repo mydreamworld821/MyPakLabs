@@ -162,14 +162,8 @@ const ImageUpload = ({
       return;
     }
 
-    // If skipCrop is true, upload directly without cropping
-    if (skipCrop) {
-      await handleDirectUpload(file);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      return;
-    }
+    // Store the original file for skipCrop mode
+    setOriginalFile(file);
 
     // Create preview URL and show cropper
     const reader = new FileReader();
@@ -188,25 +182,38 @@ const ImageUpload = ({
   };
 
   const handleCropConfirm = async () => {
-    if (!croppedAreaPixels || !imageToCrop) return;
+    if (!imageToCrop) return;
 
     setIsUploading(true);
     setShowCropper(false);
 
     try {
-      // Create cropped image blob
-      const croppedBlob = await createCroppedImage(imageToCrop, croppedAreaPixels);
+      let uploadBlob: Blob;
+      let contentType = "image/jpeg";
+      let fileExt = "jpg";
+
+      // If skipCrop is true, upload the original full image
+      if (skipCrop && originalFile) {
+        uploadBlob = originalFile;
+        contentType = originalFile.type;
+        fileExt = originalFile.name.split(".").pop() || "jpg";
+      } else if (croppedAreaPixels) {
+        // Create cropped image blob
+        uploadBlob = await createCroppedImage(imageToCrop, croppedAreaPixels);
+      } else {
+        throw new Error("No crop area selected");
+      }
 
       // Create a unique filename
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(fileName, croppedBlob, {
+        .upload(fileName, uploadBlob, {
           cacheControl: "3600",
           upsert: false,
-          contentType: "image/jpeg"
+          contentType
         });
 
       if (error) throw error;
@@ -318,7 +325,7 @@ const ImageUpload = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Move className="w-5 h-5" />
-              Adjust Image Position
+              {skipCrop ? "Preview & Upload Full Image" : "Adjust Image Position"}
             </DialogTitle>
           </DialogHeader>
 
@@ -346,31 +353,41 @@ const ImageUpload = ({
 
             {/* Instructions */}
             <div className="text-center text-sm text-muted-foreground">
-              <Move className="w-4 h-4 inline mr-1" />
-              Drag to reposition • Pinch or use slider to zoom
+              {skipCrop ? (
+                "Preview your image before uploading (full image will be saved)"
+              ) : (
+                <>
+                  <Move className="w-4 h-4 inline mr-1" />
+                  Drag to reposition • Pinch or use slider to zoom
+                </>
+              )}
             </div>
 
-            {/* Zoom Control */}
-            <div className="flex items-center gap-4 px-4">
-              <ZoomOut className="w-5 h-5 text-muted-foreground" />
-              <Slider
-                value={[zoom]}
-                min={1}
-                max={3}
-                step={0.1}
-                onValueChange={(value) => setZoom(value[0])}
-                className="flex-1"
-              />
-              <ZoomIn className="w-5 h-5 text-muted-foreground" />
-            </div>
+            {/* Zoom Control - only show if not skipCrop */}
+            {!skipCrop && (
+              <>
+                <div className="flex items-center gap-4 px-4">
+                  <ZoomOut className="w-5 h-5 text-muted-foreground" />
+                  <Slider
+                    value={[zoom]}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    onValueChange={(value) => setZoom(value[0])}
+                    className="flex-1"
+                  />
+                  <ZoomIn className="w-5 h-5 text-muted-foreground" />
+                </div>
 
-            {/* Reset Button */}
-            <div className="flex justify-center">
-              <Button variant="ghost" size="sm" onClick={resetCrop}>
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset Position
-              </Button>
-            </div>
+                {/* Reset Button */}
+                <div className="flex justify-center">
+                  <Button variant="ghost" size="sm" onClick={resetCrop}>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reset Position
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
 
           <DialogFooter className="gap-2">
@@ -382,6 +399,11 @@ const ImageUpload = ({
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Uploading...
+                </>
+              ) : skipCrop ? (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Full Image
                 </>
               ) : (
                 <>

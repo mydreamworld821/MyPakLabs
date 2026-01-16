@@ -79,6 +79,8 @@ const ServiceCards = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<ServiceCard | null>(null);
+  const [globalHeight, setGlobalHeight] = useState(100);
+  const [isApplyingGlobal, setIsApplyingGlobal] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
@@ -201,6 +203,29 @@ const ServiceCards = () => {
     },
   });
 
+  const applyGlobalHeight = async () => {
+    if (!serviceCards || serviceCards.length === 0) return;
+    
+    setIsApplyingGlobal(true);
+    try {
+      const updates = serviceCards.map(card => 
+        supabase
+          .from("service_cards")
+          .update({ card_height: globalHeight })
+          .eq("id", card.id)
+      );
+      
+      await Promise.all(updates);
+      queryClient.invalidateQueries({ queryKey: ["admin-service-cards"] });
+      toast.success(`All cards updated to ${globalHeight}px height!`);
+    } catch (error) {
+      toast.error("Failed to update card heights");
+      console.error(error);
+    } finally {
+      setIsApplyingGlobal(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -298,6 +323,37 @@ const ServiceCards = () => {
                   Add Card
                 </Button>
               </DialogTrigger>
+
+        {/* Global Height Control Card */}
+        <Card className="mb-4">
+          <CardContent className="pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <Label className="text-sm font-medium">Global Card Height: {globalHeight}px</Label>
+                <input
+                  type="range"
+                  min="60"
+                  max="300"
+                  step="10"
+                  value={globalHeight}
+                  onChange={(e) => setGlobalHeight(parseInt(e.target.value))}
+                  className="w-full mt-2"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>60px</span>
+                  <span>300px</span>
+                </div>
+              </div>
+              <Button 
+                onClick={applyGlobalHeight} 
+                disabled={isApplyingGlobal}
+                className="shrink-0"
+              >
+                {isApplyingGlobal ? "Applying..." : "Apply to All Cards"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>

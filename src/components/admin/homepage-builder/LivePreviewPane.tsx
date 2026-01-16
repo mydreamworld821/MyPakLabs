@@ -37,12 +37,16 @@ const getSectionPreview = (section: HomepageSection) => {
       }}
     >
       <div className="mb-3">
-        <div
-          className="h-4 w-32 bg-foreground/20 rounded"
-          style={{ color: section.text_color }}
-        />
+        <h3 
+          className="text-sm font-semibold truncate"
+          style={{ color: section.text_color || 'inherit' }}
+        >
+          {section.title}
+        </h3>
         {section.subtitle && (
-          <div className="h-3 w-48 bg-foreground/10 rounded mt-1" />
+          <p className="text-xs text-muted-foreground truncate mt-0.5">
+            {section.subtitle}
+          </p>
         )}
       </div>
       

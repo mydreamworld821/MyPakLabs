@@ -199,11 +199,7 @@ const Index = () => {
             </div>
             
             {/* Trust Signal Badges */}
-            <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-4">
-              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
-                <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600" />
-                <span>ISO Certified</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-4">
               <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
                 <Home className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-600" />
                 <span>Home Sample Collection</span>

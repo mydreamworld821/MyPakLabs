@@ -78,6 +78,59 @@
     }
     </script>
 
+    <!-- JSON-LD MedicalBusiness Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalBusiness",
+      "name": "MyPakLabs",
+      "url": "https://mypaklabs.com",
+      "logo": "https://mypaklabs.com/images/mypaklabs-logo.png",
+      "image": "https://mypaklabs.com/images/mypaklabs-logo.png",
+      "description": "Compare and book appointments with verified doctors, diagnostic labs, hospitals, nurses, and pharmacies across Pakistan. Save up to 35% on medical services.",
+      "telephone": "+92-316-7523434",
+      "email": "support@mypaklabs.com",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "G13-1",
+        "addressLocality": "Islamabad",
+        "addressRegion": "Islamabad Capital Territory",
+        "postalCode": "44000",
+        "addressCountry": "PK"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "33.6844",
+        "longitude": "73.0479"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        "opens": "00:00",
+        "closes": "23:59"
+      },
+      "medicalSpecialty": [
+        "Cardiology",
+        "Dermatology",
+        "Gynecology",
+        "Neurology",
+        "Orthopedics",
+        "Pediatrics",
+        "Psychiatry",
+        "Urology",
+        "General Practice"
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "500",
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    }
+    </script>
+
     <!-- JSON-LD WebSite Schema for Site Search -->
     <script type="application/ld+json">
     {
@@ -90,6 +143,42 @@
         "target": "https://mypaklabs.com/find-doctors?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
+    }
+    </script>
+
+    <!-- JSON-LD Review/Testimonial Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "MyPakLabs Healthcare Services",
+      "description": "Pakistan's trusted platform to compare hospitals, labs, doctors, and pharmacies with verified reviews and exclusive discounts.",
+      "brand": {
+        "@type": "Brand",
+        "name": "MyPakLabs"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "500",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "Patient Review"
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          },
+          "reviewBody": "Excellent platform for finding verified doctors and labs in Pakistan. Saved money with their exclusive discounts."
+        }
+      ]
     }
     </script>
   </head>

@@ -311,49 +311,64 @@ const LabDetail = () => {
   const totalSavings = totalOriginal - totalDiscounted;
 
   const handleConfirmBooking = async () => {
-    if (!user) {
+    // Get fresh auth state to ensure user is authenticated
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    if (!authUser) {
       toast.error("Please sign in to book tests");
       navigate("/auth");
       return;
     }
+
+    console.log("Booking attempt by user:", authUser.id, authUser.email);
 
     if (selectedTests.length === 0) {
       toast.error("Please select at least one test");
       return;
     }
 
-    const newId = await generateUniqueIdForLab();
-    setUniqueId(newId);
-
     // Save order to database
     try {
+      const newId = await generateUniqueIdForLab();
+      console.log("Generated order ID:", newId);
+      setUniqueId(newId);
+
       const validityDate = new Date();
       validityDate.setDate(validityDate.getDate() + 7);
 
-      const { error } = await supabase
+      const orderData = {
+        user_id: authUser.id,
+        lab_id: lab.id,
+        unique_id: newId,
+        tests: selectedTestItems.map(t => ({
+          test_id: t.id,
+          test_name: t.name,
+          price: t.originalPrice,
+          discounted_price: t.discountedPrice
+        })),
+        original_total: totalOriginal,
+        discount_percentage: discount,
+        discounted_total: totalDiscounted,
+        validity_date: validityDate.toISOString().split('T')[0],
+        status: 'pending' as const
+      };
+
+      console.log("Order data to insert:", orderData);
+
+      const { data, error } = await supabase
         .from("orders")
-        .insert({
-          user_id: user.id,
-          lab_id: lab.id,
-          unique_id: newId,
-          tests: selectedTestItems.map(t => ({
-            test_id: t.id,
-            test_name: t.name,
-            price: t.originalPrice,
-            discounted_price: t.discountedPrice
-          })),
-          original_total: totalOriginal,
-          discount_percentage: discount,
-          discounted_total: totalDiscounted,
-          validity_date: validityDate.toISOString().split('T')[0],
-          status: 'pending'
-        });
+        .insert([orderData])
+        .select()
+        .single();
 
       if (error) {
         console.error("Error saving order:", error);
-        toast.error("Failed to save order. Please try again.");
+        console.error("Error details:", JSON.stringify(error, null, 2));
+        toast.error(`Failed to save order: ${error.message}`);
         return;
       }
+
+      console.log("Order saved successfully:", data);
 
       // Send email notification to admin
       sendAdminEmailNotification({
@@ -365,9 +380,10 @@ const LabDetail = () => {
 
       setBookingConfirmed(true);
       toast.success("Booking confirmed! Your discount ID has been generated.");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving order:", error);
-      toast.error("Failed to save order. Please try again.");
+      console.error("Error stack:", error?.stack);
+      toast.error(`Failed to save order: ${error?.message || 'Unknown error'}`);
     }
   };
 

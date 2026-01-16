@@ -180,10 +180,12 @@ const HeroSection = () => {
   }, []);
 
   if (loading) {
+    // Reserve enough space to avoid CLS when the hero settings/content loads.
+    // (We intentionally over-reserve a bit; this is only shown while loading.)
     return (
-      <section 
-        className="pt-16 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900" 
-        style={{ minHeight: '400px' }}
+      <section
+        className="pt-16 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900"
+        style={{ minHeight: "560px" }}
       />
     );
   }

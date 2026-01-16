@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface TypingAnimationProps {
   words: string[];
@@ -9,6 +9,12 @@ const TypingAnimation = ({ words, className = "" }: TypingAnimationProps) => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentText, setCurrentText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Reserve space for the longest word to prevent layout shifts (CLS)
+  const maxWordLength = useMemo(
+    () => (words?.length ? Math.max(...words.map((w) => (w ?? "").length)) : 0),
+    [words]
+  );
 
   useEffect(() => {
     if (words.length === 0) return;
@@ -38,9 +44,18 @@ const TypingAnimation = ({ words, className = "" }: TypingAnimationProps) => {
   }, [currentText, isDeleting, currentWordIndex, words]);
 
   return (
-    <span className={className}>
+    <span
+      className={className}
+      style={
+        maxWordLength
+          ? ({ display: "inline-block", minWidth: `${maxWordLength}ch` } as const)
+          : undefined
+      }
+    >
       {currentText}
-      <span className="animate-cursor-blink">|</span>
+      <span className="animate-cursor-blink" aria-hidden="true">
+        |
+      </span>
     </span>
   );
 };

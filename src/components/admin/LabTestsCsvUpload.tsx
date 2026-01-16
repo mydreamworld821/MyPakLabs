@@ -65,25 +65,38 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
   };
 
   const downloadTemplate = async () => {
-    // Fetch all available tests
-    const { data: tests, error } = await supabase
-      .from("tests")
-      .select("name")
-      .eq("is_active", true)
-      .order("name");
+    // Fetch ONLY tests that are already configured for THIS lab
+    const { data: labTests, error } = await supabase
+      .from("lab_tests")
+      .select(`
+        price,
+        discounted_price,
+        tests:test_id (name)
+      `)
+      .eq("lab_id", labId)
+      .eq("is_available", true);
 
     if (error) {
-      toast.error("Failed to fetch tests");
+      toast.error("Failed to fetch lab tests");
       return;
     }
 
     // Create Excel workbook
     const wb = XLSX.utils.book_new();
     
-    // Create data with headers
+    // Create data with headers - pre-fill with existing lab tests
     const data = [
       ["test_name", "original_price", "discount_%"],
-      ...(tests?.map(test => [test.name, "", ""]) || [])
+      ...(labTests?.map((lt: any) => {
+        const price = lt.price || "";
+        const discountedPrice = lt.discounted_price || "";
+        // Calculate discount % if both prices exist
+        let discountPct = "";
+        if (price && discountedPrice && price > 0) {
+          discountPct = Math.round(((price - discountedPrice) / price) * 100).toString();
+        }
+        return [lt.tests?.name || "", price, discountPct];
+      }) || [])
     ];
     
     const ws = XLSX.utils.aoa_to_sheet(data);
@@ -100,7 +113,11 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     // Download the file
     XLSX.writeFile(wb, `${labName.toLowerCase().replace(/\s+/g, "-")}-tests-template.xlsx`);
     
-    toast.success("Excel template downloaded with all available tests");
+    const testCount = labTests?.length || 0;
+    toast.success(testCount > 0 
+      ? `Template downloaded with ${testCount} existing tests for ${labName}` 
+      : `Empty template downloaded - add tests for ${labName}`
+    );
   };
 
   const parseExcel = (data: ArrayBuffer): TestRow[] => {
@@ -473,12 +490,13 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
               <p>✓ Discounted price is <strong>auto-calculated</strong></p>
               <p>✓ Duplicate test names are <strong>auto-removed</strong></p>
               <p>✓ Existing tests will be <strong>merged/updated</strong></p>
+              <p>✓ Template shows only <strong>this lab's tests</strong></p>
             </div>
           </div>
 
           <Button variant="outline" onClick={downloadTemplate} className="w-full">
             <Download className="w-4 h-4 mr-2" />
-            Download Excel Template (with all tests)
+            Download Template ({existingTestCount} tests)
           </Button>
 
           <div className="relative">

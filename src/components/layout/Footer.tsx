@@ -70,6 +70,7 @@ const Footer = () => {
               <li><Link to="/join-as-doctor" className="text-muted-foreground hover:text-background text-sm transition-colors">Join as Doctor</Link></li>
               <li><Link to="/join-as-nurse" className="text-muted-foreground hover:text-background text-sm transition-colors">Join as Nurse</Link></li>
               <li><Link to="/join-as-pharmacy" className="text-muted-foreground hover:text-background text-sm transition-colors">Join as Pharmacy</Link></li>
+              <li><Link to="/partner-registration" className="text-muted-foreground hover:text-background text-sm transition-colors">Become a Partner</Link></li>
               <li><Link to="/help" className="text-muted-foreground hover:text-background text-sm transition-colors">Help Center</Link></li>
             </ul>
           </div>

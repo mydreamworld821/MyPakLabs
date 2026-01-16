@@ -71,11 +71,11 @@ const iconMap: Record<string, LucideIcon> = {
 const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServices, showQuickAccess = true, quickAccessLayout }: DynamicServicesGridProps) => {
   if (loading) {
     return (
-      <div className="mb-8">
+      <div className="mb-8" style={{ minHeight: '320px' }}>
         <Skeleton className="h-6 w-48 mb-4" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ minHeight: '280px' }}>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="rounded-xl" style={{ height: '320px' }} />
           ))}
         </div>
       </div>

@@ -150,8 +150,8 @@ const Index = () => {
       {/* Hero Section */}
       <HeroSection />
 
-      <main className="py-6 md:py-8 relative z-0">
-        <div className="container mx-auto px-4 relative">
+      <main className="py-6 md:py-8 relative z-0" style={{ minHeight: '800px' }}>
+        <div className="container mx-auto px-4 relative" style={{ minHeight: '750px' }}>
           {/* Services Section - Dynamic Grid from Admin with Quick Access */}
           {serviceCardsConfig?.is_visible !== false && (
             <DynamicServicesGrid

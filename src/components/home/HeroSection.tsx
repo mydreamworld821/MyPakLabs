@@ -181,7 +181,10 @@ const HeroSection = () => {
 
   if (loading) {
     return (
-      <section className="pt-16 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900 min-h-[280px] animate-pulse" />
+      <section 
+        className="pt-16 bg-gradient-to-r from-amber-800 via-amber-700 to-blue-900" 
+        style={{ minHeight: '400px' }}
+      />
     );
   }
 

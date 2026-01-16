@@ -68,11 +68,11 @@ const SearchByCondition = ({ className = "", maxItems: propMaxItems = 7 }: Searc
 
   if (configLoading) {
     return (
-      <div className={className}>
+      <div className={className} style={{ minHeight: '120px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="h-6 w-48 bg-muted animate-pulse rounded" />
         </div>
-        <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3" style={{ minHeight: '72px' }}>
           {[...Array(7)].map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-2">
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-muted animate-pulse" />
@@ -133,7 +133,7 @@ const SearchByCondition = ({ className = "", maxItems: propMaxItems = 7 }: Searc
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">
+      <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3" style={{ minHeight: '72px' }}>
         {displayedConditions.map((condition) => (
           <button
             key={condition.id}

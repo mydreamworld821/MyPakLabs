@@ -53,7 +53,7 @@ export const getFCMToken = async (): Promise<string | null> => {
     
     // Get FCM token
     const token = await getToken(fcmMessaging, {
-      vapidKey: "YOUR_VAPID_KEY", // We'll need to add this
+      vapidKey: "BAiC08fMqTlGnZ2az6xz8byEmZvfOJOswmiCrS-8m01NC2Ve3N9huYjcmabyv8QGXWChgPncaEB7LgTf0FyJPBU",
       serviceWorkerRegistration: registration,
     });
 

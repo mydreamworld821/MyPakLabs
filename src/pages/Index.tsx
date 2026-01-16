@@ -23,7 +23,7 @@ import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
-import { Star, ChevronRight, TrendingDown, Award, AlertTriangle, FlaskConical, Shield, Clock } from "lucide-react";
+import { Star, ChevronRight, TrendingDown, Award, AlertTriangle, FlaskConical, Shield, Clock, Home, BadgePercent, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Profile {
@@ -189,13 +189,29 @@ const Index = () => {
 
           {/* Featured Labs Section */}
           <div className="mb-8" style={{ minHeight: '176px' }}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <h2 className="text-base md:text-lg font-semibold text-foreground">
                 Compare ISO Certified Diagnostic Labs with Discounts
               </h2>
               <Link to="/labs" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
+            </div>
+            
+            {/* Trust Signal Badges */}
+            <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-4">
+              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
+                <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600" />
+                <span>ISO Certified</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
+                <Home className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-600" />
+                <span>Home Sample Collection</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
+                <BadgePercent className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
+                <span>Discounted Rates</span>
+              </div>
             </div>
 
             {loading ? <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3" style={{ minHeight: '140px' }}>

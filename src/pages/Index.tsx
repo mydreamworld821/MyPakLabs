@@ -249,16 +249,22 @@ const Index = () => {
           {/* Featured Nurses Section */}
           <FeaturedNurses className="mb-8" />
 
-          {/* Popular Tests Section */}
+          {/* Popular Lab Tests Section */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-foreground">
-                Order Medicines from Trusted Local Pharmacies
-              </h2>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-5 h-5 text-primary" />
+                <h2 className="text-base md:text-lg font-semibold text-foreground">
+                  Popular Lab Tests
+                </h2>
+              </div>
               <Link to="/labs" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Book diagnostic tests at discounted rates from certified labs
+            </p>
 
             {loading ? <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                 {[...Array(8)].map((_, i) => <div key={i} className="bg-muted rounded-lg h-14 animate-pulse" />)}
@@ -276,6 +282,87 @@ const Index = () => {
                     </Card>
                   </Link>)}
               </div>}
+          </div>
+
+          {/* Medicines & Pharmacy Services Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                <h2 className="text-base md:text-lg font-semibold text-foreground">
+                  Medicines & Pharmacy Services
+                </h2>
+              </div>
+              <Link to="/pharmacies" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
+                Find Pharmacies <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Order medicines from trusted local pharmacies with home delivery
+            </p>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+              <Link to="/pharmacies" className="block group">
+                <Card className="h-full hover:shadow-sm hover:border-primary/30 transition-all duration-300 bg-gradient-to-br from-green-50 to-white dark:from-green-950/20 dark:to-background">
+                  <CardContent className="p-3 md:p-4 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2">
+                      <Home className="w-5 h-5 text-green-600" />
+                    </div>
+                    <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors">
+                      Home Delivery
+                    </h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
+                      Get medicines at your doorstep
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/pharmacies" className="block group">
+                <Card className="h-full hover:shadow-sm hover:border-primary/30 transition-all duration-300 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-background">
+                  <CardContent className="p-3 md:p-4 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors">
+                      24/7 Pharmacies
+                    </h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
+                      Find pharmacies open now
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/pharmacies" className="block group">
+                <Card className="h-full hover:shadow-sm hover:border-primary/30 transition-all duration-300 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background">
+                  <CardContent className="p-3 md:p-4 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-2">
+                      <Award className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors">
+                      Verified Stores
+                    </h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
+                      Licensed & trusted pharmacies
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/pharmacies" className="block group">
+                <Card className="h-full hover:shadow-sm hover:border-primary/30 transition-all duration-300 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950/20 dark:to-background">
+                  <CardContent className="p-3 md:p-4 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-2">
+                      <BadgePercent className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors">
+                      Best Prices
+                    </h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
+                      Competitive medicine rates
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
           </div>
 
           {/* Custom Sections from Admin */}

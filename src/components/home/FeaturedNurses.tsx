@@ -127,7 +127,7 @@ const FeaturedNurses = ({ className }: FeaturedNursesProps) => {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <h2 className="text-base md:text-lg font-semibold text-foreground">
-            {selectedCity === "all" ? "Home Nursing Services" : `Nurses in ${selectedCity}`}
+            {selectedCity === "all" ? "Emergency & Home Nursing Services at Your Doorstep" : `Nurses in ${selectedCity}`}
           </h2>
           {cities.length > 0 && (
             <Select value={selectedCity} onValueChange={setSelectedCity}>

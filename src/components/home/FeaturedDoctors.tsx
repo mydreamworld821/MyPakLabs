@@ -105,7 +105,7 @@ const FeaturedDoctors = ({ className }: FeaturedDoctorsProps) => {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <h2 className="text-base md:text-lg font-semibold text-foreground">
-            {selectedCity === "all" ? "Featured Doctors" : `Doctors in ${selectedCity}`}
+            {selectedCity === "all" ? "Book Verified Doctors Online in Islamabad & Rawalpindi" : `Doctors in ${selectedCity}`}
           </h2>
           {cities.length > 0 && (
             <Select value={selectedCity} onValueChange={setSelectedCity}>

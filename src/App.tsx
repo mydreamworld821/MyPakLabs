@@ -66,6 +66,7 @@ import AdminMedicalStores from "./pages/admin/MedicalStores";
 import AdminMedicineOrders from "./pages/admin/MedicineOrders";
 import AdminHeroSettings from "./pages/admin/HeroSettings";
 import AdminHomepageLayout from "./pages/admin/HomepageLayout";
+import AdminHomepageBuilder from "./pages/admin/HomepageBuilder";
 import AdminPageLayouts from "./pages/admin/PageLayouts";
 import AdminReviews from "./pages/admin/Reviews";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";

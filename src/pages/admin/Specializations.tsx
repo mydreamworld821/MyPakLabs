@@ -242,6 +242,7 @@ const AdminSpecializations = () => {
                   currentUrl={formData.icon_url}
                   onUpload={(url) => setFormData({ ...formData, icon_url: url })}
                   aspectRatio="square"
+                  skipCrop={true}
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <div>

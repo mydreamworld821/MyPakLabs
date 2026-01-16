@@ -246,6 +246,7 @@ const AdminSurgeries = () => {
                         setFormData({ ...formData, image_url: url })
                       }
                       aspectRatio="banner"
+                      skipCrop={true}
                     />
                   </div>
 

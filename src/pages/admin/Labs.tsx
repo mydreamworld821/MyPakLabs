@@ -420,6 +420,7 @@ const AdminLabs = () => {
                     currentUrl={formData.logo_url}
                     onUpload={(url) => setFormData({ ...formData, logo_url: url })}
                     aspectRatio="square"
+                    skipCrop={true}
                   />
                   <ImageUpload
                     label="Cover Banner"
@@ -428,6 +429,7 @@ const AdminLabs = () => {
                     currentUrl={formData.cover_image_url}
                     onUpload={(url) => setFormData({ ...formData, cover_image_url: url })}
                     aspectRatio="banner"
+                    skipCrop={true}
                   />
                 </div>
 

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useFirebasePushNotifications } from '@/hooks/useFirebasePushNotifications';
 import EmergencyFlashNotification from '@/components/EmergencyFlashNotification';
 
 interface EmergencyNotification {
@@ -58,6 +59,10 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
 export const NotificationProvider = ({ children }: NotificationProviderProps) => {
   const { user } = useAuth();
   const { permission, requestPermission, showNotification, playNotificationSound } = usePushNotifications();
+  const { 
+    requestPermissionAndGetToken: requestFCMPermission, 
+    isSupported: isFCMSupported 
+  } = useFirebasePushNotifications();
   const [pendingNotifications, setPendingNotifications] = useState<EmergencyNotification[]>([]);
   const [nurseId, setNurseId] = useState<string | null>(null);
   const [isApprovedNurse, setIsApprovedNurse] = useState(false);
@@ -226,6 +231,18 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     });
   }, [permission, showNotification, playNotificationSound, nurseLocation, nurseRadius]);
 
+  // Combined permission request that also enables FCM
+  const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
+    const browserResult = await requestPermission();
+    
+    // Also request FCM permission if supported
+    if (isFCMSupported && browserResult) {
+      await requestFCMPermission();
+    }
+    
+    return browserResult;
+  }, [requestPermission, requestFCMPermission, isFCMSupported]);
+
   const dismissNotification = useCallback((id: string) => {
     setPendingNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
@@ -237,7 +254,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       value={{
         pendingNotifications,
         dismissNotification,
-        requestNotificationPermission: requestPermission,
+        requestNotificationPermission,
         notificationPermission: permission,
         hasUnreadNotifications: pendingNotifications.length > 0,
       }}

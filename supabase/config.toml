@@ -2,3 +2,6 @@ project_id = "tdxhlewkukiyjkptorpl"
 
 [functions.intelligent-search]
 verify_jwt = false
+
+[functions.send-fcm-notification]
+verify_jwt = false

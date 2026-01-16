@@ -191,7 +191,7 @@ const Index = () => {
           <div className="mb-8" style={{ minHeight: '176px' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base md:text-lg font-semibold text-foreground">
-                Featured Labs
+                Compare ISO Certified Diagnostic Labs with Discounts
               </h2>
               <Link to="/labs" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
                 View All <ChevronRight className="w-4 h-4" />
@@ -237,7 +237,7 @@ const Index = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base md:text-lg font-semibold text-foreground">
-                Popular Tests
+                Order Medicines from Trusted Local Pharmacies
               </h2>
               <Link to="/labs" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
                 View All <ChevronRight className="w-4 h-4" />

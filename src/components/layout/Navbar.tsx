@@ -166,6 +166,8 @@ const Navbar = () => {
             <img 
               src={myPakLabsLogo} 
               alt="MyPakLabs Logo" 
+              width={50}
+              height={40}
               className="h-10 w-auto object-contain group-hover:scale-105 transition-transform"
             />
             <span className="text-lg font-bold text-foreground">MyPakLabs</span>

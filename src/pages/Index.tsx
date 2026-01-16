@@ -13,6 +13,7 @@ import SearchByCondition from "@/components/home/SearchByCondition";
 import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
 import SeoFooterSection from "@/components/home/SeoFooterSection";
+import TrustSection from "@/components/home/TrustSection";
 import { PatientTestimonials } from "@/components/home/PatientTestimonials";
 import OurPartners from "@/components/home/OurPartners";
 
@@ -317,6 +318,9 @@ const Index = () => {
 
       {/* Our Partners Section */}
       <OurPartners />
+
+      {/* Trust Section */}
+      <TrustSection />
 
       {/* SEO Footer Section - Above Footer */}
       <SeoFooterSection />

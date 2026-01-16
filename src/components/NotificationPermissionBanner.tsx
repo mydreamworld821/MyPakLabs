@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, TestTube2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { sendFCMNotification } from '@/utils/fcmNotifications';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const NotificationPermissionBanner = () => {
   const { notificationPermission, requestNotificationPermission } = useNotifications();
+  const { user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [testingSending, setTestingSending] = useState(false);
 
   // Check if we should show the banner
   const shouldShow = 
@@ -33,6 +38,49 @@ const NotificationPermissionBanner = () => {
     setDismissed(true);
     localStorage.setItem('notification-banner-dismissed', 'true');
   };
+
+  const handleTestNotification = async () => {
+    if (!user) {
+      toast.error('Please login to test notifications');
+      return;
+    }
+    
+    setTestingSending(true);
+    const result = await sendFCMNotification({
+      title: '🔔 Test Notification',
+      body: 'This is a test push notification from MyPakLabs!',
+      userIds: [user.id],
+      data: {
+        url: '/',
+        type: 'test',
+      },
+    });
+    setTestingSending(false);
+    
+    if (result.success) {
+      toast.success('Test notification sent!');
+    } else {
+      toast.error('Failed to send test notification');
+    }
+  };
+
+  // Show test button if notifications are enabled
+  if (notificationPermission === 'granted' && user) {
+    return (
+      <div className="fixed bottom-4 right-4 z-40">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleTestNotification}
+          disabled={testingSending}
+          className="shadow-lg"
+        >
+          <TestTube2 className="w-4 h-4 mr-2" />
+          {testingSending ? 'Sending...' : 'Test Push'}
+        </Button>
+      </div>
+    );
+  }
 
   if (!shouldShow) return null;
 

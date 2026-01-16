@@ -55,7 +55,7 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.text('Web: www.mypaklabs.com', pageWidth / 2 - 30, y + 18);
   doc.text('Phone: 0316-7523434', pageWidth / 2 + 25, y + 18);
   
-  doc.text('Email: mhmmdaqib@gmail.com', pageWidth / 2 - 30, y + 24);
+  doc.text('Email: support@mypaklabs.com', pageWidth / 2 - 30, y + 24);
   doc.text('Address: Islamabad', pageWidth / 2 + 25, y + 24);
 
   y += 30;
@@ -67,32 +67,41 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   
   y += 8;
 
-  // Patient Details Section - Like template
-  doc.setFontSize(12);
+  // Patient Details Section - Fixed column layout
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
-  const col1X = margin;
-  const col2X = margin + 65;
-  const col3X = pageWidth / 2 + 10;
-  const col4X = pageWidth / 2 + 55;
+  // Define columns with proper spacing (page width ~210mm, margin 15mm each side = 180mm usable)
+  const col1X = margin;           // Label column 1
+  const col2X = margin + 32;      // Value column 1
+  const col3X = pageWidth / 2 + 5;  // Label column 2
+  const col4X = pageWidth / 2 + 40; // Value column 2
   
-  // Row 1
+  const maxValueWidth1 = col3X - col2X - 5; // Max width for first value column
+  const maxValueWidth2 = pageWidth - margin - col4X; // Max width for second value column
+  
+  // Row 1: Discount ID | Name
   doc.setFont('helvetica', 'bold');
   doc.text('Discount ID:', col1X, y);
-  doc.setFont('helvetica', 'bold');
   doc.setTextColor(75, 0, 130);
-  doc.text(booking.uniqueId, col2X, y);
+  const discountIdText = booking.uniqueId.length > 22 
+    ? booking.uniqueId.substring(0, 22) + '...' 
+    : booking.uniqueId;
+  doc.text(discountIdText, col2X, y);
   
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Name:', col3X, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(booking.patientName || 'N/A', col4X, y);
+  const nameText = (booking.patientName || 'N/A').length > 20 
+    ? (booking.patientName || 'N/A').substring(0, 20) + '...' 
+    : (booking.patientName || 'N/A');
+  doc.text(nameText, col4X, y);
   
   y += 8;
   
-  // Row 2
+  // Row 2: Age/Gender | Contact No
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Age/Gender:', col1X, y);
@@ -110,11 +119,15 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   
   y += 8;
   
-  // Row 3
+  // Row 3: Lab | Discount
   doc.setFont('helvetica', 'bold');
   doc.text('Lab:', col1X, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(booking.labName, col2X, y);
+  // Truncate lab name to fit in available space
+  const labNameText = booking.labName.length > 30 
+    ? booking.labName.substring(0, 30) + '...' 
+    : booking.labName;
+  doc.text(labNameText, col2X, y);
   
   doc.setFont('helvetica', 'bold');
   doc.text('Discount:', col3X, y);

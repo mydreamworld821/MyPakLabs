@@ -70,6 +70,7 @@ const navItems = [
   { href: "/admin/surgeries", label: "Surgeries", icon: Scissors },
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
   { href: "/admin/emergency-requests", label: "Emergency Requests", icon: AlertTriangle },
+  { href: "/admin/health-posts", label: "Health Hub", icon: Heart },
   { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { href: "/admin/partners", label: "Partners", icon: Building2 },

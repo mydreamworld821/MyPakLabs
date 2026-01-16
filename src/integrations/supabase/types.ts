@@ -413,6 +413,187 @@ export type Database = {
         }
         Relationships: []
       }
+      health_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "health_post_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          doctor_id: string | null
+          id: string
+          is_doctor_reply: boolean
+          likes_count: number
+          parent_comment_id: string | null
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          is_doctor_reply?: boolean
+          likes_count?: number
+          parent_comment_id?: string | null
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          is_doctor_reply?: boolean
+          likes_count?: number
+          parent_comment_id?: string | null
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_post_comments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_post_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "health_post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "health_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "health_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_posts: {
+        Row: {
+          author_id: string
+          author_type: string
+          comments_count: number
+          content: string
+          created_at: string
+          doctor_id: string | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_published: boolean
+          likes_count: number
+          tags: string[] | null
+          title: string
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          author_id: string
+          author_type: string
+          comments_count?: number
+          content: string
+          created_at?: string
+          doctor_id?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          likes_count?: number
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          author_id?: string
+          author_type?: string
+          comments_count?: number
+          content?: string
+          created_at?: string
+          doctor_id?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          likes_count?: number
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_posts_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_settings: {
         Row: {
           background_gradient: string | null

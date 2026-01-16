@@ -69,6 +69,7 @@ import AdminHomepageLayout from "./pages/admin/HomepageLayout";
 import AdminHomepageBuilder from "./pages/admin/HomepageBuilder";
 import AdminPageLayouts from "./pages/admin/PageLayouts";
 import AdminReviews from "./pages/admin/Reviews";
+import AdminHealthPosts from "./pages/admin/HealthPosts";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
 import EmergencyNursingRequest from "./pages/EmergencyNursingRequest";
 import EmergencyRequestStatus from "./pages/EmergencyRequestStatus";
@@ -191,6 +192,7 @@ const App = () => (
               <Route path="/admin/homepage-builder" element={<ProtectedRoute requireAdmin><AdminHomepageBuilder /></ProtectedRoute>} />
               <Route path="/admin/page-layouts" element={<ProtectedRoute requireAdmin><AdminPageLayouts /></ProtectedRoute>} />
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
+              <Route path="/admin/health-posts" element={<ProtectedRoute requireAdmin><AdminHealthPosts /></ProtectedRoute>} />
               <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
               
               {/* Moderator Routes */}

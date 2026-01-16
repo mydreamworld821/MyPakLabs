@@ -206,28 +206,46 @@ const DoctorDetail = () => {
     return hh * 60 + mm;
   };
 
+  // Get current time in Pakistan timezone (PKT = UTC+5)
+  const getPakistanTime = () => {
+    const now = new Date();
+    // Convert to Pakistan time (UTC+5)
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const pktOffset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+    return new Date(utc + pktOffset);
+  };
+
+  // Get today's date in Pakistan timezone
+  const getPakistanToday = () => {
+    const pkt = getPakistanTime();
+    return startOfDay(pkt);
+  };
+
   const isTimeSlotDisabled = (timeLabel: string, forDate?: Date) => {
     const checkDate = forDate || selectedDate;
     if (!checkDate) return false;
 
-    const todayStart = startOfDay(new Date());
+    const pktToday = getPakistanToday();
     const checkStart = startOfDay(checkDate);
-    if (checkStart.getTime() !== todayStart.getTime()) return false;
+    
+    // If not today, don't disable any slots
+    if (checkStart.getTime() !== pktToday.getTime()) return false;
 
-    // If booking for today, disable times that already passed
-    const now = new Date();
-    const nowMins = now.getHours() * 60 + now.getMinutes();
+    // If booking for today, disable times that already passed (in PKT)
+    const pktNow = getPakistanTime();
+    const nowMins = pktNow.getHours() * 60 + pktNow.getMinutes();
 
     const slotMins = parseTimeLabel(timeLabel);
     if (slotMins === null) return false;
 
-    return slotMins <= nowMins;
+    // Add 15 min buffer - disable slots that are within 15 mins of current time
+    return slotMins <= nowMins + 15;
   };
 
-  // Check if today has any available slots remaining
+  // Check if today has any available slots remaining (in PKT)
   const hasTodayAvailableSlots = useMemo(() => {
-    const today = new Date();
-    return timeSlots.some((slot) => !isTimeSlotDisabled(slot, today));
+    const pktToday = getPakistanToday();
+    return timeSlots.some((slot) => !isTimeSlotDisabled(slot, pktToday));
   }, [timeSlots]);
 
   const handleBookAppointment = async () => {
@@ -675,11 +693,17 @@ const DoctorDetail = () => {
                       selected={selectedDate}
                       onSelect={setSelectedDate}
                       disabled={(date) => {
-                        const todayStart = startOfDay(new Date());
+                        // Use Pakistan timezone for all date comparisons
+                        const pktToday = getPakistanToday();
                         const dateStart = startOfDay(date);
-                        const isToday = dateStart.getTime() === todayStart.getTime();
-                        const isPast = dateStart < todayStart;
-                        const isTooFar = date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                        const isToday = dateStart.getTime() === pktToday.getTime();
+                        const isPast = dateStart < pktToday;
+                        
+                        // Allow booking up to 30 days in advance
+                        const pktNow = getPakistanTime();
+                        const maxDate = new Date(pktNow.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        const isTooFar = date > maxDate;
+                        
                         const isUnavailableDay = !isDateAvailable(date);
                         
                         // Allow today if there are available slots, otherwise disable

@@ -206,46 +206,42 @@ const DoctorDetail = () => {
     return hh * 60 + mm;
   };
 
+  const getDateKey = (date: Date) => format(date, "yyyy-MM-dd");
+
   // Get current time in Pakistan timezone (PKT = UTC+5)
   const getPakistanTime = () => {
     const now = new Date();
-    // Convert to Pakistan time (UTC+5)
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const pktOffset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+    const pktOffset = 5 * 60 * 60 * 1000;
     return new Date(utc + pktOffset);
   };
 
-  // Get today's date in Pakistan timezone
-  const getPakistanToday = () => {
-    const pkt = getPakistanTime();
-    return startOfDay(pkt);
-  };
+  const getPakistanTodayKey = () => getDateKey(getPakistanTime());
+  const getPakistanTodayStart = () => startOfDay(getPakistanTime());
 
   const isTimeSlotDisabled = (timeLabel: string, forDate?: Date) => {
     const checkDate = forDate || selectedDate;
     if (!checkDate) return false;
 
-    const pktToday = getPakistanToday();
-    const checkStart = startOfDay(checkDate);
-    
-    // If not today, don't disable any slots
-    if (checkStart.getTime() !== pktToday.getTime()) return false;
+    // Only disable past slots when booking for "today" in PKT
+    const todayKey = getPakistanTodayKey();
+    const checkKey = getDateKey(checkDate);
+    if (checkKey !== todayKey) return false;
 
-    // If booking for today, disable times that already passed (in PKT)
     const pktNow = getPakistanTime();
     const nowMins = pktNow.getHours() * 60 + pktNow.getMinutes();
 
     const slotMins = parseTimeLabel(timeLabel);
     if (slotMins === null) return false;
 
-    // Add 15 min buffer - disable slots that are within 15 mins of current time
+    // 15 min buffer
     return slotMins <= nowMins + 15;
   };
 
   // Check if today has any available slots remaining (in PKT)
   const hasTodayAvailableSlots = useMemo(() => {
-    const pktToday = getPakistanToday();
-    return timeSlots.some((slot) => !isTimeSlotDisabled(slot, pktToday));
+    const pktTodayStart = getPakistanTodayStart();
+    return timeSlots.some((slot) => !isTimeSlotDisabled(slot, pktTodayStart));
   }, [timeSlots]);
 
   const handleBookAppointment = async () => {
@@ -693,24 +689,23 @@ const DoctorDetail = () => {
                       selected={selectedDate}
                       onSelect={setSelectedDate}
                       disabled={(date) => {
-                        // Use Pakistan timezone for all date comparisons
-                        const pktToday = getPakistanToday();
-                        const dateStart = startOfDay(date);
-                        const isToday = dateStart.getTime() === pktToday.getTime();
-                        const isPast = dateStart < pktToday;
-                        
-                        // Allow booking up to 30 days in advance
-                        const pktNow = getPakistanTime();
-                        const maxDate = new Date(pktNow.getTime() + 30 * 24 * 60 * 60 * 1000);
-                        const isTooFar = date > maxDate;
-                        
+                        const todayKey = getPakistanTodayKey();
+                        const dateKey = getDateKey(date);
+
+                        const isToday = dateKey === todayKey;
+                        const isPast = dateKey < todayKey;
+
+                        const maxKey = getDateKey(
+                          new Date(getPakistanTime().getTime() + 30 * 24 * 60 * 60 * 1000)
+                        );
+                        const isTooFar = dateKey > maxKey;
+
                         const isUnavailableDay = !isDateAvailable(date);
-                        
-                        // Allow today if there are available slots, otherwise disable
+
                         if (isToday) {
                           return !hasTodayAvailableSlots || isUnavailableDay;
                         }
-                        
+
                         return isPast || isTooFar || isUnavailableDay;
                       }}
                       className="rounded-md border w-full"

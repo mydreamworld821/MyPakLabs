@@ -161,7 +161,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          {/* Logo */}
+          {/* Logo with Tagline */}
           <Link to="/" className="flex items-center gap-2 group">
             <img 
               src={myPakLabsLogo} 
@@ -170,7 +170,10 @@ const Navbar = () => {
               height={40}
               className="h-10 w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="text-lg font-bold text-foreground">MyPakLabs</span>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-foreground leading-tight">MyPakLabs</span>
+              <span className="text-[10px] text-muted-foreground hidden sm:block leading-tight">Trusted Healthcare – Book with Confidence</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -348,6 +351,18 @@ const Navbar = () => {
               >
                 <Heart className="w-3.5 h-3.5" />
                 Nurses
+              </Button>
+            </Link>
+            
+            {/* Emergency Nursing - Highlighted */}
+            <Link to="/emergency-nursing-request">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs px-2.5 bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 animate-pulse"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                🚨 Emergency
               </Button>
             </Link>
             <Link to="/pharmacies">

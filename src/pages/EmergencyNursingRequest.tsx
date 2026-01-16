@@ -233,11 +233,13 @@ export default function EmergencyNursingRequest() {
       console.log('FCM notification sent:', result);
     });
 
-    // Send email notification to admin
+    // Send email notification to admin and customer
+    const { data: { user: authUser } } = await supabase.auth.getUser();
     sendAdminEmailNotification({
       type: 'emergency_request',
       patientName: formData.patientName,
       patientPhone: formData.patientPhone,
+      patientEmail: authUser?.email || undefined,
       city: formData.city,
       urgency: formData.urgency,
       services: formData.servicesNeeded,

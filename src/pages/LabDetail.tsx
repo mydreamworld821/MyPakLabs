@@ -370,12 +370,15 @@ const LabDetail = () => {
 
       console.log("Order saved successfully:", data);
 
-      // Send email notification to admin
+      // Send email notification to admin and customer
       sendAdminEmailNotification({
         type: 'order',
         patientName: userProfile?.full_name || 'Patient',
+        patientEmail: authUser.email || undefined,
         orderId: newId,
         labName: lab.name,
+        testNames: selectedTestItems.map(t => t.name),
+        totalAmount: totalDiscounted,
       }).catch(console.error);
 
       setBookingConfirmed(true);

@@ -13,6 +13,7 @@ type NotificationType =
 interface BaseNotificationData {
   patientName: string;
   patientPhone?: string;
+  patientEmail?: string; // Customer email for confirmation
 }
 
 interface PrescriptionNotification extends BaseNotificationData {
@@ -23,6 +24,8 @@ interface OrderNotification extends BaseNotificationData {
   type: 'order';
   orderId: string;
   labName?: string;
+  testNames?: string[];
+  totalAmount?: number;
 }
 
 interface DoctorAppointmentNotification extends BaseNotificationData {
@@ -31,6 +34,7 @@ interface DoctorAppointmentNotification extends BaseNotificationData {
   appointmentDate: string;
   appointmentTime: string;
   consultationType?: string;
+  appointmentFee?: number;
 }
 
 interface NurseBookingNotification extends BaseNotificationData {
@@ -38,6 +42,7 @@ interface NurseBookingNotification extends BaseNotificationData {
   nurseName: string;
   serviceNeeded: string;
   preferredDate: string;
+  preferredTime?: string;
 }
 
 interface EmergencyRequestNotification extends BaseNotificationData {
@@ -51,6 +56,7 @@ interface MedicineOrderNotification extends BaseNotificationData {
   type: 'medicine_order';
   orderId: string;
   pharmacyName?: string;
+  deliveryAddress?: string;
 }
 
 type NotificationData = 
@@ -62,7 +68,7 @@ type NotificationData =
   | MedicineOrderNotification;
 
 /**
- * Send email notification to admin for any booking/order
+ * Send email notification to admin and optionally confirmation to customer
  */
 export const sendAdminEmailNotification = async (data: NotificationData) => {
   try {
@@ -74,14 +80,14 @@ export const sendAdminEmailNotification = async (data: NotificationData) => {
     });
 
     if (error) {
-      console.error('Error sending admin email notification:', error);
+      console.error('Error sending email notification:', error);
       return { success: false, error };
     }
 
-    console.log('Admin email notification sent:', result);
+    console.log('Email notification sent:', result);
     return { success: true, data: result };
   } catch (error) {
-    console.error('Error invoking admin notification function:', error);
+    console.error('Error invoking notification function:', error);
     return { success: false, error };
   }
 };

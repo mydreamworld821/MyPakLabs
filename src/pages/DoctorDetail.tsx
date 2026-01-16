@@ -319,14 +319,16 @@ const DoctorDetail = () => {
 
       if (error) throw error;
 
-      // Send email notification to admin
+      // Send email notification to admin and customer
       sendAdminEmailNotification({
         type: 'doctor_appointment',
-        patientName: authUser.email || 'Patient',
+        patientName: authUser.email?.split('@')[0] || 'Patient',
+        patientEmail: authUser.email || undefined,
         doctorName: doctor.full_name,
         appointmentDate: format(selectedDate, "dd MMM yyyy"),
         appointmentTime: selectedTime,
         consultationType,
+        appointmentFee: fee,
       }).catch(console.error);
 
       toast({

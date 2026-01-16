@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Clock, HeadphonesIcon } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Clock, HeadphonesIcon, MessageCircle } from "lucide-react";
 import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 import { useNativePlatform } from "@/hooks/useNativePlatform";
 import { cn } from "@/lib/utils";
@@ -81,6 +81,17 @@ const Footer = () => {
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Phone className="w-4 h-4" />
                 <a href="tel:+923167523434" className="hover:text-background transition-colors">03167523434</a>
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <MessageCircle className="w-4 h-4 text-green-500" />
+                <a 
+                  href="https://wa.me/923167523434?text=Hi%20MyPakLabs%2C%20I%20need%20help" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-green-500 hover:text-green-400 transition-colors font-medium"
+                >
+                  Chat on WhatsApp
+                </a>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Mail className="w-4 h-4" />

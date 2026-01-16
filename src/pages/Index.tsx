@@ -255,59 +255,6 @@ const Index = () => {
               </div>}
           </div>
 
-          {/* Why Choose Us Section */}
-          <div className="mb-8">
-            <h2 className="text-base md:text-lg font-semibold text-foreground mb-4 text-center">
-              Why Choose MyPakLabs?
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-              <Card className="text-center border-0 shadow-sm">
-                <CardContent className="p-3 md:p-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-xs md:text-sm mb-1">Best Prices</h3>
-                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
-                    Save up to 35% on tests
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="text-center border-0 shadow-sm">
-                <CardContent className="p-3 md:p-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Award className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-xs md:text-sm mb-1">PMC Verified</h3>
-                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
-                    PMC verified doctors
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="text-center border-0 shadow-sm">
-                <CardContent className="p-3 md:p-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-xs md:text-sm mb-1">Authentic Info</h3>
-                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
-                    Updated information
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="text-center border-0 shadow-sm">
-                <CardContent className="p-3 md:p-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Clock className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-xs md:text-sm mb-1">Quick Results</h3>
-                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
-                    Priority processing
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
           {/* Custom Sections from Admin */}
           <CustomSections />
         </div>

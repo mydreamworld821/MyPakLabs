@@ -57,7 +57,7 @@ export const generatePrescriptionPDF = async (details: PrescriptionPDFDetails) =
   doc.text('Web: www.mypaklabs.com', pageWidth / 2 - 30, y + 18);
   doc.text('Phone: 0316-7523434', pageWidth / 2 + 25, y + 18);
   
-  doc.text('Email: mhmmdaqib@gmail.com', pageWidth / 2 - 30, y + 24);
+  doc.text('Email: support@mypaklabs.com', pageWidth / 2 - 30, y + 24);
   doc.text('Address: Islamabad', pageWidth / 2 + 25, y + 24);
 
   y += 30;
@@ -71,32 +71,39 @@ export const generatePrescriptionPDF = async (details: PrescriptionPDFDetails) =
 
   const displayId = details.uniqueId || `#${details.prescriptionId.slice(0, 8).toUpperCase()}`;
 
-  // Patient Details Section - Like template
-  doc.setFontSize(12);
+  // Patient Details Section - Fixed column layout
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
-  const col1X = margin;
-  const col2X = margin + 65;
-  const col3X = pageWidth / 2 + 10;
-  const col4X = pageWidth / 2 + 55;
+  // Define columns with proper spacing
+  const col1X = margin;           // Label column 1
+  const col2X = margin + 32;      // Value column 1
+  const col3X = pageWidth / 2 + 5;  // Label column 2
+  const col4X = pageWidth / 2 + 40; // Value column 2
   
-  // Row 1
+  // Row 1: Discount ID | Name
   doc.setFont('helvetica', 'bold');
   doc.text('Discount ID:', col1X, y);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(79, 70, 229);
-  doc.text(displayId, col2X, y);
+  const discountIdText = displayId.length > 22 
+    ? displayId.substring(0, 22) + '...' 
+    : displayId;
+  doc.text(discountIdText, col2X, y);
   
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Name:', col3X, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(details.patientName || 'N/A', col4X, y);
+  const nameText = (details.patientName || 'N/A').length > 20 
+    ? (details.patientName || 'N/A').substring(0, 20) + '...' 
+    : (details.patientName || 'N/A');
+  doc.text(nameText, col4X, y);
   
   y += 8;
   
-  // Row 2
+  // Row 2: Age/Gender | Contact No
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Age/Gender:', col1X, y);
@@ -114,11 +121,14 @@ export const generatePrescriptionPDF = async (details: PrescriptionPDFDetails) =
   
   y += 8;
   
-  // Row 3
+  // Row 3: Lab | Discount
   doc.setFont('helvetica', 'bold');
   doc.text('Lab:', col1X, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(details.labName, col2X, y);
+  const labNameText = details.labName.length > 30 
+    ? details.labName.substring(0, 30) + '...' 
+    : details.labName;
+  doc.text(labNameText, col2X, y);
   
   doc.setFont('helvetica', 'bold');
   doc.text('Discount:', col3X, y);

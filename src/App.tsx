@@ -82,6 +82,8 @@ import OrderMedicine from "./pages/OrderMedicine";
 import NurseActiveJob from "./pages/NurseActiveJob";
 import AITools from "./pages/AITools";
 import Reviews from "./pages/Reviews";
+import PartnerRegistration from "./pages/PartnerRegistration";
+import AdminPartners from "./pages/admin/Partners";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
@@ -149,6 +151,7 @@ const App = () => (
               <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
               <Route path="/ai-tools" element={<AITools />} />
               <Route path="/reviews" element={<Reviews />} />
+              <Route path="/partner-registration" element={<PartnerRegistration />} />
               {/* SEO City Pages */}
               <Route path="/doctors-in-:city" element={<DoctorsInCity />} />
               <Route path="/labs-in-:city" element={<LabsInCity />} />
@@ -188,6 +191,7 @@ const App = () => (
               <Route path="/admin/homepage-builder" element={<ProtectedRoute requireAdmin><AdminHomepageBuilder /></ProtectedRoute>} />
               <Route path="/admin/page-layouts" element={<ProtectedRoute requireAdmin><AdminPageLayouts /></ProtectedRoute>} />
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
+              <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

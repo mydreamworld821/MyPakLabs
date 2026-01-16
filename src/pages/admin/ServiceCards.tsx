@@ -46,6 +46,7 @@ interface ServiceCard {
   card_size: string | null;
   col_span: number | null;
   row_span: number | null;
+  card_height: number | null;
 }
 
 const iconOptions = [
@@ -89,6 +90,7 @@ const ServiceCards = () => {
     card_size: "normal",
     col_span: 1,
     row_span: 1,
+    card_height: 100,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -141,6 +143,7 @@ const ServiceCards = () => {
       card_size: string;
       col_span: number;
       row_span: number;
+      card_height: number;
       image_url?: string | null;
     }) => {
       const payload = {
@@ -154,6 +157,7 @@ const ServiceCards = () => {
         card_size: data.card_size,
         col_span: data.col_span,
         row_span: data.row_span,
+        card_height: data.card_height,
         image_url: data.image_url,
       };
 
@@ -209,6 +213,7 @@ const ServiceCards = () => {
       card_size: "normal",
       col_span: 1,
       row_span: 1,
+      card_height: 100,
     });
     setEditingCard(null);
     setImageFile(null);
@@ -229,6 +234,7 @@ const ServiceCards = () => {
       card_size: card.card_size || "normal",
       col_span: card.col_span || 1,
       row_span: card.row_span || 1,
+      card_height: card.card_height || 100,
     });
     setImagePreview(card.image_url);
     setIsDialogOpen(true);
@@ -422,25 +428,7 @@ const ServiceCards = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label>Card Size</Label>
-                      <Select
-                        value={formData.card_size}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, card_size: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Small</SelectItem>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="large">Large</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Column Span</Label>
                       <Select
@@ -475,6 +463,25 @@ const ServiceCards = () => {
                           <SelectItem value="2">2 Rows</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Card Height: {formData.card_height}px</Label>
+                    <input
+                      type="range"
+                      min="60"
+                      max="300"
+                      step="10"
+                      value={formData.card_height}
+                      onChange={(e) =>
+                        setFormData({ ...formData, card_height: parseInt(e.target.value) })
+                      }
+                      className="w-full mt-2"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>60px</span>
+                      <span>300px</span>
                     </div>
                   </div>
 

@@ -2,7 +2,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
+import myPakLabsLogo from "@/assets/mypaklabs-logo.jpeg";
 
 const PartnerTerms = () => {
   const terms = [
@@ -27,9 +28,11 @@ const PartnerTerms = () => {
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="text-center mb-12">
-              <div className="w-16 h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-glow">
-                <Building2 className="w-8 h-8 text-primary-foreground" />
-              </div>
+              <img 
+                src={myPakLabsLogo} 
+                alt="MyPakLabs Logo" 
+                className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-lg object-contain bg-white p-2"
+              />
               <Badge variant="secondary" className="mb-4">For Partners</Badge>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                 Partner Lab Terms
@@ -69,12 +72,12 @@ const PartnerTerms = () => {
                   Contact our partnership team to discuss how your laboratory can join our network.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
-                  <a href="tel:+923478763821" className="text-primary hover:underline">
-                    +92 347 8763821
+                  <a href="tel:+923167523434" className="text-primary hover:underline">
+                    +92 316 7523434
                   </a>
                   <span className="hidden sm:inline text-muted-foreground">|</span>
-                  <a href="mailto:mhmmdaqib@gmail.com" className="text-primary hover:underline">
-                    mhmmdaqib@gmail.com
+                  <a href="mailto:support@mypaklabs.com" className="text-primary hover:underline">
+                    support@mypaklabs.com
                   </a>
                 </div>
               </CardContent>

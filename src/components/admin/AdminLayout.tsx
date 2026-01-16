@@ -89,7 +89,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   }, [isAdmin, navigate]);
 
-  const ADMIN_EMAIL = "mhmmdaqib@gmail.com";
+  const ADMIN_EMAIL = "support@mypaklabs.com";
 
   // Helper function to send email notification
   const sendEmailNotification = async (

@@ -40,7 +40,7 @@ const TypingAnimation = ({ words, className = "" }: TypingAnimationProps) => {
   return (
     <span className={className}>
       {currentText}
-      <span className="animate-pulse">|</span>
+      <span className="animate-cursor-blink">|</span>
     </span>
   );
 };

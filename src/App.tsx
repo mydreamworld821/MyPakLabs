@@ -185,6 +185,7 @@ const App = () => (
               <Route path="/admin/medicine-orders" element={<ProtectedRoute requireAdmin><AdminMedicineOrders /></ProtectedRoute>} />
               <Route path="/admin/hero-settings" element={<ProtectedRoute requireAdmin><AdminHeroSettings /></ProtectedRoute>} />
               <Route path="/admin/homepage-layout" element={<ProtectedRoute requireAdmin><AdminHomepageLayout /></ProtectedRoute>} />
+              <Route path="/admin/homepage-builder" element={<ProtectedRoute requireAdmin><AdminHomepageBuilder /></ProtectedRoute>} />
               <Route path="/admin/page-layouts" element={<ProtectedRoute requireAdmin><AdminPageLayouts /></ProtectedRoute>} />
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
               

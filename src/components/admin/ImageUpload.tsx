@@ -23,6 +23,7 @@ interface ImageUploadProps {
   currentUrl: string;
   onUpload: (url: string) => void;
   aspectRatio?: "square" | "banner" | "profile";
+  skipCrop?: boolean; // Skip cropping and upload full image directly
 }
 
 // Helper function to create cropped image
@@ -83,7 +84,8 @@ const ImageUpload = ({
   folder,
   currentUrl,
   onUpload,
-  aspectRatio = "square"
+  aspectRatio = "square",
+  skipCrop = false
 }: ImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState<string>(currentUrl);
@@ -112,6 +114,38 @@ const ImageUpload = ({
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
+  const handleDirectUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop() || "jpg";
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type
+        });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+
+      const publicUrl = urlData.publicUrl;
+      setPreview(publicUrl);
+      onUpload(publicUrl);
+      toast.success("Image uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -122,9 +156,18 @@ const ImageUpload = ({
       return;
     }
 
-    // Validate file size (max 10MB for cropping)
+    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size must be less than 10MB");
+      return;
+    }
+
+    // If skipCrop is true, upload directly without cropping
+    if (skipCrop) {
+      await handleDirectUpload(file);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 

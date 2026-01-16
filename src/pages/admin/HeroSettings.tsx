@@ -923,6 +923,7 @@ const HeroSettingsPage = () => {
                 bucket="hero-images"
                 folder="banners"
                 aspectRatio="banner"
+                skipCrop={true}
               />
               {heroImageUrl && (
                 <>

@@ -34,6 +34,7 @@ import {
   Pill,
   Image,
   Palette,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,8 @@ const navItems = [
   { href: "/admin/page-layouts", label: "Page Layouts", icon: Settings },
   { href: "/admin/hero-settings", label: "Hero Banner", icon: Image },
   { href: "/admin/service-cards", label: "Service Cards", icon: LayoutGrid },
+  { href: "/admin/quick-access-services", label: "Quick Access", icon: Zap },
+  { href: "/admin/quick-access-layout", label: "Quick Access Layout", icon: Settings },
   { href: "/admin/labs", label: "Labs", icon: Building2 },
   { href: "/admin/featured-labs", label: "Featured Labs", icon: Star },
   { href: "/admin/tests", label: "Tests", icon: TestTube },

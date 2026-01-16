@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
+import { sendEmergencyNotificationToNurses } from "@/utils/fcmNotifications";
 import {
   AlertTriangle,
   MapPin,
@@ -220,6 +221,16 @@ export default function EmergencyNursingRequest() {
       });
       return;
     }
+
+    // Send FCM push notification to all nurses
+    sendEmergencyNotificationToNurses(
+      data.id,
+      formData.city,
+      formData.servicesNeeded,
+      formData.urgency
+    ).then((result) => {
+      console.log('FCM notification sent:', result);
+    });
 
     toast({
       title: "🚨 Emergency Request Live!",

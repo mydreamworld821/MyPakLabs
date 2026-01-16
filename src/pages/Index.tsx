@@ -179,7 +179,7 @@ const Index = () => {
           <SearchByCondition className="mb-8" maxItems={7} />
 
           {/* Featured Labs Section */}
-          <div className="mb-8">
+          <div className="mb-8" style={{ minHeight: '176px' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base md:text-lg font-semibold text-foreground">
                 Featured Labs
@@ -189,9 +189,9 @@ const Index = () => {
               </Link>
             </div>
 
-            {loading ? <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+            {loading ? <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3" style={{ minHeight: '140px' }}>
                 {[...Array(6)].map((_, i) => <div key={i} className="bg-muted rounded-lg h-28 animate-pulse" />)}
-              </div> : <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+              </div> : <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3" style={{ minHeight: '140px' }}>
                 {featuredLabs.map(lab => <Link key={lab.id} to={`/lab/${lab.slug}`} className="block group">
                     <Card className="h-full hover:shadow-md transition-all duration-300 overflow-hidden">
                       <CardContent className="p-2 md:p-3 flex flex-col items-center text-center">

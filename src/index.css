@@ -258,6 +258,9 @@
 
 .animate-cursor-blink {
   animation: cursorBlink 1s ease-in-out infinite;
+  display: inline-block;
+  width: 0.5em;
+  text-align: center;
 }
 
 /* Custom scrollbar */

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface HomepageSection {
   id: string;
@@ -8,7 +9,7 @@ export interface HomepageSection {
   subtitle: string | null;
   is_visible: boolean;
   display_order: number;
-  
+
   // Layout
   columns_desktop: number;
   columns_tablet: number;
@@ -17,13 +18,13 @@ export interface HomepageSection {
   section_padding_y: number;
   items_gap: number;
   max_items: number;
-  
+
   // Card
   card_width: string;
   card_height: number;
   card_border_radius: number;
   card_shadow: string;
-  
+
   // Image
   image_height: number;
   image_width: string;
@@ -31,15 +32,15 @@ export interface HomepageSection {
   image_position_y: number;
   image_fit: string;
   image_border_radius: number;
-  
+
   // Style
   background_color: string;
   background_gradient: string | null;
   text_color: string;
   accent_color: string | null;
-  
+
   section_type: string;
-  custom_content: Record<string, unknown> | null;
+  custom_content: Json | null;
 
   // Quick Access specific fields
   icon_container_size?: number;

@@ -70,30 +70,24 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
-  // Define columns with proper spacing (page width ~210mm, margin 15mm each side = 180mm usable)
+  // Define columns with proper spacing
   const col1X = margin;           // Label column 1
   const col2X = margin + 32;      // Value column 1
-  const col3X = pageWidth / 2 + 5;  // Label column 2
-  const col4X = pageWidth / 2 + 40; // Value column 2
-  
-  const maxValueWidth1 = col3X - col2X - 5; // Max width for first value column
-  const maxValueWidth2 = pageWidth - margin - col4X; // Max width for second value column
+  const col3X = pageWidth / 2 + 10;  // Label column 2
+  const col4X = pageWidth / 2 + 45; // Value column 2
   
   // Row 1: Discount ID | Name
   doc.setFont('helvetica', 'bold');
   doc.text('Discount ID:', col1X, y);
   doc.setTextColor(75, 0, 130);
-  const discountIdText = booking.uniqueId.length > 22 
-    ? booking.uniqueId.substring(0, 22) + '...' 
-    : booking.uniqueId;
-  doc.text(discountIdText, col2X, y);
+  doc.text(booking.uniqueId, col2X, y);
   
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Name:', col3X, y);
   doc.setFont('helvetica', 'normal');
-  const nameText = (booking.patientName || 'N/A').length > 20 
-    ? (booking.patientName || 'N/A').substring(0, 20) + '...' 
+  const nameText = (booking.patientName || 'N/A').length > 18 
+    ? (booking.patientName || 'N/A').substring(0, 18) + '...' 
     : (booking.patientName || 'N/A');
   doc.text(nameText, col4X, y);
   
@@ -117,21 +111,24 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   
   y += 8;
   
-  // Row 3: Lab | Discount
+  // Row 3: Lab (full width for long names)
+  doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Lab:', col1X, y);
   doc.setFont('helvetica', 'normal');
-  // Truncate lab name to fit in available space
-  const labNameText = booking.labName.length > 30 
-    ? booking.labName.substring(0, 30) + '...' 
+  // Allow longer lab name since it has full row width
+  const maxLabWidth = pageWidth - margin - col2X - 50; // Leave space for discount
+  const labNameText = booking.labName.length > 45 
+    ? booking.labName.substring(0, 45) + '...' 
     : booking.labName;
   doc.text(labNameText, col2X, y);
   
+  // Discount on same row but at the end
   doc.setFont('helvetica', 'bold');
-  doc.text('Discount:', col3X, y);
+  doc.text('Discount:', pageWidth - margin - 45, y);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(16, 185, 129);
-  doc.text(`${booking.discountPercentage}%`, col4X, y);
+  doc.text(`${booking.discountPercentage}%`, pageWidth - margin - 10, y);
   
   y += 10;
   

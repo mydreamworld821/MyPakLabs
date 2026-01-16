@@ -77,25 +77,22 @@ export const generatePrescriptionPDF = async (details: PrescriptionPDFDetails) =
   // Define columns with proper spacing
   const col1X = margin;           // Label column 1
   const col2X = margin + 32;      // Value column 1
-  const col3X = pageWidth / 2 + 5;  // Label column 2
-  const col4X = pageWidth / 2 + 40; // Value column 2
+  const col3X = pageWidth / 2 + 10;  // Label column 2
+  const col4X = pageWidth / 2 + 45; // Value column 2
   
   // Row 1: Discount ID | Name
   doc.setFont('helvetica', 'bold');
   doc.text('Discount ID:', col1X, y);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(79, 70, 229);
-  const discountIdText = displayId.length > 22 
-    ? displayId.substring(0, 22) + '...' 
-    : displayId;
-  doc.text(discountIdText, col2X, y);
+  doc.text(displayId, col2X, y);
   
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Name:', col3X, y);
   doc.setFont('helvetica', 'normal');
-  const nameText = (details.patientName || 'N/A').length > 20 
-    ? (details.patientName || 'N/A').substring(0, 20) + '...' 
+  const nameText = (details.patientName || 'N/A').length > 18 
+    ? (details.patientName || 'N/A').substring(0, 18) + '...' 
     : (details.patientName || 'N/A');
   doc.text(nameText, col4X, y);
   
@@ -119,20 +116,23 @@ export const generatePrescriptionPDF = async (details: PrescriptionPDFDetails) =
   
   y += 8;
   
-  // Row 3: Lab | Discount
+  // Row 3: Lab (full width for long names)
+  doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text('Lab:', col1X, y);
   doc.setFont('helvetica', 'normal');
-  const labNameText = details.labName.length > 30 
-    ? details.labName.substring(0, 30) + '...' 
+  // Allow longer lab name since it has more space
+  const labNameText = details.labName.length > 45 
+    ? details.labName.substring(0, 45) + '...' 
     : details.labName;
   doc.text(labNameText, col2X, y);
   
+  // Discount on same row but at the end
   doc.setFont('helvetica', 'bold');
-  doc.text('Discount:', col3X, y);
+  doc.text('Discount:', pageWidth - margin - 45, y);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(16, 185, 129);
-  doc.text(`${details.labDiscount}%`, col4X, y);
+  doc.text(`${details.labDiscount}%`, pageWidth - margin - 10, y);
   
   y += 12;
   

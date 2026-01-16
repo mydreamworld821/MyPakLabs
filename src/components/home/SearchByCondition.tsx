@@ -86,7 +86,7 @@ const SearchByCondition = ({ className = "", maxItems: propMaxItems = 7 }: Searc
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-base md:text-lg font-semibold text-foreground">
             {title}
@@ -132,6 +132,11 @@ const SearchByCondition = ({ className = "", maxItems: propMaxItems = 7 }: Searc
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Guiding intro line */}
+      <p className="text-sm text-muted-foreground mb-4">
+        Not sure which doctor to consult? Start here.
+      </p>
 
       <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3" style={{ minHeight: '72px' }}>
         {displayedConditions.map((condition) => (

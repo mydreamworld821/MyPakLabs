@@ -132,35 +132,18 @@ export const useHomepageBuilder = () => {
 
   // Reorder sections (drag and drop)
   const reorderSections = useCallback((oldIndex: number, newIndex: number) => {
-    setState(prev => {
-      const newSections = [...prev.sections];
-      const [moved] = newSections.splice(oldIndex, 1);
-      newSections.splice(newIndex, 0, moved);
-      
-      // Update display_order for all sections
-      const updatedSections = newSections.map((s, i) => ({
-        ...s,
-        display_order: i + 1,
-      }));
-      
-      return prev;
-    });
-    
-    // Apply with history
-    setState(prev => {
-      const newSections = [...prev.sections];
-      const [moved] = newSections.splice(oldIndex, 1);
-      newSections.splice(newIndex, 0, moved);
-      
-      const updatedSections = newSections.map((s, i) => ({
-        ...s,
-        display_order: i + 1,
-      }));
-      
-      pushHistory(updatedSections);
-      return { ...prev, sections: updatedSections };
-    });
-  }, [pushHistory]);
+    const newSections = [...state.sections];
+    const [moved] = newSections.splice(oldIndex, 1);
+    newSections.splice(newIndex, 0, moved);
+
+    // Update display_order for all sections
+    const updatedSections = newSections.map((s, i) => ({
+      ...s,
+      display_order: i + 1,
+    }));
+
+    pushHistory(updatedSections);
+  }, [state.sections, pushHistory]);
 
   // Update section property
   const updateSection = useCallback((id: string, updates: Partial<HomepageSection>) => {

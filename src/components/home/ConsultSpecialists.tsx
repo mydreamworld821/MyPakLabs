@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSectionConfig } from "@/hooks/useHomepageSections";
-import { ChevronRight, Stethoscope, Heart, Brain, Eye, Baby, Bone, Ear, Activity, Smile, User } from "lucide-react";
+import { ChevronRight, Stethoscope, Heart, Brain, Eye, Baby, Bone, Ear, Activity, Smile, User, CheckCircle, Award, Star } from "lucide-react";
 
 interface Specialization {
   id: string;
@@ -139,7 +139,7 @@ const ConsultSpecialists = ({ className = "", maxItems: propMaxItems = 14 }: Con
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-base md:text-lg font-semibold text-foreground">
             {title}
@@ -154,6 +154,27 @@ const ConsultSpecialists = ({ className = "", maxItems: propMaxItems = 14 }: Con
         >
           View All <ChevronRight className="w-4 h-4" />
         </Link>
+      </div>
+      
+      {/* Intro sentence + Trust badges */}
+      <div className="mb-4">
+        <p className="text-sm text-muted-foreground mb-2">
+          Choose from top-rated specialists trusted by patients across Pakistan
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <CheckCircle className="w-3.5 h-3.5" />
+            PMC Verified
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium">
+            <Award className="w-3.5 h-3.5" />
+            Experienced
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+            <Star className="w-3.5 h-3.5" />
+            Patient-Reviewed
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">

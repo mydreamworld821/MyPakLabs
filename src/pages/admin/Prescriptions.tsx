@@ -247,9 +247,8 @@ const AdminPrescriptions = () => {
 
       if (status === "approved") {
         updateData.approved_tests = selectedTests;
-        // Generate unique ID based on lab name when approving
-        const labName = selectedPrescription.labs?.name || "MEDI";
-        updateData.unique_id = generateLabId(labName);
+        // Generate unique ID when approving
+        updateData.unique_id = await generateLabId();
       }
 
       const { error } = await supabase

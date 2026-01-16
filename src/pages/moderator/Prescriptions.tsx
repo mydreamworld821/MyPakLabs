@@ -241,8 +241,7 @@ const ModeratorPrescriptions = () => {
 
       if (status === "approved") {
         updateData.approved_tests = selectedTests;
-        const labName = selectedPrescription.labs?.name || "MEDI";
-        updateData.unique_id = generateLabId(labName);
+        updateData.unique_id = await generateLabId();
       }
 
       const { error } = await supabase

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   getFCMToken, 
   onForegroundMessage, 
   isMessagingSupported 
 } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseFCMOptions {
   onMessage?: (payload: any) => void;
@@ -12,6 +14,7 @@ interface UseFCMOptions {
 }
 
 export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
+  const { user } = useAuth();
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +77,33 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
     };
   }, [isSupported, options.onMessage]);
 
+  // Save FCM token to database
+  const saveTokenToDatabase = useCallback(async (token: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('fcm_tokens')
+        .upsert(
+          {
+            user_id: user.id,
+            token: token,
+            device_type: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'web',
+            is_active: true,
+          },
+          { onConflict: 'user_id,token' }
+        );
+
+      if (error) {
+        console.error('Error saving FCM token:', error);
+      } else {
+        console.log('FCM token saved to database');
+      }
+    } catch (error) {
+      console.error('Error saving FCM token:', error);
+    }
+  }, [user]);
+
   // Request permission and get token
   const requestPermissionAndGetToken = useCallback(async (): Promise<string | null> => {
     if (!isSupported) {
@@ -91,9 +121,8 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
         setPermission('granted');
         toast.success('Push notifications enabled! 🔔');
         
-        // Here you would typically save the token to your database
-        // to send notifications to this device later
-        console.log('FCM Token to save:', token);
+        // Save token to database
+        await saveTokenToDatabase(token);
         
         return token;
       } else {
@@ -110,7 +139,7 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported]);
+  }, [isSupported, saveTokenToDatabase]);
 
   // Play notification sound
   const playNotificationSound = () => {

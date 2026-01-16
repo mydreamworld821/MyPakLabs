@@ -20,6 +20,8 @@ const Footer = () => {
               <img 
                 src={myPakLabsLogo} 
                 alt="MyPakLabs Logo" 
+                width={60}
+                height={48}
                 className="h-12 w-auto object-contain bg-white rounded-lg p-1"
               />
               <span className="text-xl font-bold">MyPakLabs</span>

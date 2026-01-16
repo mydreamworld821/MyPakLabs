@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -17,15 +17,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Eye, Heart, MessageCircle, Image, Link } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Heart, MessageCircle, Image, Link, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import ImageUpload from "@/components/admin/ImageUpload";
 
@@ -48,6 +50,8 @@ interface HealthPost {
 const HealthPosts = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewingPost, setViewingPost] = useState<HealthPost | null>(null);
+  const [deletingPost, setDeletingPost] = useState<HealthPost | null>(null);
   const [editingPost, setEditingPost] = useState<HealthPost | null>(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -130,6 +134,7 @@ const HealthPosts = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["health-posts-admin"] });
       toast({ title: "Success", description: "Post deleted successfully" });
+      setDeletingPost(null);
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -303,88 +308,203 @@ const HealthPosts = () => {
           </Dialog>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Posts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : posts?.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No posts yet. Create your first health article!
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Engagement</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts?.map((post) => (
-                    <TableRow key={post.id}>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {post.title}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{post.author_type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={post.is_published ? "default" : "outline"}>
-                          {post.is_published ? "Published" : "Draft"}
+        {/* Posts Grid */}
+        {isLoading ? (
+          <div className="text-center py-8">Loading...</div>
+        ) : posts?.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No posts yet. Create your first health article!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {posts?.map((post) => (
+              <Card key={post.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                {post.featured_image_url && (
+                  <div className="aspect-video bg-muted overflow-hidden">
+                    <img
+                      src={post.featured_image_url}
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold line-clamp-2 flex-1">{post.title}</h3>
+                    <Badge variant={post.is_published ? "default" : "outline"} className="shrink-0">
+                      {post.is_published ? "Published" : "Draft"}
+                    </Badge>
+                  </div>
+
+                  {post.excerpt && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                  )}
+
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {post.author_type}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {format(new Date(post.updated_at), "MMM d, yyyy")}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Heart className="w-3 h-3" /> {post.likes_count}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageCircle className="w-3 h-3" /> {post.comments_count}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" /> {post.views_count}
+                    </span>
+                  </div>
+
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {post.tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Heart className="w-4 h-4" /> {post.likes_count}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle className="w-4 h-4" /> {post.comments_count}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="w-4 h-4" /> {post.views_count}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(post.updated_at), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(post)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              if (confirm("Delete this post?")) {
-                                deleteMutation.mutate(post.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      ))}
+                      {post.tags.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{post.tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setViewingPost(post)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(post)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setDeletingPost(post)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* View Post Dialog */}
+        <Dialog open={!!viewingPost} onOpenChange={() => setViewingPost(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{viewingPost?.title}</DialogTitle>
+            </DialogHeader>
+            {viewingPost && (
+              <div className="space-y-4">
+                {viewingPost.featured_image_url && (
+                  <img
+                    src={viewingPost.featured_image_url}
+                    alt={viewingPost.title}
+                    className="w-full rounded-lg max-h-80 object-cover"
+                  />
+                )}
+
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    {viewingPost.author_type}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {format(new Date(viewingPost.created_at), "MMM d, yyyy 'at' h:mm a")}
+                  </span>
+                  <Badge variant={viewingPost.is_published ? "default" : "outline"}>
+                    {viewingPost.is_published ? "Published" : "Draft"}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="flex items-center gap-1">
+                    <Heart className="w-4 h-4 text-red-500" /> {viewingPost.likes_count} likes
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="w-4 h-4 text-blue-500" /> {viewingPost.comments_count} comments
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-4 h-4 text-green-500" /> {viewingPost.views_count} views
+                  </span>
+                </div>
+
+                {viewingPost.tags && viewingPost.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {viewingPost.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <div
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: viewingPost.content }}
+                />
+
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setViewingPost(null)}>
+                    Close
+                  </Button>
+                  <Button onClick={() => {
+                    handleEdit(viewingPost);
+                    setViewingPost(null);
+                  }}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit Post
+                  </Button>
+                </div>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deletingPost} onOpenChange={() => setDeletingPost(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Post</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{deletingPost?.title}"? This action cannot be undone.
+                All comments and likes associated with this post will also be deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => deletingPost && deleteMutation.mutate(deletingPost.id)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );

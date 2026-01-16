@@ -353,18 +353,6 @@ const Navbar = () => {
                 Nurses
               </Button>
             </Link>
-            
-            {/* Emergency Nursing - Highlighted */}
-            <Link to="/emergency-nursing-request">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-xs px-2.5 bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 animate-pulse"
-              >
-                <AlertTriangle className="w-3.5 h-3.5" />
-                🚨 Emergency
-              </Button>
-            </Link>
             <Link to="/pharmacies">
               <Button
                 variant={isActive("/pharmacies") ? "soft" : "ghost"}

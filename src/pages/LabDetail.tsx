@@ -15,6 +15,7 @@ import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { generateLabId } from "@/utils/generateLabId";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -353,6 +354,14 @@ const LabDetail = () => {
         toast.error("Failed to save order. Please try again.");
         return;
       }
+
+      // Send email notification to admin
+      sendAdminEmailNotification({
+        type: 'order',
+        patientName: userProfile?.full_name || 'Patient',
+        orderId: newId,
+        labName: lab.name,
+      }).catch(console.error);
 
       setBookingConfirmed(true);
       toast.success("Booking confirmed! Your discount ID has been generated.");

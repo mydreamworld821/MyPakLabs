@@ -190,14 +190,17 @@ const NurseDetail = () => {
 
       if (error) throw error;
 
-      // Send email notification to admin
+      // Send email notification to admin and customer
+      const { data: { user: authUser } } = await supabase.auth.getUser();
       sendAdminEmailNotification({
         type: 'nurse_booking',
         patientName: bookingForm.patient_name,
         patientPhone: bookingForm.patient_phone,
+        patientEmail: authUser?.email || undefined,
         nurseName: nurse.full_name,
         serviceNeeded: bookingForm.service_needed,
         preferredDate: bookingForm.preferred_date,
+        preferredTime: bookingForm.preferred_time,
       }).catch(console.error);
 
       toast.success("Booking request submitted! The nurse will contact you shortly.");

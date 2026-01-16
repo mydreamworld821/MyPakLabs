@@ -52,11 +52,9 @@ export const generateBookingPDF = async (booking: BookingDetails) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(75, 85, 99);
   
-  doc.text('Web: www.mypaklabs.com', pageWidth / 2 - 30, y + 18);
-  doc.text('Phone: 0316-7523434', pageWidth / 2 + 25, y + 18);
-  
-  doc.text('Email: support@mypaklabs.com', pageWidth / 2 - 30, y + 24);
-  doc.text('Address: Islamabad', pageWidth / 2 + 25, y + 24);
+  // Center align contact details
+  doc.text('Web: www.mypaklabs.com  |  Phone: 0316-7523434', pageWidth / 2, y + 18, { align: 'center' });
+  doc.text('Email: support@mypaklabs.com  |  Address: Islamabad, Pakistan', pageWidth / 2, y + 24, { align: 'center' });
 
   y += 30;
 

@@ -60,6 +60,7 @@ interface ServiceCard {
   card_size: string | null;
   col_span: number | null;
   row_span: number | null;
+  card_height: number | null;
 }
 
 interface QuickAccessService {

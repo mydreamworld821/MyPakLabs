@@ -1904,6 +1904,7 @@ export type Database = {
       service_cards: {
         Row: {
           bg_color: string | null
+          card_height: number | null
           card_size: string | null
           col_span: number | null
           created_at: string
@@ -1920,6 +1921,7 @@ export type Database = {
         }
         Insert: {
           bg_color?: string | null
+          card_height?: number | null
           card_size?: string | null
           col_span?: number | null
           created_at?: string
@@ -1936,6 +1938,7 @@ export type Database = {
         }
         Update: {
           bg_color?: string | null
+          card_height?: number | null
           card_size?: string | null
           col_span?: number | null
           created_at?: string

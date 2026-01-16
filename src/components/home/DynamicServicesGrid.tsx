@@ -17,6 +17,7 @@ interface ServiceCard {
   card_size: string | null;
   col_span: number | null;
   row_span: number | null;
+  card_height: number | null;
 }
 
 interface QuickAccessService {
@@ -113,15 +114,20 @@ const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServi
     return classes;
   };
 
-  // Get height based on card size
-  const getCardHeight = (card: ServiceCard) => {
+  // Get height style based on card_height (custom) or fallback to card_size
+  const getCardHeightStyle = (card: ServiceCard): React.CSSProperties => {
+    // Use custom height if set
+    if (card.card_height && card.card_height > 0) {
+      return { minHeight: `${card.card_height}px` };
+    }
+    
     const size = card.card_size || "normal";
     const rowSpan = card.row_span || 1;
     
-    if (rowSpan >= 2) return "min-h-[180px] md:min-h-[220px]";
-    if (size === "large") return "min-h-[140px]";
-    if (size === "small") return "min-h-[80px]";
-    return "min-h-[100px]";
+    if (rowSpan >= 2) return { minHeight: '180px' };
+    if (size === "large") return { minHeight: '140px' };
+    if (size === "small") return { minHeight: '80px' };
+    return { minHeight: '100px' };
   };
 
   // Default bg colors for variety
@@ -175,7 +181,7 @@ const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServi
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     <div className={`absolute inset-0 ${isDarkBg ? "bg-gradient-to-b from-black/60 via-transparent to-transparent" : "bg-gradient-to-b from-primary/80 via-transparent to-transparent"}`} />
-                    <CardContent className={`p-4 ${getCardHeight(card)} flex flex-col relative z-10`}>
+                    <CardContent className="p-4 flex flex-col relative z-10" style={getCardHeightStyle(card)}>
                       {IconComponent && (
                         <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center mb-2">
                           <IconComponent className="w-5 h-5 text-white" />
@@ -192,7 +198,7 @@ const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServi
                     </CardContent>
                   </>
                 ) : (
-                  <CardContent className={`p-4 ${getCardHeight(card)} flex flex-col`}>
+                  <CardContent className="p-4 flex flex-col" style={getCardHeightStyle(card)}>
                     {IconComponent && (
                       <div className={`w-10 h-10 rounded-lg ${isDarkBg ? "bg-white/20" : "bg-primary/10"} flex items-center justify-center mb-2`}>
                         <IconComponent className={`w-5 h-5 ${isDarkBg ? "text-white" : "text-primary"}`} />

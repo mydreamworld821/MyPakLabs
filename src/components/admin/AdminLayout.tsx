@@ -33,6 +33,7 @@ import {
   Store,
   Pill,
   Image,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/homepage-builder", label: "Visual Builder", icon: Palette },
   { href: "/admin/homepage-layout", label: "Homepage Layout", icon: LayoutGrid },
   { href: "/admin/page-layouts", label: "Page Layouts", icon: Settings },
   { href: "/admin/hero-settings", label: "Hero Banner", icon: Image },

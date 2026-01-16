@@ -31,7 +31,7 @@ const PartnerTerms = () => {
               <img 
                 src={myPakLabsLogo} 
                 alt="MyPakLabs Logo" 
-                className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-lg object-contain bg-white p-2"
+                className="w-24 h-24 mx-auto mb-6 rounded-2xl shadow-xl object-contain"
               />
               <Badge variant="secondary" className="mb-4">For Partners</Badge>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">

@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { 
   Heart, 
   MapPin, 
@@ -188,6 +189,16 @@ const NurseDetail = () => {
       });
 
       if (error) throw error;
+
+      // Send email notification to admin
+      sendAdminEmailNotification({
+        type: 'nurse_booking',
+        patientName: bookingForm.patient_name,
+        patientPhone: bookingForm.patient_phone,
+        nurseName: nurse.full_name,
+        serviceNeeded: bookingForm.service_needed,
+        preferredDate: bookingForm.preferred_date,
+      }).catch(console.error);
 
       toast.success("Booking request submitted! The nurse will contact you shortly.");
       setShowBookingDialog(false);

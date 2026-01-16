@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { format, startOfDay } from "date-fns";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import {
   ArrowLeft,
   Star,
@@ -317,6 +318,16 @@ const DoctorDetail = () => {
         .single();
 
       if (error) throw error;
+
+      // Send email notification to admin
+      sendAdminEmailNotification({
+        type: 'doctor_appointment',
+        patientName: authUser.email || 'Patient',
+        doctorName: doctor.full_name,
+        appointmentDate: format(selectedDate, "dd MMM yyyy"),
+        appointmentTime: selectedTime,
+        consultationType,
+      }).catch(console.error);
 
       toast({
         title: "Appointment Booked!",

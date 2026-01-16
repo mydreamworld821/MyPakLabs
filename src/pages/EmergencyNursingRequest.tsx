@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { sendEmergencyNotificationToNurses } from "@/utils/fcmNotifications";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import {
   AlertTriangle,
   MapPin,
@@ -231,6 +232,16 @@ export default function EmergencyNursingRequest() {
     ).then((result) => {
       console.log('FCM notification sent:', result);
     });
+
+    // Send email notification to admin
+    sendAdminEmailNotification({
+      type: 'emergency_request',
+      patientName: formData.patientName,
+      patientPhone: formData.patientPhone,
+      city: formData.city,
+      urgency: formData.urgency,
+      services: formData.servicesNeeded,
+    }).catch(console.error);
 
     toast({
       title: "🚨 Emergency Request Live!",

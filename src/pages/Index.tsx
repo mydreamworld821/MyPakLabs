@@ -14,6 +14,8 @@ import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
 import SeoFooterSection from "@/components/home/SeoFooterSection";
 import TrustSection from "@/components/home/TrustSection";
+import FAQSection from "@/components/home/FAQSection";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { PatientTestimonials } from "@/components/home/PatientTestimonials";
 import OurPartners from "@/components/home/OurPartners";
 
@@ -147,6 +149,11 @@ const Index = () => {
   }, [user]);
 
   return <div className="min-h-screen bg-background">
+      {/* Breadcrumb Schema for SEO */}
+      <BreadcrumbSchema items={[
+        { name: "Home", url: "https://mypaklabs.com/" }
+      ]} />
+
       <Navbar />
 
       {/* Hero Section */}
@@ -268,6 +275,9 @@ const Index = () => {
 
       {/* Trust Section */}
       <TrustSection />
+
+      {/* FAQ Section with Schema */}
+      <FAQSection />
 
       {/* SEO Footer Section - Above Footer */}
       <SeoFooterSection />

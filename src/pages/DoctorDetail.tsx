@@ -195,29 +195,40 @@ const DoctorDetail = () => {
     return doctor?.consultation_fee || 0;
   };
 
-  const isTimeSlotDisabled = (timeLabel: string) => {
-    if (!selectedDate) return false;
-
-    const todayStart = startOfDay(new Date());
-    const selectedStart = startOfDay(selectedDate);
-    if (selectedStart.getTime() !== todayStart.getTime()) return false;
-
-    // If booking for today, disable times that already passed
-    const now = new Date();
-    const nowMins = now.getHours() * 60 + now.getMinutes();
-
+  const parseTimeLabel = (timeLabel: string) => {
     const match = timeLabel.match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/i);
-    if (!match) return false;
-
+    if (!match) return null;
     let hh = Number(match[1]);
     const mm = Number(match[2]);
     const period = match[3].toUpperCase();
     if (period === "PM" && hh !== 12) hh += 12;
     if (period === "AM" && hh === 12) hh = 0;
-    const slotMins = hh * 60 + mm;
-
-    return slotMins < nowMins;
+    return hh * 60 + mm;
   };
+
+  const isTimeSlotDisabled = (timeLabel: string, forDate?: Date) => {
+    const checkDate = forDate || selectedDate;
+    if (!checkDate) return false;
+
+    const todayStart = startOfDay(new Date());
+    const checkStart = startOfDay(checkDate);
+    if (checkStart.getTime() !== todayStart.getTime()) return false;
+
+    // If booking for today, disable times that already passed
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+
+    const slotMins = parseTimeLabel(timeLabel);
+    if (slotMins === null) return false;
+
+    return slotMins <= nowMins;
+  };
+
+  // Check if today has any available slots remaining
+  const hasTodayAvailableSlots = useMemo(() => {
+    const today = new Date();
+    return timeSlots.some((slot) => !isTimeSlotDisabled(slot, today));
+  }, [timeSlots]);
 
   const handleBookAppointment = async () => {
     // Ensure we have a fresh authenticated user (AuthContext can be briefly null on refresh)
@@ -663,11 +674,21 @@ const DoctorDetail = () => {
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
-                      disabled={(date) =>
-                        startOfDay(date) < startOfDay(new Date()) ||
-                        date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ||
-                        !isDateAvailable(date)
-                      }
+                      disabled={(date) => {
+                        const todayStart = startOfDay(new Date());
+                        const dateStart = startOfDay(date);
+                        const isToday = dateStart.getTime() === todayStart.getTime();
+                        const isPast = dateStart < todayStart;
+                        const isTooFar = date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                        const isUnavailableDay = !isDateAvailable(date);
+                        
+                        // Allow today if there are available slots, otherwise disable
+                        if (isToday) {
+                          return !hasTodayAvailableSlots || isUnavailableDay;
+                        }
+                        
+                        return isPast || isTooFar || isUnavailableDay;
+                      }}
                       className="rounded-md border w-full"
                     />
                   </div>

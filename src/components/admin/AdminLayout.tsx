@@ -316,7 +316,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;
               const isPrescriptions = item.href === '/admin/prescriptions';

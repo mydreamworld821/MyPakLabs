@@ -263,8 +263,8 @@ const LabDetail = () => {
   };
 
   // Use the lab-based ID generator
-  const generateUniqueIdForLab = (): string => {
-    return generateLabId(lab?.name || "MEDI");
+  const generateUniqueIdForLab = async (): Promise<string> => {
+    return await generateLabId();
   };
 
   if (isLoading) {
@@ -321,7 +321,7 @@ const LabDetail = () => {
       return;
     }
 
-    const newId = generateUniqueIdForLab();
+    const newId = await generateUniqueIdForLab();
     setUniqueId(newId);
 
     // Save order to database

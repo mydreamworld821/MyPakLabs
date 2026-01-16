@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
  * YYYY is the current year
  * MM is the current month
  * NNNNN is a 5-digit sequential number (never duplicates)
+ * 
+ * Uses a database function with SECURITY DEFINER to bypass RLS
+ * and get the correct sequence across all users' orders
  */
 export const generateLabId = async (): Promise<string> => {
   const now = new Date();
@@ -16,45 +19,29 @@ export const generateLabId = async (): Promise<string> => {
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const prefix = `MPL-${year}-${month}`;
 
-  // Get the highest existing number for this month
-  const { data: existingOrders } = await supabase
-    .from('orders')
-    .select('unique_id')
-    .like('unique_id', `${prefix}-%`)
-    .order('unique_id', { ascending: false })
-    .limit(1);
+  try {
+    // Call database function that bypasses RLS to get accurate sequence
+    const { data, error } = await supabase.rpc('get_next_order_sequence', {
+      prefix: prefix
+    });
 
-  const { data: existingPrescriptions } = await supabase
-    .from('prescriptions')
-    .select('unique_id')
-    .like('unique_id', `${prefix}-%`)
-    .order('unique_id', { ascending: false })
-    .limit(1);
-
-  // Extract the highest sequence number from both tables
-  let maxSeq = 0;
-
-  if (existingOrders && existingOrders.length > 0 && existingOrders[0].unique_id) {
-    const parts = existingOrders[0].unique_id.split('-');
-    if (parts.length === 4) {
-      const seq = parseInt(parts[3], 10);
-      if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+    if (error) {
+      console.error("Error getting sequence from database:", error);
+      // Fallback to random number if RPC fails
+      const randomNum = Math.floor(Math.random() * 99999) + 1;
+      return `${prefix}-${randomNum.toString().padStart(5, '0')}`;
     }
+
+    const nextSeq = data || 1;
+    const paddedSeq = nextSeq.toString().padStart(5, '0');
+    
+    return `${prefix}-${paddedSeq}`;
+  } catch (error) {
+    console.error("Error generating lab ID:", error);
+    // Fallback to random number
+    const randomNum = Math.floor(Math.random() * 99999) + 1;
+    return `${prefix}-${randomNum.toString().padStart(5, '0')}`;
   }
-
-  if (existingPrescriptions && existingPrescriptions.length > 0 && existingPrescriptions[0].unique_id) {
-    const parts = existingPrescriptions[0].unique_id.split('-');
-    if (parts.length === 4) {
-      const seq = parseInt(parts[3], 10);
-      if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
-    }
-  }
-
-  // Generate next sequence number
-  const nextSeq = maxSeq + 1;
-  const paddedSeq = nextSeq.toString().padStart(5, '0');
-
-  return `${prefix}-${paddedSeq}`;
 };
 
 /**

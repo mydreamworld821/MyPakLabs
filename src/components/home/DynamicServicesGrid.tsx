@@ -118,10 +118,10 @@ const DynamicServicesGrid = ({ cards, loading, title, subtitle, quickAccessServi
     const size = card.card_size || "normal";
     const rowSpan = card.row_span || 1;
     
-    if (rowSpan >= 2) return "min-h-[280px] md:min-h-[320px]";
-    if (size === "large") return "min-h-[200px]";
-    if (size === "small") return "min-h-[100px]";
-    return "min-h-[140px]";
+    if (rowSpan >= 2) return "min-h-[180px] md:min-h-[220px]";
+    if (size === "large") return "min-h-[140px]";
+    if (size === "small") return "min-h-[80px]";
+    return "min-h-[100px]";
   };
 
   // Default bg colors for variety

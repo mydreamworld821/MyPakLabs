@@ -165,11 +165,9 @@ const DoctorDetail = () => {
     return `${hh12.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")} ${period}`;
   };
 
-  const isDateAvailable = (date: Date) => {
-    if (!doctor?.available_days || doctor.available_days.length === 0) return true;
-    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const dayName = dayNames[date.getDay()];
-    return doctor.available_days.includes(dayName);
+  // Allow all days for booking (as per user request - any day within 30 days)
+  const isDateAvailable = (_date: Date) => {
+    return true;
   };
 
   const timeSlots = useMemo(() => {
@@ -689,24 +687,23 @@ const DoctorDetail = () => {
                       selected={selectedDate}
                       onSelect={setSelectedDate}
                       disabled={(date) => {
-                        const todayKey = getPakistanTodayKey();
-                        const dateKey = getDateKey(date);
+                        const pktNow = getPakistanTime();
+                        const pktTodayStart = startOfDay(pktNow);
+                        const dateStart = startOfDay(date);
 
-                        const isToday = dateKey === todayKey;
-                        const isPast = dateKey < todayKey;
+                        // Past dates (before today in PKT)
+                        if (dateStart.getTime() < pktTodayStart.getTime()) return true;
 
-                        const maxKey = getDateKey(
-                          new Date(getPakistanTime().getTime() + 30 * 24 * 60 * 60 * 1000)
-                        );
-                        const isTooFar = dateKey > maxKey;
+                        // Max 30 days from today
+                        const maxDate = new Date(pktTodayStart.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        if (dateStart.getTime() > maxDate.getTime()) return true;
 
-                        const isUnavailableDay = !isDateAvailable(date);
-
-                        if (isToday) {
-                          return !hasTodayAvailableSlots || isUnavailableDay;
+                        // Today: only disable if no slots left
+                        if (dateStart.getTime() === pktTodayStart.getTime()) {
+                          return !hasTodayAvailableSlots;
                         }
 
-                        return isPast || isTooFar || isUnavailableDay;
+                        return false;
                       }}
                       className="rounded-md border w-full"
                     />

@@ -1,0 +1,112 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
+
+interface Partner {
+  id: string;
+  company_name: string;
+  logo_url: string | null;
+  website_url: string | null;
+}
+
+const OurPartners = () => {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      const { data, error } = await supabase
+        .from("partners")
+        .select("id, company_name, logo_url, website_url")
+        .eq("is_approved", true)
+        .order("display_order", { ascending: true });
+
+      if (!error && data) {
+        setPartners(data);
+      }
+      setIsLoading(false);
+    };
+
+    fetchPartners();
+  }, []);
+
+  if (isLoading || partners.length === 0) return null;
+
+  // Double the partners for seamless infinite scroll
+  const scrollPartners = [...partners, ...partners];
+
+  return (
+    <section className="py-8 md:py-12 bg-background border-t border-border">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground">
+            Our Partners
+          </h2>
+          <Link
+            to="/partner-registration"
+            className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+          >
+            Join Us
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* Scrolling Logos */}
+        <div className="relative overflow-hidden">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-background to-transparent z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent z-10" />
+
+          {/* Marquee container */}
+          <div className="flex animate-marquee">
+            {scrollPartners.map((partner, index) => (
+              <div
+                key={`${partner.id}-${index}`}
+                className="flex-shrink-0 px-6 md:px-10"
+              >
+                {partner.website_url ? (
+                  <a
+                    href={partner.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-300"
+                  >
+                    {partner.logo_url ? (
+                      <img
+                        src={partner.logo_url}
+                        alt={partner.company_name}
+                        className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-[150px] object-contain"
+                      />
+                    ) : (
+                      <span className="text-lg font-semibold text-muted-foreground">
+                        {partner.company_name}
+                      </span>
+                    )}
+                  </a>
+                ) : (
+                  <div className="grayscale opacity-70">
+                    {partner.logo_url ? (
+                      <img
+                        src={partner.logo_url}
+                        alt={partner.company_name}
+                        className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-[150px] object-contain"
+                      />
+                    ) : (
+                      <span className="text-lg font-semibold text-muted-foreground">
+                        {partner.company_name}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default OurPartners;

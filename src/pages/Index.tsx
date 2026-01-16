@@ -14,6 +14,7 @@ import CustomSections from "@/components/home/CustomSections";
 import DynamicServicesGrid from "@/components/home/DynamicServicesGrid";
 import SeoFooterSection from "@/components/home/SeoFooterSection";
 import { PatientTestimonials } from "@/components/home/PatientTestimonials";
+import OurPartners from "@/components/home/OurPartners";
 
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
@@ -313,6 +314,9 @@ const Index = () => {
 
       {/* Patient Testimonials Section */}
       <PatientTestimonials />
+
+      {/* Our Partners Section */}
+      <OurPartners />
 
       {/* SEO Footer Section - Above Footer */}
       <SeoFooterSection />

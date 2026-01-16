@@ -1647,6 +1647,51 @@ export type Database = {
         }
         Relationships: []
       }
+      partners: {
+        Row: {
+          company_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          is_approved: boolean | null
+          logo_url: string | null
+          partner_type: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_approved?: boolean | null
+          logo_url?: string | null
+          partner_type?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_approved?: boolean | null
+          logo_url?: string | null
+          partner_type?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       prescriptions: {
         Row: {
           admin_notes: string | null

@@ -68,6 +68,8 @@ const navItems = [
   { href: "/admin/surgery-inquiries", label: "Surgery Leads", icon: MessageSquare },
   { href: "/admin/emergency-requests", label: "Emergency Requests", icon: AlertTriangle },
   { href: "/admin/locations", label: "Locations", icon: MapPin },
+  { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
+  { href: "/admin/partners", label: "Partners", icon: Building2 },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

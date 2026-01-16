@@ -178,17 +178,24 @@ export const useHomepageBuilder = () => {
     }
   }, [state.sections, updateSection]);
 
-  // Lock section (prevent editing - we'll add a locked field)
+  // Lock section (prevent editing)
   const toggleLock = useCallback((id: string) => {
-    const section = state.sections.find(s => s.id === id);
-    if (section) {
-      updateSection(id, { 
-        custom_content: { 
-          ...section.custom_content as Record<string, unknown>,
-          locked: !(section.custom_content as Record<string, unknown>)?.locked 
-        }
-      });
-    }
+    const section = state.sections.find((s) => s.id === id);
+    if (!section) return;
+
+    const current =
+      section.custom_content &&
+      typeof section.custom_content === "object" &&
+      !Array.isArray(section.custom_content)
+        ? (section.custom_content as Record<string, unknown>)
+        : {};
+
+    updateSection(id, {
+      custom_content: {
+        ...current,
+        locked: !(current as any).locked,
+      } as any,
+    });
   }, [state.sections, updateSection]);
 
   // Duplicate section
@@ -203,30 +210,41 @@ export const useHomepageBuilder = () => {
     }
 
     try {
+      const payload: any = {
+        section_key: `${section.section_key}_copy_${Date.now()}`,
+        title: `${section.title} (Copy)`,
+        subtitle: section.subtitle,
+        display_order: state.sections.length + 1,
+        is_visible: section.is_visible,
+        section_type: section.section_type,
+        columns_desktop: section.columns_desktop,
+        columns_tablet: section.columns_tablet,
+        columns_mobile: section.columns_mobile,
+        items_gap: section.items_gap,
+        section_padding_x: section.section_padding_x,
+        section_padding_y: section.section_padding_y,
+        max_items: section.max_items,
+        card_height: section.card_height,
+        card_border_radius: section.card_border_radius,
+        card_shadow: section.card_shadow,
+        image_height: section.image_height,
+        image_fit: section.image_fit,
+        image_border_radius: section.image_border_radius,
+        background_color: section.background_color,
+        background_gradient: section.background_gradient,
+        text_color: section.text_color,
+        accent_color: section.accent_color,
+        custom_content: section.custom_content as any,
+        icon_container_size: section.icon_container_size,
+        icon_size: section.icon_size,
+        show_labels: section.show_labels,
+        justify_content: section.justify_content,
+        layout_mode: section.layout_mode,
+      };
+
       const { data, error } = await supabase
         .from("homepage_sections")
-        .insert({
-          section_key: `${section.section_key}_copy_${Date.now()}`,
-          title: `${section.title} (Copy)`,
-          subtitle: section.subtitle,
-          display_order: state.sections.length + 1,
-          is_visible: section.is_visible,
-          section_type: section.section_type,
-          columns_desktop: section.columns_desktop,
-          columns_tablet: section.columns_tablet,
-          columns_mobile: section.columns_mobile,
-          items_gap: section.items_gap,
-          section_padding_x: section.section_padding_x,
-          section_padding_y: section.section_padding_y,
-          max_items: section.max_items,
-          card_height: section.card_height,
-          card_border_radius: section.card_border_radius,
-          card_shadow: section.card_shadow,
-          image_height: section.image_height,
-          image_fit: section.image_fit,
-          image_border_radius: section.image_border_radius,
-          background_color: section.background_color,
-        })
+        .insert(payload)
         .select()
         .single();
 
@@ -273,30 +291,33 @@ export const useHomepageBuilder = () => {
   const addSection = useCallback(async () => {
     try {
       const newOrder = state.sections.length + 1;
+      const payload: any = {
+        section_key: `custom_section_${Date.now()}`,
+        title: "New Section",
+        subtitle: "Add your content here",
+        display_order: newOrder,
+        section_type: "grid",
+        is_visible: true,
+        columns_desktop: 4,
+        columns_tablet: 2,
+        columns_mobile: 1,
+        items_gap: 16,
+        section_padding_x: 0,
+        section_padding_y: 24,
+        max_items: 8,
+        card_height: 200,
+        card_border_radius: 12,
+        card_shadow: "md",
+        image_height: 120,
+        image_fit: "cover",
+        image_border_radius: 8,
+        background_color: "transparent",
+        custom_content: null,
+      };
+
       const { data, error } = await supabase
         .from("homepage_sections")
-        .insert({
-          section_key: `custom_section_${Date.now()}`,
-          title: "New Section",
-          subtitle: "Add your content here",
-          display_order: newOrder,
-          section_type: "grid",
-          is_visible: true,
-          columns_desktop: 4,
-          columns_tablet: 2,
-          columns_mobile: 1,
-          items_gap: 16,
-          section_padding_x: 0,
-          section_padding_y: 24,
-          max_items: 8,
-          card_height: 200,
-          card_border_radius: 12,
-          card_shadow: "md",
-          image_height: 120,
-          image_fit: "cover",
-          image_border_radius: 8,
-          background_color: "transparent",
-        })
+        .insert(payload)
         .select()
         .single();
 
@@ -340,42 +361,44 @@ export const useHomepageBuilder = () => {
     setSaving(true);
     try {
       for (const section of state.sections) {
+        const payload: any = {
+          title: section.title,
+          subtitle: section.subtitle,
+          is_visible: section.is_visible,
+          display_order: section.display_order,
+          columns_desktop: section.columns_desktop,
+          columns_tablet: section.columns_tablet,
+          columns_mobile: section.columns_mobile,
+          section_padding_x: section.section_padding_x,
+          section_padding_y: section.section_padding_y,
+          items_gap: section.items_gap,
+          max_items: section.max_items,
+          card_width: section.card_width,
+          card_height: section.card_height,
+          card_border_radius: section.card_border_radius,
+          card_shadow: section.card_shadow,
+          image_height: section.image_height,
+          image_width: section.image_width,
+          image_position_x: section.image_position_x,
+          image_position_y: section.image_position_y,
+          image_fit: section.image_fit,
+          image_border_radius: section.image_border_radius,
+          background_color: section.background_color,
+          background_gradient: section.background_gradient,
+          text_color: section.text_color,
+          accent_color: section.accent_color,
+          section_type: section.section_type,
+          custom_content: section.custom_content as any,
+          icon_container_size: section.icon_container_size,
+          icon_size: section.icon_size,
+          show_labels: section.show_labels,
+          justify_content: section.justify_content,
+          layout_mode: section.layout_mode,
+        };
+
         const { error } = await supabase
           .from("homepage_sections")
-          .update({
-            title: section.title,
-            subtitle: section.subtitle,
-            is_visible: section.is_visible,
-            display_order: section.display_order,
-            columns_desktop: section.columns_desktop,
-            columns_tablet: section.columns_tablet,
-            columns_mobile: section.columns_mobile,
-            section_padding_x: section.section_padding_x,
-            section_padding_y: section.section_padding_y,
-            items_gap: section.items_gap,
-            max_items: section.max_items,
-            card_width: section.card_width,
-            card_height: section.card_height,
-            card_border_radius: section.card_border_radius,
-            card_shadow: section.card_shadow,
-            image_height: section.image_height,
-            image_width: section.image_width,
-            image_position_x: section.image_position_x,
-            image_position_y: section.image_position_y,
-            image_fit: section.image_fit,
-            image_border_radius: section.image_border_radius,
-            background_color: section.background_color,
-            background_gradient: section.background_gradient,
-            text_color: section.text_color,
-            accent_color: section.accent_color,
-            section_type: section.section_type,
-            custom_content: section.custom_content as unknown as Record<string, never>,
-            icon_container_size: section.icon_container_size,
-            icon_size: section.icon_size,
-            show_labels: section.show_labels,
-            justify_content: section.justify_content,
-            layout_mode: section.layout_mode,
-          })
+          .update(payload)
           .eq("id", section.id);
 
         if (error) throw error;

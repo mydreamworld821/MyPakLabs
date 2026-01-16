@@ -124,6 +124,10 @@ interface DashboardStats {
   // Medicine Orders
   totalMedicineOrders: number;
   pendingMedicineOrders: number;
+  
+  // Reviews & Partners
+  pendingReviews: number;
+  pendingPartners: number;
 }
 
 interface RecentOrder {
@@ -197,7 +201,8 @@ const AdminDashboard = () => {
     totalNurseBookings: 0, pendingNurseBookings: 0,
     totalNurses: 0, approvedNurses: 0, pendingNurses: 0,
     totalPharmacies: 0, approvedPharmacies: 0, pendingPharmacies: 0,
-    totalMedicineOrders: 0, pendingMedicineOrders: 0
+    totalMedicineOrders: 0, pendingMedicineOrders: 0,
+    pendingReviews: 0, pendingPartners: 0
   });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [recentPrescriptions, setRecentPrescriptions] = useState<RecentPrescription[]>([]);
@@ -300,6 +305,10 @@ const AdminDashboard = () => {
         { count: totalMedicineOrders },
         { count: pendingMedicineOrders },
         
+        // Reviews & Partners
+        { count: pendingReviews },
+        { count: pendingPartners },
+        
         // Recent data
         { data: recentOrdersData },
         { data: recentPrescriptionsData },
@@ -390,6 +399,10 @@ const AdminDashboard = () => {
         supabase.from("medicine_orders").select("*", { count: "exact", head: true }),
         supabase.from("medicine_orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
         
+        // Reviews & Partners
+        supabase.from("reviews").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("partners").select("*", { count: "exact", head: true }).eq("is_approved", false),
+        
         // Recent data
         supabase.from("orders").select("id, unique_id, status, discounted_total, created_at, labs(name)").order("created_at", { ascending: false }).limit(5),
         supabase.from("prescriptions").select("id, unique_id, status, created_at").order("created_at", { ascending: false }).limit(5),
@@ -476,7 +489,10 @@ const AdminDashboard = () => {
         pendingPharmacies: pendingPharmacies || 0,
         
         totalMedicineOrders: totalMedicineOrders || 0,
-        pendingMedicineOrders: pendingMedicineOrders || 0
+        pendingMedicineOrders: pendingMedicineOrders || 0,
+        
+        pendingReviews: pendingReviews || 0,
+        pendingPartners: pendingPartners || 0
       });
 
       setRecentOrders(recentOrdersData as RecentOrder[] || []);
@@ -745,6 +761,40 @@ const AdminDashboard = () => {
                         <p className="text-sm text-teal-700">Pending fulfillment</p>
                       </div>
                       <ArrowUpRight className="w-5 h-5 text-teal-600 ml-auto" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              )}
+              
+              {stats.pendingReviews > 0 && (
+                <Link to="/admin/reviews">
+                  <Card className="border-purple-200 bg-purple-50 hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-purple-900">{stats.pendingReviews} Reviews</p>
+                        <p className="text-sm text-purple-700">Awaiting approval</p>
+                      </div>
+                      <ArrowUpRight className="w-5 h-5 text-purple-600 ml-auto" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              )}
+              
+              {stats.pendingPartners > 0 && (
+                <Link to="/admin/partners">
+                  <Card className="border-indigo-200 bg-indigo-50 hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-indigo-900">{stats.pendingPartners} Partners</p>
+                        <p className="text-sm text-indigo-700">Registration requests</p>
+                      </div>
+                      <ArrowUpRight className="w-5 h-5 text-indigo-600 ml-auto" />
                     </CardContent>
                   </Card>
                 </Link>

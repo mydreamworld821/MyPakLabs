@@ -80,6 +80,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newPrescriptionCount, setNewPrescriptionCount] = useState(0);
   const [newOrderCount, setNewOrderCount] = useState(0);
+  const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
+  const [pendingPartnersCount, setPendingPartnersCount] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -211,6 +213,52 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     };
   }, [navigate]);
 
+  // Fetch pending reviews and partners count on mount
+  useEffect(() => {
+    const fetchPendingCounts = async () => {
+      const [reviewsResult, partnersResult] = await Promise.all([
+        supabase
+          .from('reviews')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending'),
+        supabase
+          .from('partners')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_approved', false)
+      ]);
+      
+      setPendingReviewsCount(reviewsResult.count || 0);
+      setPendingPartnersCount(partnersResult.count || 0);
+    };
+
+    fetchPendingCounts();
+
+    // Subscribe to realtime changes for reviews
+    const reviewsChannel = supabase
+      .channel('admin-reviews-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reviews' },
+        () => fetchPendingCounts()
+      )
+      .subscribe();
+
+    // Subscribe to realtime changes for partners
+    const partnersChannel = supabase
+      .channel('admin-partners-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'partners' },
+        () => fetchPendingCounts()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(partnersChannel);
+    };
+  }, []);
+
   // Reset notification counts when visiting respective pages
   useEffect(() => {
     if (location.pathname === '/admin/prescriptions') {
@@ -270,7 +318,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               const isActive = location.pathname === item.href;
               const isPrescriptions = item.href === '/admin/prescriptions';
               const isOrders = item.href === '/admin/orders';
-              const badgeCount = isPrescriptions ? newPrescriptionCount : isOrders ? newOrderCount : 0;
+              const isReviews = item.href === '/admin/reviews';
+              const isPartners = item.href === '/admin/partners';
+              
+              let badgeCount = 0;
+              if (isPrescriptions) badgeCount = newPrescriptionCount;
+              else if (isOrders) badgeCount = newOrderCount;
+              else if (isReviews) badgeCount = pendingReviewsCount;
+              else if (isPartners) badgeCount = pendingPartnersCount;
+              
               const showBadge = badgeCount > 0;
               
               return (

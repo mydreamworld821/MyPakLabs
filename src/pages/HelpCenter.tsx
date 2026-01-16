@@ -124,7 +124,7 @@ const HelpCenter = () => {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-medium text-foreground">mhmmdaqib@gmail.com</p>
+                        <p className="font-medium text-foreground">support@mypaklabs.com</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

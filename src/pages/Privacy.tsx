@@ -128,7 +128,7 @@ const Privacy = () => {
                   If you have any questions about this Privacy Policy, please contact us:
                 </p>
                 <div className="mt-4 space-y-2 text-muted-foreground">
-                  <p>📧 Email: <a href="mailto:mhmmdaqib@gmail.com" className="text-primary hover:underline">mhmmdaqib@gmail.com</a></p>
+                  <p>📧 Email: <a href="mailto:support@mypaklabs.com" className="text-primary hover:underline">support@mypaklabs.com</a></p>
                   <p>📞 Phone: <a href="tel:03167523434" className="text-primary hover:underline">03167523434</a></p>
                   <p>📍 Address: G13-1 Islamabad</p>
                 </div>

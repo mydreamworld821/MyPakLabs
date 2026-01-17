@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -13,22 +13,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isSameDay, parseISO } from "date-fns";
-import { 
-  Store, 
-  Package, 
-  Clock, 
+import {
+  Store,
+  Package,
+  Clock,
   CheckCircle,
   XCircle,
   Truck,
   Loader2,
-  AlertCircle,
   Settings,
-  TrendingUp,
-  Phone,
   MapPin,
   CalendarIcon,
   Eye,
-  Receipt
+  Receipt,
 } from "lucide-react";
 import { Json } from "@/integrations/supabase/types";
 
@@ -66,7 +63,7 @@ interface MedicineOrder {
 
 const PharmacyDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [store, setStore] = useState<MedicalStore | null>(null);
   const [orders, setOrders] = useState<MedicineOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,12 +73,17 @@ const PharmacyDashboard = () => {
   const [showOrderDetail, setShowOrderDetail] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to resolve before redirecting.
+    if (authLoading) return;
+
     if (!user) {
       navigate("/auth", { state: { from: "/pharmacy-dashboard" } });
       return;
     }
+
     fetchStoreAndOrders();
-  }, [user, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, navigate]);
 
   const fetchStoreAndOrders = async () => {
     if (!user) return;
@@ -235,45 +237,40 @@ const PharmacyDashboard = () => {
     );
   }
 
-  const completedOrders = useMemo(() => 
-    orders.filter(o => o.status === "completed" || o.status === "delivered"), 
-    [orders]
-  );
+  const completedOrders = orders.filter((o) => o.status === "completed" || o.status === "delivered");
 
   const orderCounts = {
-    pending: orders.filter(o => o.status === "pending").length,
-    accepted: orders.filter(o => o.status === "accepted").length,
-    preparing: orders.filter(o => o.status === "preparing").length,
-    out_for_delivery: orders.filter(o => o.status === "out_for_delivery").length,
+    pending: orders.filter((o) => o.status === "pending").length,
+    accepted: orders.filter((o) => o.status === "accepted").length,
+    preparing: orders.filter((o) => o.status === "preparing").length,
+    out_for_delivery: orders.filter((o) => o.status === "out_for_delivery").length,
     completed: completedOrders.length,
   };
 
-  // Get unique dates that have completed orders (for calendar highlighting)
-  const completedOrderDates = useMemo(() => {
-    return completedOrders.map(o => parseISO(o.created_at));
-  }, [completedOrders]);
+  // Dates that have completed orders (for calendar highlighting)
+  const completedOrderDates = completedOrders.map((o) => parseISO(o.created_at));
 
   const getFilteredOrders = () => {
     let filtered: MedicineOrder[] = [];
-    
+
     switch (activeTab) {
       case "pending":
-        filtered = orders.filter(o => o.status === "pending");
+        filtered = orders.filter((o) => o.status === "pending");
         break;
       case "active":
-        filtered = orders.filter(o => ["accepted", "preparing", "out_for_delivery"].includes(o.status));
+        filtered = orders.filter((o) => ["accepted", "preparing", "out_for_delivery"].includes(o.status));
         break;
       case "completed":
         filtered = completedOrders;
         // Apply date filter for completed orders
         if (selectedDate) {
-          filtered = filtered.filter(o => isSameDay(parseISO(o.created_at), selectedDate));
+          filtered = filtered.filter((o) => isSameDay(parseISO(o.created_at), selectedDate));
         }
         break;
       default:
         filtered = orders;
     }
-    
+
     return filtered;
   };
 
@@ -286,13 +283,14 @@ const PharmacyDashboard = () => {
     setSelectedDate(undefined);
   };
 
-  // Calculate revenue from completed orders
-  const totalRevenue = useMemo(() => {
-    const dateFilteredOrders = selectedDate 
-      ? completedOrders.filter(o => isSameDay(parseISO(o.created_at), selectedDate))
-      : completedOrders;
-    return dateFilteredOrders.reduce((sum, o) => sum + (o.final_price || o.estimated_price || 0), 0);
-  }, [completedOrders, selectedDate]);
+  // Revenue from completed orders (honors date filter)
+  const dateFilteredOrders = selectedDate
+    ? completedOrders.filter((o) => isSameDay(parseISO(o.created_at), selectedDate))
+    : completedOrders;
+  const totalRevenue = dateFilteredOrders.reduce(
+    (sum, o) => sum + (o.final_price || o.estimated_price || 0),
+    0
+  );
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { className: string; label: string }> = {

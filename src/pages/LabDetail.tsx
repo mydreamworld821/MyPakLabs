@@ -10,9 +10,11 @@ import Footer from "@/components/layout/Footer";
 import TestSelector from "@/components/labs/TestSelector";
 import PrescriptionUploader from "@/components/labs/PrescriptionUploader";
 import BranchesSection from "@/components/labs/BranchesSection";
+import WalletRedemption from "@/components/wallet/WalletRedemption";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
 import { supabase } from "@/integrations/supabase/client";
 import { generateLabId } from "@/utils/generateLabId";
 import { sendAdminEmailNotification } from "@/utils/adminNotifications";
@@ -37,6 +39,7 @@ import {
   ChevronDown,
   Search,
   Map,
+  Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -108,6 +111,7 @@ const LabDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { uploadPrescription, isUploading } = usePrescriptionUpload();
+  const { addCredits, deductCredits, creditsPerBooking, isEnabled: walletEnabled } = useWallet();
   
   const [lab, setLab] = useState<Lab | null>(null);
   const [tests, setTests] = useState<TestItem[]>([]);
@@ -118,6 +122,8 @@ const LabDetail = () => {
   const [uniqueId, setUniqueId] = useState("");
   const [isSavingPrescription, setIsSavingPrescription] = useState(false);
   const [prescriptionSaved, setPrescriptionSaved] = useState(false);
+  const [walletDiscount, setWalletDiscount] = useState(0);
+  const [walletCreditsUsed, setWalletCreditsUsed] = useState(0);
   const [userProfile, setUserProfile] = useState<{
     full_name: string | null;
     phone: string | null;
@@ -309,6 +315,7 @@ const LabDetail = () => {
   const totalOriginal = selectedTestItems.reduce((sum, t) => sum + t.originalPrice, 0);
   const totalDiscounted = selectedTestItems.reduce((sum, t) => sum + t.discountedPrice, 0);
   const totalSavings = totalOriginal - totalDiscounted;
+  const finalTotal = Math.max(0, totalDiscounted - walletDiscount);
 
   const handleConfirmBooking = async () => {
     // Get fresh auth state to ensure user is authenticated
@@ -348,9 +355,10 @@ const LabDetail = () => {
         })),
         original_total: totalOriginal,
         discount_percentage: discount,
-        discounted_total: totalDiscounted,
+        discounted_total: finalTotal,
         validity_date: validityDate.toISOString().split('T')[0],
-        status: 'pending' as const
+        status: 'pending' as const,
+        notes: walletDiscount > 0 ? `Wallet discount: PKR ${walletDiscount} (${walletCreditsUsed} credits used)` : null
       };
 
       console.log("Order data to insert:", orderData);
@@ -400,6 +408,27 @@ const LabDetail = () => {
           day: '2-digit' 
         }),
       }).catch(console.error);
+
+      // Deduct wallet credits if used
+      if (walletCreditsUsed > 0) {
+        await deductCredits.mutateAsync({
+          credits: walletCreditsUsed,
+          serviceType: "lab_discount",
+          referenceId: newId,
+          description: `Discount on lab test booking at ${lab.name}`,
+        });
+      }
+
+      // Award credits for booking
+      if (walletEnabled) {
+        await addCredits.mutateAsync({
+          credits: creditsPerBooking,
+          serviceType: "lab_test",
+          referenceId: newId,
+          description: `Lab test booking at ${lab.name}`,
+        });
+        toast.success(`🎉 You earned ${creditsPerBooking} wallet credits!`);
+      }
 
       setBookingConfirmed(true);
       toast.success("Booking confirmed! Your discount ID has been generated.");
@@ -849,17 +878,43 @@ const LabDetail = () => {
                             - Rs. {totalSavings.toLocaleString()}
                           </span>
                         </div>
+                        {walletDiscount > 0 && (
+                          <div className="flex justify-between text-xs sm:text-sm">
+                            <span className="text-muted-foreground flex items-center gap-1">
+                              <Wallet className="w-3 h-3" /> Wallet Discount
+                            </span>
+                            <span className="text-green-600">
+                              - Rs. {walletDiscount.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t border-border">
                           <span>Total</span>
                           <span className="text-primary">
-                            Rs. {totalDiscounted.toLocaleString()}
+                            Rs. {finalTotal.toLocaleString()}
                           </span>
                         </div>
                       </div>
 
                       <Badge variant="success" className="w-full justify-center py-1.5 text-xs">
-                        You save Rs. {totalSavings.toLocaleString()}!
+                        You save Rs. {(totalSavings + walletDiscount).toLocaleString()}!
                       </Badge>
+
+                      {/* Wallet Redemption */}
+                      {user && (
+                        <WalletRedemption
+                          maxDiscount={totalDiscounted}
+                          appliedDiscount={walletDiscount}
+                          onApplyDiscount={(discount, credits) => {
+                            setWalletDiscount(discount);
+                            setWalletCreditsUsed(credits);
+                          }}
+                          onRemoveDiscount={() => {
+                            setWalletDiscount(0);
+                            setWalletCreditsUsed(0);
+                          }}
+                        />
+                      )}
 
                       <Button
                         className="w-full"

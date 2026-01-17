@@ -2339,11 +2339,132 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_settings: {
+        Row: {
+          created_at: string
+          credits_expiry_months: number | null
+          credits_per_booking: number
+          credits_to_pkr_ratio: number
+          id: string
+          is_enabled: boolean
+          minimum_redemption_credits: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits_expiry_months?: number | null
+          credits_per_booking?: number
+          credits_to_pkr_ratio?: number
+          id?: string
+          is_enabled?: boolean
+          minimum_redemption_credits?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits_expiry_months?: number | null
+          credits_per_booking?: number
+          credits_to_pkr_ratio?: number
+          id?: string
+          is_enabled?: boolean
+          minimum_redemption_credits?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          created_at: string
+          credits: number
+          description: string | null
+          id: string
+          reference_id: string | null
+          service_type: string
+          type: Database["public"]["Enums"]["wallet_transaction_type"]
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          service_type: string
+          type: Database["public"]["Enums"]["wallet_transaction_type"]
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          service_type?: string
+          type?: Database["public"]["Enums"]["wallet_transaction_type"]
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          created_at: string
+          id: string
+          total_credits: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          total_credits?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          total_credits?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_wallet_credits: {
+        Args: {
+          p_credits: number
+          p_description?: string
+          p_reference_id?: string
+          p_service_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      deduct_wallet_credits: {
+        Args: {
+          p_credits: number
+          p_description?: string
+          p_reference_id?: string
+          p_service_type: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       generate_booking_unique_id: {
         Args: { booking_type: string }
         Returns: string
@@ -2394,6 +2515,7 @@ export type Database = {
         | "pharmacy"
         | "platform"
       review_status: "pending" | "approved" | "rejected"
+      wallet_transaction_type: "credit" | "debit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2557,6 +2679,7 @@ export const Constants = {
         "platform",
       ],
       review_status: ["pending", "approved", "rejected"],
+      wallet_transaction_type: ["credit", "debit"],
     },
   },
 } as const

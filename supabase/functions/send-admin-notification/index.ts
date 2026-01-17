@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -12,11 +13,20 @@ const corsHeaders = {
 // Official sender email - domain verified in Resend
 const OFFICIAL_EMAIL = "MyPakLabs <support@mypaklabs.com>";
 
+interface TestDetail {
+  name: string;
+  originalPrice: number;
+  discountedPrice: number;
+}
+
 interface NotificationRequest {
   type: "prescription" | "order" | "doctor_appointment" | "nurse_booking" | "emergency_request" | "medicine_order";
   patientName: string;
   patientPhone?: string;
-  patientEmail?: string; // Customer email for confirmation
+  patientEmail?: string;
+  patientAge?: number;
+  patientGender?: string;
+  patientCity?: string;
   labName?: string;
   orderId?: string;
   adminEmail: string;
@@ -41,7 +51,255 @@ interface NotificationRequest {
   // Lab order specific
   testNames?: string[];
   totalAmount?: number;
+  // PDF generation data
+  tests?: TestDetail[];
+  totalOriginal?: number;
+  totalDiscounted?: number;
+  totalSavings?: number;
+  discountPercentage?: number;
+  validityDays?: number;
+  bookingDate?: string;
 }
+
+// Generate PDF for lab booking
+const generateLabBookingPDF = (data: NotificationRequest): string | null => {
+  if (data.type !== 'order' || !data.tests || data.tests.length === 0) {
+    return null;
+  }
+
+  try {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    // Company Name - Center
+    doc.setTextColor(75, 0, 130);
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.text('My Pak Labs', pageWidth / 2, y, { align: 'center' });
+
+    y += 8;
+    
+    // Contact Details
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    doc.text('Web: www.mypaklabs.com  |  Phone: 0316-7523434', pageWidth / 2, y, { align: 'center' });
+    y += 5;
+    doc.text('Email: support@mypaklabs.com  |  Address: Islamabad, Pakistan', pageWidth / 2, y, { align: 'center' });
+
+    y += 8;
+
+    // Separator line
+    doc.setDrawColor(75, 0, 130);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    
+    y += 10;
+
+    // Patient Details Section
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    const col1X = margin;
+    const col2X = margin + 32;
+    const col3X = pageWidth / 2 + 10;
+    const col4X = pageWidth / 2 + 45;
+    
+    // Row 1: Discount ID | Name
+    doc.setFont('helvetica', 'bold');
+    doc.text('Discount ID:', col1X, y);
+    doc.setTextColor(75, 0, 130);
+    doc.text(data.orderId || 'N/A', col2X, y);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Name:', col3X, y);
+    doc.setFont('helvetica', 'normal');
+    const nameText = (data.patientName || 'N/A').length > 18 
+      ? (data.patientName || 'N/A').substring(0, 18) + '...' 
+      : (data.patientName || 'N/A');
+    doc.text(nameText, col4X, y);
+    
+    y += 8;
+    
+    // Row 2: Age/Gender | Contact No
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Age/Gender:', col1X, y);
+    doc.setFont('helvetica', 'normal');
+    const ageGenderText = [
+      data.patientAge ? `${data.patientAge}Y` : null,
+      data.patientGender || null
+    ].filter(Boolean).join(' / ') || 'N/A';
+    doc.text(ageGenderText, col2X, y);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Contact No:', col3X, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(data.patientPhone || 'N/A', col4X, y);
+    
+    y += 8;
+    
+    // Row 3: Lab
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Lab:', col1X, y);
+    doc.setFont('helvetica', 'normal');
+    const labNameText = (data.labName || 'N/A').length > 45 
+      ? (data.labName || 'N/A').substring(0, 45) + '...' 
+      : (data.labName || 'N/A');
+    doc.text(labNameText, col2X, y);
+    
+    // Discount on same row
+    doc.setFont('helvetica', 'bold');
+    doc.text('Discount:', pageWidth - margin - 45, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(16, 185, 129);
+    doc.text(`${data.discountPercentage || 0}%`, pageWidth - margin - 10, y);
+    
+    y += 10;
+    
+    // Separator line
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, pageWidth - margin, y);
+    
+    y += 8;
+
+    // Table Header
+    doc.setFillColor(75, 0, 130);
+    doc.rect(margin, y, pageWidth - 2 * margin, 10, 'F');
+    
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Title', margin + 5, y + 7);
+    doc.text('Rate', pageWidth - margin - 80, y + 7);
+    doc.text('Discount', pageWidth - margin - 50, y + 7);
+    doc.text('Payable', pageWidth - margin - 5, y + 7, { align: 'right' });
+    y += 16;
+
+    // Tests List
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    
+    data.tests.forEach((test) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.setDrawColor(220, 220, 220);
+      doc.line(margin, y + 4, pageWidth - margin, y + 4);
+      
+      const testName = test.name.length > 35 ? test.name.substring(0, 35) + '...' : test.name;
+      const discPercent = test.originalPrice > 0 
+        ? Math.round((1 - test.discountedPrice / test.originalPrice) * 100)
+        : 0;
+      
+      doc.setTextColor(0, 0, 0);
+      doc.text(testName, margin + 5, y);
+      doc.text(`${test.originalPrice.toLocaleString()}`, pageWidth - margin - 80, y);
+      doc.text(`${discPercent}%`, pageWidth - margin - 50, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${test.discountedPrice.toLocaleString()}`, pageWidth - margin - 5, y, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      
+      y += 10;
+    });
+
+    // Total Row
+    doc.setDrawColor(75, 0, 130);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Total', margin + 5, y);
+    doc.text(`${(data.totalOriginal || 0).toLocaleString()}`, pageWidth - margin - 80, y);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`${(data.totalSavings || 0).toLocaleString()}`, pageWidth - margin - 50, y);
+    doc.setTextColor(75, 0, 130);
+    doc.text(`${(data.totalDiscounted || 0).toLocaleString()}`, pageWidth - margin - 5, y, { align: 'right' });
+    
+    y += 15;
+
+    // Validity Info
+    const bookingDate = data.bookingDate || new Date().toLocaleDateString('en-PK', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit' 
+    });
+    
+    const validityDate = new Date();
+    validityDate.setDate(validityDate.getDate() + (data.validityDays || 7));
+    const validityStr = validityDate.toLocaleDateString('en-PK', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit' 
+    });
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Booking Date: ${bookingDate}`, margin, y);
+    doc.text(`Valid Until: ${validityStr}`, pageWidth - margin - 50, y);
+    
+    y += 15;
+
+    // Instructions Box
+    doc.setFillColor(254, 249, 195);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 36, 2, 2, 'F');
+    
+    doc.setTextColor(161, 98, 7);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Important Instructions:', margin + 5, y + 8);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const instructions = [
+      '1. Present this slip at the lab reception with your CNIC/ID',
+      '2. Quote your Discount ID to avail the discounted prices',
+      `3. This discount is valid for ${data.validityDays || 7} days only`,
+      '4. One-time use only - ID cannot be reused after redemption'
+    ];
+    
+    let instY = y + 14;
+    instructions.forEach(inst => {
+      doc.text(inst, margin + 5, instY);
+      instY += 5;
+    });
+    
+    y += 42;
+
+    // Footer
+    doc.setDrawColor(75, 0, 130);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 6;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(75, 0, 130);
+    doc.setFont('helvetica', 'bold');
+    doc.text('My Pak Labs', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
+    doc.text('www.mypaklabs.com', pageWidth - margin, y, { align: 'right' });
+
+    // Return base64 encoded PDF
+    return doc.output('datauristring').split(',')[1];
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    return null;
+  }
+};
 
 // Generate customer confirmation email HTML
 const generateCustomerConfirmationHtml = (data: NotificationRequest): { subject: string; html: string } | null => {
@@ -99,7 +357,7 @@ const generateCustomerConfirmationHtml = (data: NotificationRequest): { subject:
               </div>
               <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin: 20px 0;">
                 <p style="margin: 0; color: #92400e; font-size: 14px;">
-                  💡 <strong>Next Steps:</strong> Please visit the lab with your booking ID and a valid ID. Our team will assist you with the sample collection.
+                  💡 <strong>Next Steps:</strong> Please visit the lab with your booking ID and a valid ID. Your discount slip is attached to this email.
                 </p>
               </div>
               <a href="${baseUrl}/my-bookings" 
@@ -330,6 +588,18 @@ const handler = async (req: Request): Promise<Response> => {
     let html: string;
     const baseUrl = "https://mypaklab.lovable.app";
 
+    // Generate PDF for lab orders
+    let pdfBase64: string | null = null;
+    if (data.type === 'order' && data.tests && data.tests.length > 0) {
+      console.log("Generating PDF for lab order...");
+      pdfBase64 = generateLabBookingPDF(data);
+      if (pdfBase64) {
+        console.log("PDF generated successfully");
+      } else {
+        console.log("PDF generation failed or skipped");
+      }
+    }
+
     switch (data.type) {
       case "prescription":
         subject = "📋 New Prescription Uploaded - Action Required";
@@ -371,6 +641,14 @@ const handler = async (req: Request): Promise<Response> => {
                 <p style="margin: 5px 0 0; color: #1e293b; font-size: 18px; font-weight: 600;">${data.orderId}</p>
                 <p style="margin: 15px 0 0; color: #64748b; font-size: 14px;">Lab</p>
                 <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.labName || 'N/A'}</p>
+                ${data.testNames && data.testNames.length > 0 ? `
+                <p style="margin: 15px 0 0; color: #64748b; font-size: 14px;">Tests</p>
+                <p style="margin: 5px 0 0; color: #1e293b; font-size: 14px;">${data.testNames.join(', ')}</p>
+                ` : ''}
+                ${data.totalAmount ? `
+                <p style="margin: 15px 0 0; color: #64748b; font-size: 14px;">Total Amount</p>
+                <p style="margin: 5px 0 0; color: #22c55e; font-size: 18px; font-weight: 600;">Rs. ${data.totalAmount}</p>
+                ` : ''}
               </div>
               <a href="${baseUrl}/admin/orders" 
                  style="display: inline-block; background: #22c55e; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
@@ -541,6 +819,12 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
     `);
 
+    // Prepare attachments if PDF was generated
+    const attachments = pdfBase64 ? [{
+      filename: `MyPakLabs-Booking-${data.orderId}.pdf`,
+      content: pdfBase64,
+    }] : undefined;
+
     // Send admin notification email
     console.log("Sending admin email to:", data.adminEmail);
     const adminEmailResponse = await resend.emails.send({
@@ -548,6 +832,7 @@ const handler = async (req: Request): Promise<Response> => {
       to: [data.adminEmail],
       subject,
       html,
+      attachments,
     });
 
     console.log("Admin notification email sent:", adminEmailResponse);
@@ -563,6 +848,7 @@ const handler = async (req: Request): Promise<Response> => {
           to: [data.patientEmail],
           subject: customerEmail.subject,
           html: customerEmail.html,
+          attachments,
         });
         console.log("Customer confirmation email sent:", customerEmailResponse);
       }
@@ -571,7 +857,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ 
       success: true, 
       adminEmail: adminEmailResponse,
-      customerEmail: customerEmailResponse 
+      customerEmail: customerEmailResponse,
+      pdfGenerated: !!pdfBase64
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

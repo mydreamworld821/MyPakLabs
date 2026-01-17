@@ -24,8 +24,11 @@ import {
 } from "@/components/ui/table";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import WalletCard from "@/components/wallet/WalletCard";
+import WalletHistory from "@/components/wallet/WalletHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -51,6 +54,7 @@ import {
   Stethoscope,
   Download,
   Printer,
+  Wallet,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 
@@ -112,6 +116,32 @@ const statusConfig: Record<string, { icon: any; color: string; label: string }> 
     color: "bg-red-500/10 text-red-600 border-red-500/20",
     label: "Cancelled"
   }
+};
+
+// Wallet Section Component
+const WalletSection = () => {
+  const {
+    totalCredits,
+    totalPKR,
+    minimumCredits,
+    creditsPerBooking,
+    isEnabled,
+    transactions,
+    isLoading,
+  } = useWallet();
+
+  return (
+    <div className="space-y-6">
+      <WalletCard
+        totalCredits={totalCredits}
+        totalPKR={totalPKR}
+        minimumCredits={minimumCredits}
+        creditsPerBooking={creditsPerBooking}
+        isEnabled={isEnabled}
+      />
+      <WalletHistory transactions={transactions} isLoading={isLoading} />
+    </div>
+  );
 };
 
 const Profile = () => {
@@ -533,8 +563,12 @@ const Profile = () => {
 
             {/* Orders & History */}
             <div className="lg:col-span-2">
-              <Tabs defaultValue="orders" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs defaultValue="wallet" className="space-y-4">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="wallet" className="gap-2">
+                    <Wallet className="w-4 h-4" />
+                    <span className="hidden sm:inline">Wallet</span>
+                  </TabsTrigger>
                   <TabsTrigger value="orders" className="gap-2">
                     <ShoppingCart className="w-4 h-4" />
                     <span className="hidden sm:inline">Orders</span> ({orders.length})
@@ -548,6 +582,10 @@ const Profile = () => {
                     <span className="hidden sm:inline">Activity</span>
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="wallet">
+                  <WalletSection />
+                </TabsContent>
 
                 <TabsContent value="orders">
                   <Card>

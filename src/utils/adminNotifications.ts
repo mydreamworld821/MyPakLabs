@@ -89,6 +89,7 @@ interface MedicineOrderNotification extends BaseNotificationData {
   storeId?: string;
   orderId: string;
   pharmacyName?: string;
+  pharmacyPhone?: string;
   deliveryAddress?: string;
 }
 

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { 
   Store, 
   MapPin, 
@@ -209,10 +210,12 @@ const OrderMedicine = () => {
           }))
         : [];
       
+      const orderId = generateUniqueId();
+      
       const { error } = await supabase.from("medicine_orders").insert({
         user_id: user.id,
         store_id: store.id,
-        unique_id: generateUniqueId(),
+        unique_id: orderId,
         prescription_url: prescriptionUrl,
         medicines: validMedicines,
         delivery_address: deliveryAddress.trim(),
@@ -221,6 +224,31 @@ const OrderMedicine = () => {
       });
       
       if (error) throw error;
+      
+      // Get user profile for patient details
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("user_id", user.id)
+        .single();
+      
+      // Get user email
+      const { data: emailData } = await supabase.functions.invoke("send-admin-notification", {
+        body: { action: "get_user_email", userId: user.id }
+      });
+      
+      // Send notification to pharmacy, admin, and patient
+      await sendAdminEmailNotification({
+        type: "medicine_order",
+        orderId,
+        storeId: store.id,
+        patientName: profile?.full_name || "Customer",
+        patientPhone: profile?.phone || undefined,
+        patientEmail: emailData?.email || undefined,
+        pharmacyName: store.name,
+        pharmacyPhone: store.phone,
+        deliveryAddress: deliveryAddress.trim(),
+      });
       
       toast.success("Order placed successfully! The pharmacy will contact you shortly.");
       navigate("/my-bookings");

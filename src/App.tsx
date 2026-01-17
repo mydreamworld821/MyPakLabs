@@ -102,11 +102,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <NotificationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          {/* NotificationProvider must be INSIDE BrowserRouter because EmergencyFlashNotification uses useNavigate */}
+          <NotificationProvider>
             <ScrollToTop />
             <NotificationPermissionBanner />
             <Routes>
@@ -205,9 +206,9 @@ const App = () => (
             </Routes>
             <HealthChatbot />
             <NativeMobileWrapper />
-          </BrowserRouter>
-        </TooltipProvider>
-      </NotificationProvider>
+          </NotificationProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

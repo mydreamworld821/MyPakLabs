@@ -31,6 +31,7 @@ interface JobDetails {
   location_lat: number;
   location_lng: number;
   location_address: string | null;
+  house_address: string | null;
   city: string | null;
   services_needed: string[];
   urgency: string;
@@ -326,19 +327,44 @@ export default function NurseActiveJob() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2 p-3 bg-muted rounded-lg">
-              <MapPin className="w-5 h-5 text-primary mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm">{job.location_address || job.city || "Location captured"}</p>
-                <Button
-                  size="sm"
-                  variant="link"
-                  className="p-0 h-auto text-primary"
-                  onClick={openInMaps}
-                >
-                  Open in Google Maps <ExternalLink className="w-3 h-3 ml-1" />
-                </Button>
+            {/* Patient Address - Enhanced */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-blue-900 text-sm mb-1">Patient Address</p>
+                  
+                  {/* House Address - Primary */}
+                  {job.house_address && (
+                    <p className="text-sm text-blue-800 font-medium mb-1">
+                      🏠 {job.house_address}
+                    </p>
+                  )}
+                  
+                  {/* City */}
+                  {job.city && (
+                    <p className="text-sm text-blue-700">📍 {job.city}</p>
+                  )}
+                  
+                  {/* GPS Address */}
+                  {job.location_address && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      GPS: {job.location_address}
+                    </p>
+                  )}
+                </div>
               </div>
+              
+              {/* Google Maps Button */}
+              <Button
+                size="sm"
+                className="w-full mt-3 bg-blue-600 hover:bg-blue-700"
+                onClick={openInMaps}
+              >
+                <Navigation className="w-4 h-4 mr-2" />
+                Navigate with Google Maps
+                <ExternalLink className="w-3 h-3 ml-2" />
+              </Button>
             </div>
 
             <div className="flex flex-wrap gap-1">

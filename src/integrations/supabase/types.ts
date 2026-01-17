@@ -33,6 +33,7 @@ export type Database = {
           prescription_uploaded_at: string | null
           prescription_url: string | null
           status: Database["public"]["Enums"]["appointment_status"]
+          unique_id: string | null
           updated_at: string
         }
         Insert: {
@@ -53,6 +54,7 @@ export type Database = {
           prescription_uploaded_at?: string | null
           prescription_url?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
+          unique_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -73,6 +75,7 @@ export type Database = {
           prescription_uploaded_at?: string | null
           prescription_url?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
+          unique_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1331,6 +1334,7 @@ export type Database = {
           preferred_time: string
           service_needed: string
           status: string
+          unique_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1350,6 +1354,7 @@ export type Database = {
           preferred_time: string
           service_needed: string
           status?: string
+          unique_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1369,6 +1374,7 @@ export type Database = {
           preferred_time?: string
           service_needed?: string
           status?: string
+          unique_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2335,6 +2341,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_booking_unique_id: {
+        Args: { booking_type: string }
+        Returns: string
+      }
       get_next_order_sequence: { Args: { prefix: string }; Returns: number }
       get_user_role: {
         Args: { _user_id: string }

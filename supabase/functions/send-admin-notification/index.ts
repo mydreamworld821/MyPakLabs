@@ -39,6 +39,7 @@ interface NotificationRequest {
   orderId?: string;
   bookingId?: string;
   adminEmail: string;
+  adminNotes?: string;
   // Provider IDs for routing notifications
   doctorId?: string;
   nurseId?: string;
@@ -883,6 +884,49 @@ const generatePendingEmailHtml = (data: NotificationRequest): { subject: string;
     </div>
   `;
 
+  if (data.type === 'prescription') {
+    return {
+      subject: `⏳ Prescription Uploaded - Awaiting Review`,
+      html: `
+        <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">📋 Prescription Uploaded</h1>
+          </div>
+          <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+              Dear <strong>${data.patientName}</strong>,
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+              Your prescription has been uploaded successfully and is now under review by our medical team.
+            </p>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
+              ${data.labName ? `
+              <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Selected Lab</p>
+                <p style="margin: 5px 0 0; color: #22c55e; font-size: 18px; font-weight: 700;">${data.labName}</p>
+              </div>
+              ` : ''}
+              <div style="margin-bottom: 12px;">
+                <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Status</p>
+                <p style="margin: 5px 0 0; color: #f59e0b; font-size: 16px; font-weight: 600;">⏳ Pending Review</p>
+              </div>
+            </div>
+            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                ⏰ <strong>What's Next:</strong> Our team will review your prescription and confirm the tests. Once approved, you'll receive a confirmation email with your discount slip (PDF) containing your unique Discount ID.
+              </p>
+            </div>
+            <a href="${baseUrl}/my-bookings" 
+               style="display: block; background: #f59e0b; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
+              Track My Prescriptions
+            </a>
+            ${footer}
+          </div>
+        </div>
+      `
+    };
+  }
+
   if (data.type === 'doctor_appointment') {
     return {
       subject: `⏳ Appointment Request Received - Dr. ${data.doctorName}`,
@@ -1002,6 +1046,104 @@ const generateConfirmedEmailHtml = (data: NotificationRequest): { subject: strin
       </p>
     </div>
   `;
+
+  if (data.type === 'prescription') {
+    const testsHtml = data.tests?.map(t => `
+      <tr>
+        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">${t.name}</td>
+        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right; text-decoration: line-through; color: #94a3b8;">Rs. ${t.originalPrice.toLocaleString()}</td>
+        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right; color: #22c55e; font-weight: 600;">Rs. ${t.discountedPrice.toLocaleString()}</td>
+      </tr>
+    `).join('') || '';
+
+    return {
+      subject: `✅ Prescription Approved - Your Discount ID: ${data.orderId}`,
+      html: `
+        <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #22c55e, #10b981); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">✅ Prescription Approved!</h1>
+          </div>
+          <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+              Dear <strong>${data.patientName}</strong>,
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+              Great news! Your prescription has been reviewed and approved. Please find your discount details below.
+            </p>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
+              <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Your Discount ID</p>
+                <p style="margin: 5px 0 0; color: #22c55e; font-size: 24px; font-weight: 700; letter-spacing: 2px;">${data.orderId}</p>
+              </div>
+              <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Lab</p>
+                <p style="margin: 5px 0 0; color: #1e293b; font-size: 18px; font-weight: 600;">${data.labName || 'N/A'}</p>
+              </div>
+              
+              ${data.tests && data.tests.length > 0 ? `
+              <div style="margin-bottom: 16px;">
+                <p style="margin: 0 0 12px; color: #64748b; font-size: 12px; text-transform: uppercase;">Approved Tests</p>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                  <thead>
+                    <tr style="color: #64748b; font-size: 12px; text-transform: uppercase;">
+                      <th style="text-align: left; padding: 8px 0; border-bottom: 2px solid #e2e8f0;">Test</th>
+                      <th style="text-align: right; padding: 8px 0; border-bottom: 2px solid #e2e8f0;">Original</th>
+                      <th style="text-align: right; padding: 8px 0; border-bottom: 2px solid #e2e8f0;">Payable</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${testsHtml}
+                  </tbody>
+                </table>
+              </div>
+              ` : ''}
+              
+              <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin-top: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #64748b;">Original Total:</span>
+                  <span style="text-decoration: line-through; color: #94a3b8;">Rs. ${(data.totalOriginal || 0).toLocaleString()}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #16a34a; font-weight: 600;">You Save:</span>
+                  <span style="color: #16a34a; font-weight: 600;">Rs. ${(data.totalSavings || 0).toLocaleString()} (${data.discountPercentage || 0}% OFF)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 2px solid #22c55e;">
+                  <span style="font-size: 18px; font-weight: 700; color: #1e293b;">Total Payable:</span>
+                  <span style="font-size: 18px; font-weight: 700; color: #22c55e;">Rs. ${(data.totalDiscounted || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+            
+            ${data.adminNotes ? `
+            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                📝 <strong>Notes from Admin:</strong> ${data.adminNotes}
+              </p>
+            </div>
+            ` : ''}
+            
+            <div style="background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                📎 <strong>Attachment:</strong> Your discount slip is attached to this email. Please print or save it and present it at the lab along with your original prescription.
+              </p>
+            </div>
+            
+            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                ⏰ <strong>Important:</strong> This discount is valid for ${data.validityDays || 7} days only. Please visit the lab with your Discount ID and original prescription.
+              </p>
+            </div>
+            
+            <a href="${baseUrl}/my-bookings" 
+               style="display: block; background: #22c55e; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
+              View My Prescriptions
+            </a>
+            ${footer}
+          </div>
+        </div>
+      `
+    };
+  }
 
   if (data.type === 'doctor_appointment') {
     return {
@@ -1169,8 +1311,8 @@ const generateCustomerConfirmationHtml = (data: NotificationRequest): { subject:
     </div>
   `;
 
-  // For doctor/nurse bookings, use status-based emails
-  if (data.type === 'doctor_appointment' || data.type === 'nurse_booking') {
+  // For prescription, doctor/nurse bookings, use status-based emails
+  if (data.type === 'prescription' || data.type === 'doctor_appointment' || data.type === 'nurse_booking') {
     if (data.status === 'confirmed') {
       return generateConfirmedEmailHtml(data);
     }
@@ -1536,6 +1678,10 @@ const handler = async (req: Request): Promise<Response> => {
     if (data.type === 'order' && data.tests && data.tests.length > 0) {
       console.log("Generating PDF for lab order...");
       pdfBase64 = generateLabBookingPDF(data);
+    } else if (data.type === 'prescription' && isConfirmation && data.tests && data.tests.length > 0) {
+      console.log("Generating PDF for prescription confirmation...");
+      // Use lab booking PDF format for prescription confirmations
+      pdfBase64 = generateLabBookingPDF({...data, type: 'order'});
     } else if (data.type === 'doctor_appointment' && isConfirmation) {
       console.log("Generating PDF for doctor appointment confirmation...");
       pdfBase64 = generateDoctorAppointmentPDF(data);
@@ -1551,8 +1697,35 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate admin email content
     switch (data.type) {
       case "prescription":
-        subject = "📋 New Prescription Uploaded - Action Required";
-        html = `
+        subject = isConfirmation 
+          ? `✅ Prescription Approved - ${data.orderId}`
+          : "📋 New Prescription Uploaded - Action Required";
+        html = isConfirmation ? `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #22c55e, #10b981); padding: 30px; border-radius: 16px 16px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">✅ Prescription Approved</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Prescription for <strong>${data.patientName}</strong> has been approved with ${data.tests?.length || 0} test(s).
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <p style="margin: 0; color: #64748b; font-size: 14px;">Discount ID</p>
+                <p style="margin: 5px 0 0; color: #22c55e; font-size: 18px; font-weight: 600;">${data.orderId}</p>
+                <p style="margin: 15px 0 0; color: #64748b; font-size: 14px;">Lab</p>
+                <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.labName || 'N/A'}</p>
+                ${data.totalDiscounted ? `
+                <p style="margin: 15px 0 0; color: #64748b; font-size: 14px;">Total Payable</p>
+                <p style="margin: 5px 0 0; color: #22c55e; font-size: 18px; font-weight: 600;">Rs. ${data.totalDiscounted.toLocaleString()}</p>
+                ` : ''}
+              </div>
+              <a href="${baseUrl}/admin/prescriptions" 
+                 style="display: inline-block; background: #22c55e; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 10px;">
+                View Prescriptions
+              </a>
+            </div>
+          </div>
+        ` : `
           <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #0ea5e9, #6366f1); padding: 30px; border-radius: 16px 16px 0 0;">
               <h1 style="color: white; margin: 0; font-size: 24px;">New Prescription Uploaded</h1>
@@ -1561,6 +1734,16 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #334155; font-size: 16px; line-height: 1.6;">
                 <strong>${data.patientName}</strong> has uploaded a new prescription that requires your review.
               </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                ${data.labName ? `
+                <p style="margin: 0; color: #64748b; font-size: 14px;">Selected Lab</p>
+                <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 600;">${data.labName}</p>
+                ` : ''}
+                ${data.patientPhone ? `
+                <p style="margin: 15px 0 0; color: #64748b; font-size: 14px;">Patient Phone</p>
+                <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.patientPhone}</p>
+                ` : ''}
+              </div>
               <a href="${baseUrl}/admin/prescriptions" 
                  style="display: inline-block; background: #0ea5e9; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 10px;">
                 Review Prescription
@@ -1773,6 +1956,8 @@ const handler = async (req: Request): Promise<Response> => {
     let attachmentFilename = '';
     if (data.type === 'order') {
       attachmentFilename = `MyPakLabs-Booking-${data.orderId}.pdf`;
+    } else if (data.type === 'prescription' && isConfirmation) {
+      attachmentFilename = `MyPakLabs-Prescription-${data.orderId}.pdf`;
     } else if (data.type === 'doctor_appointment') {
       attachmentFilename = `MyPakLabs-Appointment-${data.bookingId || data.appointmentDate}.pdf`;
     } else if (data.type === 'nurse_booking') {

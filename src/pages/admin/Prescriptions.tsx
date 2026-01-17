@@ -239,6 +239,8 @@ const AdminPrescriptions = () => {
     setIsUpdating(true);
 
     try {
+      const uniqueId = status === "approved" ? await generateLabId() : null;
+      
       const updateData: any = {
         status: status,
         admin_notes: adminNotes || null,
@@ -247,8 +249,7 @@ const AdminPrescriptions = () => {
 
       if (status === "approved") {
         updateData.approved_tests = selectedTests;
-        // Generate unique ID when approving
-        updateData.unique_id = await generateLabId();
+        updateData.unique_id = uniqueId;
       }
 
       const { error } = await supabase
@@ -257,6 +258,46 @@ const AdminPrescriptions = () => {
         .eq("id", selectedPrescription.id);
 
       if (error) throw error;
+
+      // Send confirmation notification with PDF when approved
+      if (status === "approved" && selectedPrescription.profiles) {
+
+        // Calculate totals
+        const totalOriginal = selectedTests.reduce((sum, t) => sum + (t.original_price || t.price), 0);
+        const totalDiscounted = selectedTests.reduce((sum, t) => sum + t.price, 0);
+        const totalSavings = totalOriginal - totalDiscounted;
+        const discountPercentage = selectedPrescription.labs?.discount_percentage || 
+          (totalOriginal > 0 ? Math.round((totalSavings / totalOriginal) * 100) : 0);
+
+        try {
+          await supabase.functions.invoke("send-admin-notification", {
+            body: {
+              type: "prescription",
+              status: "confirmed",
+              patientName: selectedPrescription.profiles.full_name || "Patient",
+              patientPhone: selectedPrescription.profiles.phone || "",
+              patientCity: selectedPrescription.profiles.city,
+              labName: selectedPrescription.labs?.name || "Lab",
+              orderId: uniqueId,
+              adminEmail: "mhmmdaqib@gmail.com",
+              adminNotes: adminNotes,
+              tests: selectedTests.map(t => ({
+                name: t.test_name,
+                originalPrice: t.original_price || t.price,
+                discountedPrice: t.price,
+              })),
+              totalOriginal,
+              totalDiscounted,
+              totalSavings,
+              discountPercentage,
+              validityDays: 7,
+              bookingDate: format(new Date(), "dd MMM yyyy"),
+            },
+          });
+        } catch (notifError) {
+          console.error("Error sending confirmation notification:", notifError);
+        }
+      }
       
       toast.success(`Prescription ${status}${status === "approved" ? ` with ${selectedTests.length} test(s)` : ""}`);
       setIsDialogOpen(false);

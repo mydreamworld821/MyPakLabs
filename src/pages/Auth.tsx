@@ -607,7 +607,10 @@ const Auth = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone">Phone Number</Label>
+                      <Label htmlFor="signup-phone">
+                        Phone Number <span className="text-destructive">*</span>
+                        <span className="text-xs text-muted-foreground ml-1">(Used for all bookings)</span>
+                      </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -620,6 +623,9 @@ const Auth = () => {
                           required
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        This number will be used for all your bookings and shown on PDF slips
+                      </p>
                     </div>
 
                     <div className="space-y-2">

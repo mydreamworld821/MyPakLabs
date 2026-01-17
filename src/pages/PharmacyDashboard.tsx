@@ -93,7 +93,7 @@ const PharmacyDashboard = () => {
         .from("medical_stores")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (storeError) {
         if (storeError.code === "PGRST116") {

@@ -92,6 +92,13 @@ const NurseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string | null;
+    phone: string | null;
+    city: string | null;
+    age: number | null;
+    gender: string | null;
+  } | null>(null);
   const [bookingForm, setBookingForm] = useState({
     patient_name: "",
     patient_phone: "",
@@ -101,6 +108,39 @@ const NurseDetail = () => {
     preferred_time: "",
     notes: "",
   });
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) {
+        setUserProfile(null);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, phone, city, age, gender")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
+  // Pre-fill booking form when dialog opens
+  useEffect(() => {
+    if (showBookingDialog && userProfile) {
+      setBookingForm(prev => ({
+        ...prev,
+        patient_name: prev.patient_name || userProfile.full_name || "",
+        patient_phone: prev.patient_phone || userProfile.phone || "",
+      }));
+    }
+  }, [showBookingDialog, userProfile]);
 
   useEffect(() => {
     fetchNurse();
@@ -205,6 +245,9 @@ const NurseDetail = () => {
         patientName: bookingForm.patient_name,
         patientPhone: bookingForm.patient_phone,
         patientEmail: authUser?.email || undefined,
+        patientAge: userProfile?.age || undefined,
+        patientGender: userProfile?.gender || undefined,
+        patientCity: userProfile?.city || undefined,
         nurseName: nurse.full_name,
         serviceNeeded: bookingForm.service_needed,
         preferredDate: bookingForm.preferred_date,
@@ -228,9 +271,10 @@ const NurseDetail = () => {
 
       toast.success("Booking request submitted! The nurse will contact you shortly.");
       setShowBookingDialog(false);
+      // Reset form but keep profile-based data for next booking
       setBookingForm({
-        patient_name: "",
-        patient_phone: "",
+        patient_name: userProfile?.full_name || "",
+        patient_phone: userProfile?.phone || "",
         patient_address: "",
         service_needed: "",
         preferred_date: "",
@@ -639,7 +683,9 @@ const NurseDetail = () => {
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Phone Number *</Label>
+                          <Label className="text-xs">
+                            Phone Number * <span className="text-muted-foreground">(from your profile)</span>
+                          </Label>
                           <Input
                             value={bookingForm.patient_phone}
                             onChange={(e) => setBookingForm(prev => ({ ...prev, patient_phone: e.target.value }))}

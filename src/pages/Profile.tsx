@@ -261,6 +261,12 @@ const Profile = () => {
   const handleSaveProfile = async () => {
     if (!user) return;
     
+    // Validate required phone number
+    if (!editForm.phone.trim()) {
+      toast.error("Phone number is required for bookings");
+      return;
+    }
+    
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -433,13 +439,18 @@ const Profile = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="phone">
+                          Phone Number <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                           id="phone"
                           value={editForm.phone}
                           onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
                           placeholder="Enter your phone number"
                         />
+                        <p className="text-xs text-muted-foreground">
+                          This number is used for all bookings and shown on PDF slips
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>

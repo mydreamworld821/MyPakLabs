@@ -89,6 +89,35 @@ const DoctorDetail = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [consultationType, setConsultationType] = useState<"physical" | "online">("physical");
   const [isBooking, setIsBooking] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string | null;
+    phone: string | null;
+    city: string | null;
+    age: number | null;
+    gender: string | null;
+  } | null>(null);
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) {
+        setUserProfile(null);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, phone, city, age, gender")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     if (id) {
@@ -330,8 +359,12 @@ const DoctorDetail = () => {
       sendAdminEmailNotification({
         type: 'doctor_appointment',
         bookingId: uniqueId,
-        patientName: authUser.email?.split('@')[0] || 'Patient',
+        patientName: userProfile?.full_name || authUser.email?.split('@')[0] || 'Patient',
+        patientPhone: userProfile?.phone || undefined,
         patientEmail: authUser.email || undefined,
+        patientAge: userProfile?.age || undefined,
+        patientGender: userProfile?.gender || undefined,
+        patientCity: userProfile?.city || undefined,
         doctorName: doctor.full_name,
         appointmentDate: format(selectedDate, "dd MMM yyyy"),
         appointmentTime: selectedTime,

@@ -86,6 +86,7 @@ import AITools from "./pages/AITools";
 import Reviews from "./pages/Reviews";
 import PartnerRegistration from "./pages/PartnerRegistration";
 import AdminPartners from "./pages/admin/Partners";
+import AdminWallets from "./pages/admin/Wallets";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
@@ -197,6 +198,7 @@ const App = () => (
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
               <Route path="/admin/health-posts" element={<ProtectedRoute requireAdmin><AdminHealthPosts /></ProtectedRoute>} />
               <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
+              <Route path="/admin/wallets" element={<ProtectedRoute requireAdmin><AdminWallets /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />

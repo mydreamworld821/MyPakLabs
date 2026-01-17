@@ -35,6 +35,7 @@ import {
   Image,
   Palette,
   Zap,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +75,7 @@ const navItems = [
   { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { href: "/admin/partners", label: "Partners", icon: Building2 },
+  { href: "/admin/wallets", label: "Wallets", icon: Wallet },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
 import { toast } from "@/hooks/use-toast";
 import { format, startOfDay } from "date-fns";
 import { sendAdminEmailNotification } from "@/utils/adminNotifications";
@@ -80,6 +81,7 @@ const DoctorDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addCredits, creditsPerBooking, isEnabled: walletEnabled } = useWallet();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [hospitals, setHospitals] = useState<HospitalAffiliation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -336,6 +338,24 @@ const DoctorDetail = () => {
         consultationType,
         appointmentFee: fee,
       }).catch(console.error);
+
+      // Award wallet credits for booking
+      if (walletEnabled) {
+        try {
+          await addCredits.mutateAsync({
+            credits: creditsPerBooking,
+            serviceType: "doctor_appointment",
+            referenceId: uniqueId,
+            description: `Doctor appointment with Dr. ${doctor.full_name}`,
+          });
+          toast({
+            title: "🎉 Wallet Credits Earned!",
+            description: `You earned ${creditsPerBooking} wallet credits for this booking.`,
+          });
+        } catch (e) {
+          console.error("Failed to add wallet credits:", e);
+        }
+      }
 
       toast({
         title: "Appointment Booked!",

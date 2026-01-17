@@ -18,19 +18,30 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('Background message received:', payload);
   
+  const data = payload.data || {};
+  const isEmergency = data.type === 'emergency_request';
+  
   const notificationTitle = payload.notification?.title || 'New Notification';
   const notificationOptions = {
     body: payload.notification?.body || 'You have a new message',
     icon: '/images/mypaklabs-logo.png',
     badge: '/images/mypaklabs-logo.png',
-    tag: payload.data?.tag || 'default',
-    requireInteraction: true,
-    vibrate: [200, 100, 200, 100, 200],
-    data: payload.data || { url: '/' },
-    actions: [
-      { action: 'view', title: 'View' },
-      { action: 'dismiss', title: 'Dismiss' }
-    ]
+    tag: data.tag || data.requestId || 'default',
+    requireInteraction: isEmergency, // Keep emergency notifications visible
+    vibrate: isEmergency ? [500, 200, 500, 200, 500] : [200, 100, 200],
+    data: {
+      ...data,
+      url: data.url || (isEmergency ? '/nurse-emergency-feed' : '/'),
+    },
+    actions: isEmergency 
+      ? [
+          { action: 'accept', title: '✓ Accept' },
+          { action: 'view', title: 'View Details' }
+        ]
+      : [
+          { action: 'view', title: 'View' },
+          { action: 'dismiss', title: 'Dismiss' }
+        ]
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -41,19 +52,58 @@ self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event);
   event.notification.close();
   
-  const urlToOpen = event.notification.data?.url || '/';
+  const action = event.action;
+  const data = event.notification.data || {};
+  
+  // Determine URL based on action and notification type
+  let urlToOpen = data.url || '/';
+  
+  if (action === 'accept' && data.requestId) {
+    // For emergency accept, go to emergency feed with request ID
+    urlToOpen = `/nurse-emergency-feed?requestId=${data.requestId}`;
+  } else if (action === 'view') {
+    urlToOpen = data.url || '/';
+  } else if (action === 'dismiss') {
+    // Just close notification, don't open app
+    return;
+  }
+  
+  // Add emergency data to URL so the app can show the booking card
+  if (data.type === 'emergency_request' && data.requestId) {
+    const separator = urlToOpen.includes('?') ? '&' : '?';
+    urlToOpen = `${urlToOpen}${separator}showRequest=${data.requestId}`;
+  }
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if there's already a window open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          // Send message to the existing window
+          client.postMessage({
+            type: 'NOTIFICATION_CLICKED',
+            data: {
+              ...data,
+              action: action,
+            }
+          });
           client.navigate(urlToOpen);
           return client.focus();
         }
       }
+      // Open new window if none exists
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
     })
   );
+});
+
+// Handle messages from the main app
+self.addEventListener('message', (event) => {
+  console.log('Service worker received message:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

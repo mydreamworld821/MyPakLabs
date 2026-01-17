@@ -86,13 +86,13 @@ const OurPartners = () => {
                       href={partner.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-300"
+                      className="block hover:opacity-80 transition-all duration-300"
                     >
                       {partner.logo_url ? (
                         <img
                           src={partner.logo_url}
                           alt={partner.company_name}
-                          className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-[150px] object-contain"
+                          className="h-14 md:h-20 w-auto max-w-[160px] md:max-w-[200px] object-contain"
                         />
                       ) : (
                         <span className="text-lg font-semibold text-muted-foreground">
@@ -101,12 +101,12 @@ const OurPartners = () => {
                       )}
                     </a>
                   ) : (
-                    <div className="grayscale opacity-70">
+                    <div>
                       {partner.logo_url ? (
                         <img
                           src={partner.logo_url}
                           alt={partner.company_name}
-                          className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-[150px] object-contain"
+                          className="h-14 md:h-20 w-auto max-w-[160px] md:max-w-[200px] object-contain"
                         />
                       ) : (
                         <span className="text-lg font-semibold text-muted-foreground">

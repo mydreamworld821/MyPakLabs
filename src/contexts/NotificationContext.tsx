@@ -14,7 +14,9 @@ interface EmergencyNotification {
   createdAt: Date;
   // Additional data for InDrive-style notification
   patientName: string;
+  patientPhone: string | null;
   city: string | null;
+  locationAddress: string | null;
   services: string[];
   urgency: 'critical' | 'within_1_hour' | 'scheduled';
   distance: number | null;
@@ -155,6 +157,8 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     };
   }, [isApprovedNurse, nurseId, nurseLocation, nurseRadius, permission]);
 
+  // Service worker message listener is defined after handleNewEmergencyRequest
+
   const handleNewEmergencyRequest = useCallback((request: any) => {
     console.log('handleNewEmergencyRequest called:', request);
     
@@ -214,7 +218,9 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       navigateTo: '/nurse-emergency-feed',
       createdAt: new Date(),
       patientName: request.patient_name || 'Patient',
+      patientPhone: request.patient_phone || null,
       city: request.city,
+      locationAddress: request.location_address || null,
       services: request.services_needed || [],
       urgency: request.urgency,
       distance: distance ? Math.round(distance * 10) / 10 : null,
@@ -230,6 +236,34 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       return updated;
     });
   }, [permission, showNotification, playNotificationSound, nurseLocation, nurseRadius]);
+
+  // Listen for service worker messages (notification clicks from background)
+  useEffect(() => {
+    const handleServiceWorkerMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'NOTIFICATION_CLICKED' && event.data?.data?.requestId) {
+        const { data: request } = await supabase
+          .from('emergency_nursing_requests')
+          .select('*')
+          .eq('id', event.data.data.requestId)
+          .eq('status', 'live')
+          .single();
+        
+        if (request) {
+          handleNewEmergencyRequest(request);
+        }
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
+    };
+  }, [handleNewEmergencyRequest]);
 
   // Combined permission request that also enables FCM
   const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
@@ -262,17 +296,21 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       {children}
       
       {/* InDrive-Style Emergency Flash Notification */}
-      {currentNotification && (
+      {currentNotification && nurseId && (
         <EmergencyFlashNotification
           requestId={currentNotification.id}
           patientName={currentNotification.patientName}
+          patientPhone={currentNotification.patientPhone || undefined}
           city={currentNotification.city}
+          locationAddress={currentNotification.locationAddress}
           services={currentNotification.services}
           urgency={currentNotification.urgency}
           distance={currentNotification.distance}
           patientOfferPrice={currentNotification.patientOfferPrice}
+          nurseId={nurseId}
           onDismiss={() => dismissNotification(currentNotification.id)}
-          autoHideSeconds={30}
+          onAccepted={() => dismissNotification(currentNotification.id)}
+          autoHideSeconds={45}
         />
       )}
     </NotificationContext.Provider>

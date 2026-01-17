@@ -85,8 +85,53 @@ interface NotificationRequest {
   bookingDate?: string;
 }
 
-// MyPakLabs logo as base64 PNG
-const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAGpGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcDpDcmVhdGVEYXRlPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiB4bXA6TWV0YWRhdGFEYXRlPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiB4bXA6TW9kaWZ5RGF0ZT0iMjAyNC0wMS0xNVQxMjowMDowMCswNTowMCIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDowMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiBkYzpmb3JtYXQ9ImltYWdlL3BuZyIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyI+IDx4bXBNTTpIaXN0b3J5PiA8cmRmOlNlcT4gPHJkZjpsaSBzdEV2dDphY3Rpb249ImNyZWF0ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiBzdEV2dDp3aGVuPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiLz4gPC9yZGY6U2VxPiA8L3htcE1NOkhpc3Rvcnk+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+AAACkklEQVR4nO3dQW7CMBBA0XT/h+5dde1VJYiT2DNvieQQO/+TmATyx8/Pz+8P0N+vpy8A8xQAuAoAXAUArgLAf3cHwK+A/n58u4r+Mv0N7D/wu+6fJ+Be4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgO4A6Arg7gDoDuDuAOgO4O4A6A6ArgDuDoDuAO4OgO4A6A7g7gD4K+DuAOgO4O4A6A6ArgDuDoDuAO4OgO4A7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgKgO4A6A7g7gDoDuDuAOgO4O4A+Cvg7gDoDoDuAO4OgO4A6A6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6A/gq4OwC6A6A7gLsDoDuAuwOgK4C7A6A7gLsDoDuAuwOgOwC6Arg7ALoD/AUAAP//dHNLCwDU/5YAAAAASUVORK5CYII=";
+// MyPakLabs official logo as SVG path for jsPDF (professional vector format)
+// We'll draw the logo programmatically for crisp quality at any size
+const drawLogo = (doc: jsPDF, x: number, y: number, size: number = 30) => {
+  const scale = size / 100;
+  
+  // Draw wing-like medical symbol in purple
+  doc.setFillColor(75, 0, 130); // Indigo purple
+  
+  // Central figure (person with arms up)
+  doc.circle(x + 50 * scale, y + 15 * scale, 8 * scale, 'F');
+  
+  // Body
+  doc.setLineWidth(3 * scale);
+  doc.setDrawColor(75, 0, 130);
+  doc.line(x + 50 * scale, y + 23 * scale, x + 50 * scale, y + 50 * scale);
+  
+  // Arms spread wide
+  doc.line(x + 50 * scale, y + 30 * scale, x + 25 * scale, y + 20 * scale);
+  doc.line(x + 50 * scale, y + 30 * scale, x + 75 * scale, y + 20 * scale);
+  
+  // Left wing feathers
+  doc.setLineWidth(2 * scale);
+  for (let i = 0; i < 4; i++) {
+    doc.line(x + (25 - i * 5) * scale, y + (20 + i * 3) * scale, x + (10 - i * 3) * scale, y + (25 + i * 4) * scale);
+  }
+  
+  // Right wing feathers
+  for (let i = 0; i < 4; i++) {
+    doc.line(x + (75 + i * 5) * scale, y + (20 + i * 3) * scale, x + (90 + i * 3) * scale, y + (25 + i * 4) * scale);
+  }
+  
+  // Caduceus symbol below
+  doc.setLineWidth(2.5 * scale);
+  doc.line(x + 50 * scale, y + 50 * scale, x + 50 * scale, y + 80 * scale);
+  
+  // Curved snakes around staff
+  doc.setDrawColor(75, 0, 130);
+  doc.setLineWidth(1.5 * scale);
+  
+  // Stars above wings
+  const starY = y + 45 * scale;
+  const starPositions = [30, 40, 50, 60, 70];
+  starPositions.forEach(starX => {
+    doc.setFillColor(75, 0, 130);
+    doc.circle(x + starX * scale, starY, 1.5 * scale, 'F');
+  });
+};
 
 // Fetch provider email from database
 async function getProviderEmail(type: string, id: string): Promise<string | null> {
@@ -158,11 +203,11 @@ const generateLabBookingPDF = (data: NotificationRequest): string | null => {
     const margin = 15;
     let y = 10;
 
-    // Add logo
+    // Draw logo
     try {
-      doc.addImage(LOGO_BASE64, 'PNG', margin, y, 22, 22);
+      drawLogo(doc, margin - 5, y - 5, 28);
     } catch (e) {
-      console.log('Logo could not be loaded in PDF');
+      console.log('Logo could not be drawn in PDF');
     }
 
     // Company Name
@@ -371,242 +416,317 @@ const generateLabBookingPDF = (data: NotificationRequest): string | null => {
   }
 };
 
-// Generate PDF for Doctor Appointment
+// Generate PDF for Doctor Appointment - Professional Design
 const generateDoctorAppointmentPDF = (data: NotificationRequest): string | null => {
   if (data.type !== 'doctor_appointment') return null;
 
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
-    let y = 10;
+    let y = 12;
 
-    // Add logo
-    try {
-      doc.addImage(LOGO_BASE64, 'PNG', margin, y, 22, 22);
-    } catch (e) {
-      console.log('Logo could not be loaded in PDF');
-    }
+    // === PROFESSIONAL HEADER WITH GRADIENT EFFECT ===
+    // Top accent bar
+    doc.setFillColor(75, 0, 130);
+    doc.rect(0, 0, pageWidth, 4, 'F');
+    
+    y = 15;
 
-    // Company Name
+    // Company Name - Centered with tagline
     doc.setTextColor(75, 0, 130);
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
-    doc.text('My Pak Labs', pageWidth / 2, y + 12, { align: 'center' });
-
-    // Contact Details
+    doc.text('MyPakLabs', pageWidth / 2, y + 8, { align: 'center' });
+    
+    // Tagline
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(107, 114, 128);
+    doc.text('Committed to Diagnostic Excellence', pageWidth / 2, y + 16, { align: 'center' });
+    
+    y += 24;
+    
+    // Contact bar
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+    
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(75, 85, 99);
-    doc.text('Web: www.mypaklabs.com  |  Phone: 0316-7523434', pageWidth / 2, y + 18, { align: 'center' });
-    doc.text('Email: support@mypaklabs.com  |  Address: Islamabad, Pakistan', pageWidth / 2, y + 24, { align: 'center' });
+    doc.text('📞 0316-7523434', margin + 10, y + 8);
+    doc.text('📧 support@mypaklabs.com', pageWidth / 2, y + 8, { align: 'center' });
+    doc.text('🌐 www.mypaklabs.com', pageWidth - margin - 10, y + 8, { align: 'right' });
+    
+    y += 18;
 
-    y += 32;
-
-    // Title
-    doc.setFillColor(139, 92, 246);
-    doc.rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+    // === TITLE BANNER ===
+    doc.setFillColor(75, 0, 130);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 16, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('DOCTOR APPOINTMENT CONFIRMATION', pageWidth / 2, y + 8, { align: 'center' });
+    doc.text('DOCTOR APPOINTMENT CONFIRMATION', pageWidth / 2, y + 11, { align: 'center' });
 
-    y += 20;
+    y += 24;
 
-    // Booking ID
+    // Booking ID Badge
     if (data.bookingId) {
-      doc.setTextColor(75, 0, 130);
-      doc.setFontSize(12);
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(margin, y, pageWidth - 2 * margin, 14, 2, 2, 'F');
+      doc.setDrawColor(16, 185, 129);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, y, pageWidth - 2 * margin, 14, 2, 2, 'S');
+      
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Booking ID: ${data.bookingId}`, pageWidth / 2, y, { align: 'center' });
-      y += 10;
+      doc.text(`✓ Booking Confirmed  |  Reference: ${data.bookingId}`, pageWidth / 2, y + 9, { align: 'center' });
+      y += 20;
     }
 
-    // Separator
-    doc.setDrawColor(200, 200, 200);
+    // === PATIENT INFORMATION CARD ===
+    doc.setFillColor(249, 250, 251);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 45, 3, 3, 'F');
+    doc.setDrawColor(229, 231, 235);
     doc.setLineWidth(0.3);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 10;
-
-    // Patient Section
-    doc.setFillColor(243, 244, 246);
-    doc.rect(margin, y, pageWidth - 2 * margin, 35, 'F');
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 45, 3, 3, 'S');
     
-    doc.setTextColor(75, 0, 130);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PATIENT DETAILS', margin + 5, y + 8);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    const patientCol1 = margin + 5;
-    const patientCol2 = pageWidth / 2 + 5;
-    
-    y += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Name:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientName || 'N/A', patientCol1 + 25, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Phone:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientPhone || 'N/A', patientCol2 + 25, y);
-    
-    y += 8;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Age:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientAge ? `${data.patientAge} Years` : 'N/A', patientCol1 + 25, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Gender:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientGender || 'N/A', patientCol2 + 25, y);
-    
-    y += 8;
-    if (data.patientCity) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('City:', patientCol1, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(data.patientCity, patientCol1 + 25, y);
-    }
-
-    y += 15;
-
-    // Doctor Section
-    doc.setFillColor(139, 92, 246, 0.1);
-    doc.rect(margin, y, pageWidth - 2 * margin, 40, 'F');
-    
-    doc.setTextColor(139, 92, 246);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DOCTOR DETAILS', margin + 5, y + 8);
-    
-    y += 15;
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Doctor:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(139, 92, 246);
-    doc.text(`Dr. ${data.doctorName || 'N/A'}`, patientCol1 + 25, y);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Phone:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.doctorPhone || 'N/A', patientCol2 + 25, y);
-    
-    y += 8;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Qualification:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.doctorQualification || 'N/A', patientCol1 + 35, y);
-    
-    y += 8;
-    if (data.doctorSpecialization) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Specialization:', patientCol1, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(data.doctorSpecialization, patientCol1 + 38, y);
-    }
-    
-    y += 8;
-    if (data.clinicName) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Clinic:', patientCol1, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(data.clinicName, patientCol1 + 25, y);
-    }
-
-    y += 15;
-
-    // Appointment Details Table
+    // Section header
     doc.setFillColor(75, 0, 130);
-    doc.rect(margin, y, pageWidth - 2 * margin, 10, 'F');
-    
+    doc.roundedRect(margin, y, 100, 8, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('  PATIENT INFORMATION', margin + 3, y + 6);
+    
+    y += 14;
+    const col1 = margin + 8;
+    const col2 = pageWidth / 2 + 5;
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Full Name:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientName || 'N/A', col1 + 28, y);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Contact:', col2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientPhone || 'N/A', col2 + 22, y);
+    
+    y += 9;
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Age:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientAge ? `${data.patientAge} Years` : 'N/A', col1 + 28, y);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Gender:', col2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientGender || 'N/A', col2 + 22, y);
+    
+    y += 9;
+    if (data.patientCity) {
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.text('City:', col1, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      doc.text(data.patientCity, col1 + 28, y);
+    }
+
+    y += 18;
+
+    // === DOCTOR INFORMATION CARD ===
+    doc.setFillColor(245, 243, 255);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'F');
+    doc.setDrawColor(196, 181, 253);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'S');
+    
+    // Section header
+    doc.setFillColor(139, 92, 246);
+    doc.roundedRect(margin, y, 100, 8, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('  DOCTOR INFORMATION', margin + 3, y + 6);
+    
+    y += 14;
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Doctor:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(139, 92, 246);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Dr. ${data.doctorName || 'N/A'}`, col1 + 28, y);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Phone:', col2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.doctorPhone || 'N/A', col2 + 22, y);
+    
+    y += 9;
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Qualification:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text((data.doctorQualification || 'N/A').toUpperCase(), col1 + 32, y);
+    
+    if (data.doctorSpecialization) {
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Specialization:', col2, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      doc.text(data.doctorSpecialization, col2 + 32, y);
+    }
+    
+    y += 9;
+    if (data.clinicName) {
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Clinic:', col1, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      const clinicText = (data.clinicName || '').length > 50 ? data.clinicName.substring(0, 50) + '...' : data.clinicName;
+      doc.text(clinicText, col1 + 28, y);
+    }
+    
+    if (data.clinicAddress) {
+      y += 9;
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Address:', col1, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      const addressText = (data.clinicAddress || '').length > 55 ? data.clinicAddress.substring(0, 55) + '...' : data.clinicAddress;
+      doc.text(addressText, col1 + 28, y);
+    }
+
+    y += 18;
+
+    // === APPOINTMENT DETAILS TABLE ===
+    doc.setFillColor(75, 0, 130);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 10, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text('APPOINTMENT DETAILS', pageWidth / 2, y + 7, { align: 'center' });
     
-    y += 16;
+    y += 14;
+    
+    // Details grid
+    const gridWidth = (pageWidth - 2 * margin) / 4;
+    
+    // Row 1
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, gridWidth * 2, 16, 'F');
+    doc.setFillColor(243, 244, 246);
+    doc.rect(margin + gridWidth * 2, y, gridWidth * 2, 16, 'F');
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Date', margin + 5, y + 6);
+    doc.setTextColor(17, 24, 39);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.appointmentDate || 'N/A', margin + 5, y + 13);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Time', margin + gridWidth * 2 + 5, y + 6);
+    doc.setTextColor(17, 24, 39);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.appointmentTime || 'N/A', margin + gridWidth * 2 + 5, y + 13);
+    
+    y += 18;
+    
+    // Row 2
+    doc.setFillColor(243, 244, 246);
+    doc.rect(margin, y, gridWidth * 2, 16, 'F');
+    doc.setFillColor(236, 253, 245);
+    doc.rect(margin + gridWidth * 2, y, gridWidth * 2, 16, 'F');
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Consultation Type', margin + 5, y + 6);
+    doc.setTextColor(139, 92, 246);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text((data.consultationType || 'Physical').toUpperCase(), margin + 5, y + 13);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Consultation Fee', margin + gridWidth * 2 + 5, y + 6);
+    doc.setTextColor(5, 150, 105);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Rs. ${data.appointmentFee?.toLocaleString() || 'N/A'}`, margin + gridWidth * 2 + 5, y + 13);
 
-    // Appointment info rows
-    const detailsStartY = y;
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.appointmentDate || 'N/A', patientCol1 + 30, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Time:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.appointmentTime || 'N/A', patientCol2 + 25, y);
-    
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Consultation Type:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text((data.consultationType || 'Physical').toUpperCase(), patientCol1 + 50, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Fee:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(22, 163, 74);
-    doc.text(`Rs. ${data.appointmentFee?.toLocaleString() || 'N/A'}`, patientCol2 + 25, y);
+    y += 24;
 
-    y += 20;
-
-    // Instructions Box
-    doc.setFillColor(254, 249, 195);
-    doc.roundedRect(margin, y, pageWidth - 2 * margin, 40, 2, 2, 'F');
+    // === IMPORTANT INSTRUCTIONS ===
+    doc.setFillColor(254, 252, 232);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 48, 3, 3, 'F');
+    doc.setDrawColor(250, 204, 21);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 48, 3, 3, 'S');
     
     doc.setTextColor(161, 98, 7);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Important Instructions:', margin + 5, y + 8);
+    doc.text('⚠ Important Instructions', margin + 8, y + 10);
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const doctorInstructions = [
-      '1. Please arrive 10-15 minutes before your scheduled appointment time',
-      '2. Bring this slip and a valid CNIC/ID for verification',
-      '3. Bring any previous medical records or prescriptions',
-      '4. In case of cancellation, please inform at least 2 hours in advance',
-      '5. Payment is due at the time of consultation'
+    doc.setTextColor(133, 77, 14);
+    const instructions = [
+      '• Please arrive 10-15 minutes before your scheduled appointment time',
+      '• Bring this confirmation slip and a valid CNIC/ID for verification',
+      '• Carry any previous medical records, prescriptions, or test reports',
+      '• For cancellation or rescheduling, please inform at least 2 hours in advance',
+      '• Payment is due at the time of consultation'
     ];
     
-    let instY = y + 15;
-    doctorInstructions.forEach(inst => {
-      doc.text(inst, margin + 5, instY);
-      instY += 5;
+    let instY = y + 18;
+    instructions.forEach(inst => {
+      doc.text(inst, margin + 8, instY);
+      instY += 6;
     });
 
-    y += 50;
+    y += 56;
 
-    // Footer
-    doc.setDrawColor(75, 0, 130);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 6;
+    // === FOOTER ===
+    doc.setFillColor(75, 0, 130);
+    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
     
-    doc.setFontSize(10);
-    doc.setTextColor(75, 0, 130);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('My Pak Labs', margin, y);
+    doc.text('MyPakLabs - Trusted Healthcare Services', pageWidth / 2, pageHeight - 12, { align: 'center' });
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(107, 114, 128);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
-    doc.text('www.mypaklabs.com', pageWidth - margin, y, { align: 'right' });
+    doc.text(`Generated: ${new Date().toLocaleString('en-PK')}  |  www.mypaklabs.com`, pageWidth / 2, pageHeight - 6, { align: 'center' });
 
     return doc.output('datauristring').split(',')[1];
   } catch (error) {
@@ -615,194 +735,259 @@ const generateDoctorAppointmentPDF = (data: NotificationRequest): string | null 
   }
 };
 
-// Generate PDF for Nurse Booking
+// Generate PDF for Nurse Booking - Professional Design
 const generateNurseBookingPDF = (data: NotificationRequest): string | null => {
   if (data.type !== 'nurse_booking') return null;
 
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
-    let y = 10;
+    let y = 12;
 
-    // Add logo
-    try {
-      doc.addImage(LOGO_BASE64, 'PNG', margin, y, 22, 22);
-    } catch (e) {
-      console.log('Logo could not be loaded in PDF');
-    }
+    // === PROFESSIONAL HEADER ===
+    // Top accent bar - Pink theme for nursing
+    doc.setFillColor(236, 72, 153);
+    doc.rect(0, 0, pageWidth, 4, 'F');
+    
+    y = 15;
 
     // Company Name
     doc.setTextColor(75, 0, 130);
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
-    doc.text('My Pak Labs', pageWidth / 2, y + 12, { align: 'center' });
-
-    // Contact Details
+    doc.text('MyPakLabs', pageWidth / 2, y + 8, { align: 'center' });
+    
+    // Tagline
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(107, 114, 128);
+    doc.text('Committed to Diagnostic Excellence', pageWidth / 2, y + 16, { align: 'center' });
+    
+    y += 24;
+    
+    // Contact bar
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+    
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(75, 85, 99);
-    doc.text('Web: www.mypaklabs.com  |  Phone: 0316-7523434', pageWidth / 2, y + 18, { align: 'center' });
-    doc.text('Email: support@mypaklabs.com  |  Address: Islamabad, Pakistan', pageWidth / 2, y + 24, { align: 'center' });
+    doc.text('📞 0316-7523434', margin + 10, y + 8);
+    doc.text('📧 support@mypaklabs.com', pageWidth / 2, y + 8, { align: 'center' });
+    doc.text('🌐 www.mypaklabs.com', pageWidth - margin - 10, y + 8, { align: 'right' });
+    
+    y += 18;
 
-    y += 32;
-
-    // Title
+    // === TITLE BANNER ===
     doc.setFillColor(236, 72, 153);
-    doc.rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 16, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('HOME NURSING SERVICE CONFIRMATION', pageWidth / 2, y + 8, { align: 'center' });
+    doc.text('HOME NURSING SERVICE CONFIRMATION', pageWidth / 2, y + 11, { align: 'center' });
 
-    y += 20;
+    y += 24;
 
-    // Booking ID
+    // Booking ID Badge
     if (data.bookingId) {
-      doc.setTextColor(236, 72, 153);
-      doc.setFontSize(12);
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(margin, y, pageWidth - 2 * margin, 14, 2, 2, 'F');
+      doc.setDrawColor(16, 185, 129);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, y, pageWidth - 2 * margin, 14, 2, 2, 'S');
+      
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Booking ID: ${data.bookingId}`, pageWidth / 2, y, { align: 'center' });
-      y += 10;
+      doc.text(`✓ Booking Confirmed  |  Reference: ${data.bookingId}`, pageWidth / 2, y + 9, { align: 'center' });
+      y += 20;
     }
 
-    // Separator
-    doc.setDrawColor(200, 200, 200);
+    // === PATIENT INFORMATION CARD ===
+    doc.setFillColor(249, 250, 251);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'F');
+    doc.setDrawColor(229, 231, 235);
     doc.setLineWidth(0.3);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 10;
-
-    // Patient Section
-    doc.setFillColor(243, 244, 246);
-    doc.rect(margin, y, pageWidth - 2 * margin, 45, 'F');
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'S');
     
-    doc.setTextColor(236, 72, 153);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PATIENT DETAILS', margin + 5, y + 8);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    
-    const patientCol1 = margin + 5;
-    const patientCol2 = pageWidth / 2 + 5;
-    
-    y += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Name:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientName || 'N/A', patientCol1 + 25, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Phone:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientPhone || 'N/A', patientCol2 + 25, y);
-    
-    y += 8;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Age:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientAge ? `${data.patientAge} Years` : 'N/A', patientCol1 + 25, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Gender:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.patientGender || 'N/A', patientCol2 + 25, y);
-    
-    y += 8;
-    if (data.patientAddress) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Address:', patientCol1, y);
-      doc.setFont('helvetica', 'normal');
-      const addressText = data.patientAddress.length > 60 
-        ? data.patientAddress.substring(0, 60) + '...' 
-        : data.patientAddress;
-      doc.text(addressText, patientCol1 + 30, y);
-    }
-
-    y += 20;
-
-    // Nurse Section
-    doc.setFillColor(236, 72, 153, 0.1);
-    doc.rect(margin, y, pageWidth - 2 * margin, 35, 'F');
-    
-    doc.setTextColor(236, 72, 153);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('NURSE DETAILS', margin + 5, y + 8);
-    
-    y += 15;
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Nurse:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(236, 72, 153);
-    doc.text(data.nurseName || 'N/A', patientCol1 + 25, y);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Phone:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.nursePhone || 'N/A', patientCol2 + 25, y);
-    
-    y += 8;
-    if (data.nurseQualification) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Qualification:', patientCol1, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(data.nurseQualification, patientCol1 + 35, y);
-    }
-
-    y += 15;
-
-    // Service Details Table
+    // Section header
     doc.setFillColor(75, 0, 130);
-    doc.rect(margin, y, pageWidth - 2 * margin, 10, 'F');
-    
+    doc.roundedRect(margin, y, 100, 8, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('  PATIENT INFORMATION', margin + 3, y + 6);
+    
+    y += 14;
+    const col1 = margin + 8;
+    const col2 = pageWidth / 2 + 5;
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Full Name:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientName || 'N/A', col1 + 28, y);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Contact:', col2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientPhone || 'N/A', col2 + 22, y);
+    
+    y += 9;
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Age:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientAge ? `${data.patientAge} Years` : 'N/A', col1 + 28, y);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Gender:', col2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.patientGender || 'N/A', col2 + 22, y);
+    
+    y += 9;
+    if (data.patientAddress) {
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Address:', col1, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      const addressText = (data.patientAddress || '').length > 60 ? data.patientAddress.substring(0, 60) + '...' : data.patientAddress;
+      doc.text(addressText, col1 + 28, y);
+    }
+
+    y += 18;
+
+    // === NURSE INFORMATION CARD ===
+    doc.setFillColor(253, 242, 248);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 40, 3, 3, 'F');
+    doc.setDrawColor(251, 207, 232);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 40, 3, 3, 'S');
+    
+    // Section header
+    doc.setFillColor(236, 72, 153);
+    doc.roundedRect(margin, y, 100, 8, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('  NURSE INFORMATION', margin + 3, y + 6);
+    
+    y += 14;
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Nurse:', col1, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(236, 72, 153);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.nurseName || 'N/A', col1 + 28, y);
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Phone:', col2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(17, 24, 39);
+    doc.text(data.nursePhone || 'N/A', col2 + 22, y);
+    
+    y += 9;
+    if (data.nurseQualification) {
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Qualification:', col1, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      doc.text(data.nurseQualification, col1 + 32, y);
+    }
+
+    y += 18;
+
+    // === SERVICE DETAILS TABLE ===
+    doc.setFillColor(236, 72, 153);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 10, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text('SERVICE DETAILS', pageWidth / 2, y + 7, { align: 'center' });
     
-    y += 16;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
+    y += 14;
     
+    // Details grid
+    const gridWidth = (pageWidth - 2 * margin) / 4;
+    
+    // Row 1
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, pageWidth - 2 * margin, 16, 'F');
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Service:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
+    doc.text('Service Required', margin + 5, y + 6);
     doc.setTextColor(236, 72, 153);
-    doc.text(data.serviceNeeded || 'N/A', patientCol1 + 30, y);
-    
-    y += 10;
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Date:', patientCol1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.preferredDate || 'N/A', patientCol1 + 30, y);
+    doc.text(data.serviceNeeded || 'N/A', margin + 5, y + 13);
     
+    y += 18;
+    
+    // Row 2
+    doc.setFillColor(243, 244, 246);
+    doc.rect(margin, y, gridWidth * 2, 16, 'F');
+    doc.setFillColor(236, 253, 245);
+    doc.rect(margin + gridWidth * 2, y, gridWidth * 2, 16, 'F');
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Time:', patientCol2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.preferredTime || 'N/A', patientCol2 + 25, y);
+    doc.text('Date', margin + 5, y + 6);
+    doc.setTextColor(17, 24, 39);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.preferredDate || 'N/A', margin + 5, y + 13);
     
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Time', margin + gridWidth * 2 + 5, y + 6);
+    doc.setTextColor(17, 24, 39);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.preferredTime || 'N/A', margin + gridWidth * 2 + 5, y + 13);
+    
+    y += 18;
+    
+    // Fee row if available
     if (data.serviceFee) {
-      y += 10;
+      doc.setFillColor(236, 253, 245);
+      doc.rect(margin, y, pageWidth - 2 * margin, 16, 'F');
+      
+      doc.setTextColor(75, 85, 99);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.text('Fee:', patientCol1, y);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(22, 163, 74);
-      doc.text(`Rs. ${data.serviceFee.toLocaleString()}`, patientCol1 + 30, y);
+      doc.text('Service Fee', margin + 5, y + 6);
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Rs. ${data.serviceFee.toLocaleString()}`, margin + 5, y + 13);
+      
+      y += 20;
+    } else {
+      y += 4;
     }
 
-    // Nurse Notes Section
+    // Nurse Notes if available
     if (data.nurseNotes) {
-      y += 15;
       doc.setFillColor(254, 243, 199);
-      doc.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
+      doc.roundedRect(margin, y, pageWidth - 2 * margin, 22, 2, 2, 'F');
       
       doc.setTextColor(180, 83, 9);
       doc.setFontSize(9);
@@ -811,58 +996,53 @@ const generateNurseBookingPDF = (data: NotificationRequest): string | null => {
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      const notesText = data.nurseNotes.length > 150 
-        ? data.nurseNotes.substring(0, 150) + '...' 
-        : data.nurseNotes;
-      doc.text(notesText, margin + 5, y + 16, { maxWidth: pageWidth - 2 * margin - 10 });
+      const notesText = (data.nurseNotes || '').length > 100 ? data.nurseNotes.substring(0, 100) + '...' : data.nurseNotes;
+      doc.text(notesText, margin + 5, y + 16);
       
-      y += 30;
-    } else {
-      y += 15;
+      y += 28;
     }
 
-    // Instructions Box
-    doc.setFillColor(254, 249, 195);
-    doc.roundedRect(margin, y, pageWidth - 2 * margin, 45, 2, 2, 'F');
+    // === IMPORTANT INSTRUCTIONS ===
+    doc.setFillColor(254, 252, 232);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'F');
+    doc.setDrawColor(250, 204, 21);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'S');
     
     doc.setTextColor(161, 98, 7);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Important Instructions:', margin + 5, y + 8);
+    doc.text('⚠ Important Instructions', margin + 8, y + 10);
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const nurseInstructions = [
-      '1. Please ensure someone is available to receive the nurse at the scheduled time',
-      '2. Keep this slip ready for verification',
-      '3. Ensure the patient area is clean and accessible',
-      '4. In case of cancellation, please inform at least 2 hours in advance',
-      '5. Payment is due upon completion of service',
-      '6. For emergencies, contact our helpline: 0316-7523434'
+    doc.setTextColor(133, 77, 14);
+    const instructions = [
+      '• Ensure someone is available at the address to receive the nurse',
+      '• Keep this confirmation slip ready for verification',
+      '• Make sure the patient area is clean and accessible',
+      '• For cancellation or rescheduling, please inform at least 2 hours in advance',
+      '• Payment is due upon completion of service',
+      '• For emergencies, contact our helpline: 0316-7523434'
     ];
     
-    let instY = y + 15;
-    nurseInstructions.forEach(inst => {
-      doc.text(inst, margin + 5, instY);
+    let instY = y + 18;
+    instructions.forEach(inst => {
+      doc.text(inst, margin + 8, instY);
       instY += 5;
     });
 
-    y += 55;
-
-    // Footer
-    doc.setDrawColor(75, 0, 130);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 6;
+    // === FOOTER ===
+    doc.setFillColor(236, 72, 153);
+    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
     
-    doc.setFontSize(10);
-    doc.setTextColor(75, 0, 130);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('My Pak Labs', margin, y);
+    doc.text('MyPakLabs - Trusted Healthcare Services', pageWidth / 2, pageHeight - 12, { align: 'center' });
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(107, 114, 128);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
-    doc.text('www.mypaklabs.com', pageWidth - margin, y, { align: 'right' });
+    doc.text(`Generated: ${new Date().toLocaleString('en-PK')}  |  www.mypaklabs.com`, pageWidth / 2, pageHeight - 6, { align: 'center' });
 
     return doc.output('datauristring').split(',')[1];
   } catch (error) {

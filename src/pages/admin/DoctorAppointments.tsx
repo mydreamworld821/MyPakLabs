@@ -195,15 +195,22 @@ const AdminDoctorAppointments = () => {
           .eq("user_id", selectedAppointment.patient_id)
           .maybeSingle();
         
-        const { data: authUser } = await supabase.auth.admin.getUserById(selectedAppointment.patient_id);
+        // Get patient email from auth using edge function
+        const { data: emailData } = await supabase.functions.invoke('send-admin-notification', {
+          body: { 
+            action: 'get_user_email',
+            userId: selectedAppointment.patient_id 
+          }
+        });
+        const patientEmail = emailData?.email;
         
-        sendAdminEmailNotification({
+        await sendAdminEmailNotification({
           type: 'doctor_appointment',
           status: 'confirmed',
           bookingId: id.slice(0, 8).toUpperCase(),
           patientName: patientProfile?.full_name || selectedAppointment.profiles?.full_name || 'Patient',
           patientPhone: patientProfile?.phone || selectedAppointment.profiles?.phone || undefined,
-          patientEmail: authUser?.user?.email || undefined,
+          patientEmail: patientEmail || undefined,
           patientAge: patientProfile?.age || undefined,
           patientGender: patientProfile?.gender || undefined,
           patientCity: patientProfile?.city || undefined,
@@ -213,11 +220,13 @@ const AdminDoctorAppointments = () => {
           doctorSpecialization: selectedAppointment.doctors?.doctor_specializations?.name || undefined,
           doctorPhone: selectedAppointment.doctors?.phone || undefined,
           clinicName: selectedAppointment.doctors?.clinic_name || undefined,
+          clinicAddress: undefined,
           appointmentDate: format(new Date(selectedAppointment.appointment_date), "dd MMM yyyy"),
           appointmentTime: selectedAppointment.appointment_time,
           consultationType: selectedAppointment.consultation_type,
           appointmentFee: selectedAppointment.fee,
-        }).catch(console.error);
+        });
+        console.log('Confirmation notification sent for doctor appointment');
       }
 
       toast.success(`Appointment ${newStatus}`);

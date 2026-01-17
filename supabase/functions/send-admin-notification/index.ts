@@ -1664,7 +1664,35 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const data: NotificationRequest = await req.json();
+    const body = await req.json();
+    
+    // Handle special action to get user email
+    if (body.action === 'get_user_email' && body.userId) {
+      console.log("Getting user email for:", body.userId);
+      try {
+        const { data: userData, error } = await supabase.auth.admin.getUserById(body.userId);
+        if (error) {
+          console.error("Error getting user:", error);
+          return new Response(
+            JSON.stringify({ email: null, error: error.message }),
+            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        console.log("User email found:", userData?.user?.email);
+        return new Response(
+          JSON.stringify({ email: userData?.user?.email || null }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      } catch (err) {
+        console.error("Exception getting user:", err);
+        return new Response(
+          JSON.stringify({ email: null }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    }
+    
+    const data: NotificationRequest = body;
     console.log("Notification request:", data);
 
     const isConfirmation = data.status === 'confirmed';

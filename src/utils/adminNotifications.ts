@@ -14,6 +14,15 @@ interface BaseNotificationData {
   patientName: string;
   patientPhone?: string;
   patientEmail?: string; // Customer email for confirmation
+  patientAge?: number;
+  patientGender?: string;
+  patientCity?: string;
+}
+
+interface TestDetail {
+  name: string;
+  originalPrice: number;
+  discountedPrice: number;
 }
 
 interface PrescriptionNotification extends BaseNotificationData {
@@ -26,6 +35,14 @@ interface OrderNotification extends BaseNotificationData {
   labName?: string;
   testNames?: string[];
   totalAmount?: number;
+  // PDF generation data
+  tests?: TestDetail[];
+  totalOriginal?: number;
+  totalDiscounted?: number;
+  totalSavings?: number;
+  discountPercentage?: number;
+  validityDays?: number;
+  bookingDate?: string;
 }
 
 interface DoctorAppointmentNotification extends BaseNotificationData {

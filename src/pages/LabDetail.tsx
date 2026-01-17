@@ -370,15 +370,35 @@ const LabDetail = () => {
 
       console.log("Order saved successfully:", data);
 
-      // Send email notification to admin and customer
+      // Send email notification to admin and customer with PDF data
       sendAdminEmailNotification({
         type: 'order',
         patientName: userProfile?.full_name || 'Patient',
+        patientPhone: userProfile?.phone,
         patientEmail: authUser.email || undefined,
+        patientAge: userProfile?.age,
+        patientGender: userProfile?.gender,
+        patientCity: userProfile?.city,
         orderId: newId,
         labName: lab.name,
         testNames: selectedTestItems.map(t => t.name),
         totalAmount: totalDiscounted,
+        // PDF generation data
+        tests: selectedTestItems.map((test) => ({
+          name: test.name,
+          originalPrice: test.originalPrice,
+          discountedPrice: test.discountedPrice,
+        })),
+        totalOriginal,
+        totalDiscounted,
+        totalSavings,
+        discountPercentage: discount,
+        validityDays: 7,
+        bookingDate: new Date().toLocaleDateString('en-PK', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit' 
+        }),
       }).catch(console.error);
 
       setBookingConfirmed(true);

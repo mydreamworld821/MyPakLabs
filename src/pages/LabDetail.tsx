@@ -465,6 +465,13 @@ const LabDetail = () => {
         return;
       }
 
+      // Fetch user profile for notification
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name, phone, city, age, gender")
+        .eq("user_id", user.id)
+        .single();
+
       const { error } = await supabase
         .from("prescriptions")
         .insert({
@@ -478,6 +485,26 @@ const LabDetail = () => {
         console.error("Error saving prescription:", error);
         toast.error("Failed to save prescription");
         return;
+      }
+
+      // Send pending notification to admin and patient
+      try {
+        await supabase.functions.invoke("send-admin-notification", {
+          body: {
+            type: "prescription",
+            status: "pending",
+            patientName: profileData?.full_name || user.email?.split("@")[0] || "Patient",
+            patientPhone: profileData?.phone || "",
+            patientEmail: user.email,
+            patientAge: profileData?.age,
+            patientGender: profileData?.gender,
+            patientCity: profileData?.city,
+            labName: lab?.name || "Selected Lab",
+            adminEmail: "mhmmdaqib@gmail.com",
+          },
+        });
+      } catch (notifError) {
+        console.error("Error sending notification:", notifError);
       }
 
       setPrescriptionSaved(true);

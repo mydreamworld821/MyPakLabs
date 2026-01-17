@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
-const passwordSchema = z.string()
+const passwordSchema = z
+  .string()
   .min(8, "Password must be at least 8 characters")
   .max(128, "Password must be less than 128 characters")
   .regex(/[a-z]/, "Password must contain at least one lowercase letter")
@@ -26,9 +27,24 @@ const phoneSchema = z.string().regex(/^\+?[0-9]{10,14}$/, "Please enter a valid 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signUp, signIn, verifyOtp, resendOtp, resetPassword, updatePassword } = useAuth();
   const defaultTab = searchParams.get("mode") === "signup" ? "signup" : "login";
 
+  // Where to go after successful auth.
+  // Supports:
+  // - state.from coming from <Navigate state={{ from: location }} /> (object)
+  // - state.from coming from navigate('/auth', { state: { from: '/some-path' }}) (string)
+  const redirectPath = useMemo(() => {
+    const state = location.state as any;
+    const from = state?.from;
+    if (!from) return "/";
+    if (typeof from === "string") return from;
+    if (typeof from === "object" && typeof from.pathname === "string") {
+      return `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
+    }
+    return "/";
+  }, [location.state]);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupName, setSignupName] = useState("");
@@ -36,13 +52,13 @@ const Auth = () => {
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // OTP verification state
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [otpValue, setOtpValue] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
-  
+
   // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -61,9 +77,9 @@ const Auth = () => {
   // Redirect if already logged in (but not during password reset)
   useEffect(() => {
     if (user && !showResetPassword) {
-      navigate("/");
+      navigate(redirectPath, { replace: true });
     }
-  }, [user, navigate, showResetPassword]);
+  }, [user, navigate, showResetPassword, redirectPath]);
 
   // Resend cooldown timer
   useEffect(() => {
@@ -102,7 +118,7 @@ const Auth = () => {
       }
     } else {
       toast.success("Login successful!");
-      navigate("/");
+      navigate(redirectPath, { replace: true });
     }
     
     setIsLoading(false);
@@ -157,7 +173,7 @@ const Auth = () => {
       toast.error("Invalid or expired code. Please try again.");
     } else {
       toast.success("Email verified successfully!");
-      navigate("/");
+      navigate(redirectPath, { replace: true });
     }
     
     setIsLoading(false);

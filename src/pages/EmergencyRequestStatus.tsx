@@ -81,7 +81,21 @@ interface Tracking {
   current_lng: number;
   arrived_at: string | null;
   service_started_at: string | null;
+  updated_at?: string;
 }
+
+// Haversine formula to calculate distance
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const SERVICES_MAP: Record<string, string> = {
   iv_cannula: "IV Cannula",
@@ -398,15 +412,22 @@ export default function EmergencyRequestStatus() {
               <CardTitle className="text-lg flex items-center gap-2">
                 <Navigation className="w-5 h-5 text-blue-600" />
                 Live Tracking
+                {tracking && (
+                  <span className="relative flex h-3 w-3 ml-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Nurse Info */}
               <div className="flex items-center gap-4 mb-4">
                 <Avatar className="w-16 h-16 border-2 border-blue-500">
                   <AvatarImage src={acceptedNurse.photo_url || undefined} />
                   <AvatarFallback>{acceptedNurse.full_name[0]}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold text-lg">{acceptedNurse.full_name}</h3>
                   <p className="text-sm text-muted-foreground">{acceptedNurse.qualification}</p>
                   <div className="flex items-center gap-1 text-sm">
@@ -415,6 +436,87 @@ export default function EmergencyRequestStatus() {
                   </div>
                 </div>
               </div>
+
+              {/* Live Location Display */}
+              {tracking && tracking.current_lat && tracking.current_lng && tracking.status === "on_way" && (
+                <div className="bg-white rounded-xl p-4 mb-4 border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Navigation className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-blue-900">Nurse Location</p>
+                        <p className="text-xs text-muted-foreground">
+                          Updated {tracking.updated_at ? new Date(tracking.updated_at).toLocaleTimeString() : 'just now'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-blue-600">
+                        {calculateDistance(
+                          request.location_lat, 
+                          request.location_lng, 
+                          tracking.current_lat, 
+                          tracking.current_lng
+                        ).toFixed(1)} km
+                      </p>
+                      <p className="text-xs text-muted-foreground">away</p>
+                    </div>
+                  </div>
+                  
+                  {/* Simple Visual Progress */}
+                  <div className="relative h-12 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-between px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                          <User className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-xs font-medium text-blue-700">Nurse</span>
+                      </div>
+                      <div className="flex-1 mx-4">
+                        <div className="h-1 bg-blue-200 rounded-full">
+                          <div 
+                            className="h-1 bg-blue-500 rounded-full transition-all duration-1000"
+                            style={{ 
+                              width: `${Math.max(10, Math.min(90, 100 - (calculateDistance(
+                                request.location_lat, 
+                                request.location_lng, 
+                                tracking.current_lat, 
+                                tracking.current_lng
+                              ) * 10)))}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-green-700">You</span>
+                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                          <MapPin className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-center text-sm text-muted-foreground mt-2">
+                    Estimated arrival: ~{Math.ceil(calculateDistance(
+                      request.location_lat, 
+                      request.location_lng, 
+                      tracking.current_lat, 
+                      tracking.current_lng
+                    ) * 3)} minutes
+                  </p>
+                </div>
+              )}
+
+              {/* Waiting for tracking */}
+              {(!tracking || !tracking.current_lat) && tracking?.status !== "arrived" && tracking?.status !== "in_service" && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-500 mx-auto mb-2" />
+                  <p className="text-sm text-amber-700 font-medium">Waiting for nurse to start tracking</p>
+                  <p className="text-xs text-amber-600">Location will appear once nurse starts navigation</p>
+                </div>
+              )}
 
               {/* Status Steps */}
               <div className="space-y-3">

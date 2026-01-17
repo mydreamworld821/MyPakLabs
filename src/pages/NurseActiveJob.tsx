@@ -72,6 +72,8 @@ export default function NurseActiveJob() {
   const [tracking, setTracking] = useState<TrackingStatus | null>(null);
   const [nurseId, setNurseId] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -167,6 +169,71 @@ export default function NurseActiveJob() {
 
     setTracking(data);
   };
+
+  // Start continuous location tracking
+  const startLocationTracking = () => {
+    if (!nurseId || !navigator.geolocation) {
+      toast({ title: "Error", description: "Location not available", variant: "destructive" });
+      return;
+    }
+
+    setIsTrackingLocation(true);
+
+    // Initial position update
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        await supabase
+          .from("nurse_emergency_tracking")
+          .upsert({
+            request_id: id,
+            nurse_id: nurseId,
+            current_lat: position.coords.latitude,
+            current_lng: position.coords.longitude,
+            status: "on_way",
+          }, { onConflict: "request_id,nurse_id" });
+      },
+      (error) => console.error("Location error:", error)
+    );
+
+    // Continuous tracking
+    const wId = navigator.geolocation.watchPosition(
+      async (position) => {
+        console.log("Location update:", position.coords.latitude, position.coords.longitude);
+        await supabase
+          .from("nurse_emergency_tracking")
+          .upsert({
+            request_id: id,
+            nurse_id: nurseId,
+            current_lat: position.coords.latitude,
+            current_lng: position.coords.longitude,
+            status: tracking?.status || "on_way",
+          }, { onConflict: "request_id,nurse_id" });
+      },
+      (error) => console.error("Watch error:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+
+    setWatchId(wId);
+    toast({ title: "Live Tracking Started", description: "Patient can now see your location" });
+  };
+
+  // Stop location tracking
+  const stopLocationTracking = () => {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
+    setIsTrackingLocation(false);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [watchId]);
 
   const updateLocation = async () => {
     if (!nurseId || !navigator.geolocation) return;
@@ -398,6 +465,41 @@ export default function NurseActiveJob() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
+              {/* Live Tracking Control */}
+              <div className={`p-4 rounded-lg ${isTrackingLocation ? "bg-green-50 border-2 border-green-300" : "bg-amber-50 border-2 border-amber-200"}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {isTrackingLocation ? (
+                      <>
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        <span className="font-medium text-green-700">Live Tracking Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-5 h-5 text-amber-600" />
+                        <span className="font-medium text-amber-700">Start Live Tracking</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {isTrackingLocation 
+                    ? "Patient can see your real-time location on the map" 
+                    : "Start sharing your location so patient can track your arrival"}
+                </p>
+                <Button 
+                  size="sm" 
+                  className={isTrackingLocation ? "bg-red-500 hover:bg-red-600" : "bg-green-600 hover:bg-green-700"}
+                  onClick={isTrackingLocation ? stopLocationTracking : startLocationTracking}
+                >
+                  <Navigation className="w-4 h-4 mr-1" />
+                  {isTrackingLocation ? "Stop Tracking" : "Start Live Tracking"}
+                </Button>
+              </div>
+
               {/* On Way - Initial state */}
               <div className={`flex items-center gap-3 p-3 rounded-lg ${!tracking || tracking.status === "on_way" ? "bg-blue-50 border-2 border-blue-200" : "bg-muted"}`}>
                 <CheckCircle2 className={`w-6 h-6 ${tracking ? "text-green-500" : "text-blue-500"}`} />
@@ -405,11 +507,6 @@ export default function NurseActiveJob() {
                   <p className="font-medium">On the way</p>
                   {!tracking && <p className="text-xs text-muted-foreground">Your starting status</p>}
                 </div>
-                {(!tracking || tracking.status === "on_way") && (
-                  <Button size="sm" variant="outline" onClick={updateLocation}>
-                    <Navigation className="w-4 h-4 mr-1" /> Update Location
-                  </Button>
-                )}
               </div>
 
               {/* Arrived */}

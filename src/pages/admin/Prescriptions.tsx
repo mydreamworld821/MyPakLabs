@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { Search, FileText, Loader2, Eye, Check, X, FlaskConical } from "lucide-react";
 import { format } from "date-fns";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import PrescriptionImageViewer from "@/components/prescriptions/PrescriptionImageViewer";
 import { generateLabId } from "@/utils/generateLabId";
 
 interface Test {
@@ -445,24 +446,10 @@ const AdminPrescriptions = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
                 {/* Left: Prescription Image */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold">Prescription Image</h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    {isLoadingUrl ? (
-                      <div className="flex items-center justify-center h-64 bg-muted">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                      </div>
-                    ) : signedUrl ? (
-                      <img
-                        src={signedUrl}
-                        alt="Prescription"
-                        className="w-full max-h-96 object-contain bg-muted"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-64 bg-muted text-muted-foreground">
-                        Unable to load prescription image
-                      </div>
-                    )}
-                  </div>
+                  <PrescriptionImageViewer
+                    imageUrl={signedUrl}
+                    isLoading={isLoadingUrl}
+                  />
 
                   {/* Admin Notes */}
                   <div className="space-y-2">

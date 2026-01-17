@@ -186,6 +186,40 @@ const AdminDoctorAppointments = () => {
 
       if (error) throw error;
 
+      // Send confirmation notification with PDF when status changes to confirmed
+      if (newStatus === 'confirmed' && selectedAppointment) {
+        const { sendAdminEmailNotification } = await import("@/utils/adminNotifications");
+        const { data: patientProfile } = await supabase
+          .from("profiles")
+          .select("full_name, phone, age, gender, city")
+          .eq("user_id", selectedAppointment.patient_id)
+          .maybeSingle();
+        
+        const { data: authUser } = await supabase.auth.admin.getUserById(selectedAppointment.patient_id);
+        
+        sendAdminEmailNotification({
+          type: 'doctor_appointment',
+          status: 'confirmed',
+          bookingId: id.slice(0, 8).toUpperCase(),
+          patientName: patientProfile?.full_name || selectedAppointment.profiles?.full_name || 'Patient',
+          patientPhone: patientProfile?.phone || selectedAppointment.profiles?.phone || undefined,
+          patientEmail: authUser?.user?.email || undefined,
+          patientAge: patientProfile?.age || undefined,
+          patientGender: patientProfile?.gender || undefined,
+          patientCity: patientProfile?.city || undefined,
+          doctorId: selectedAppointment.doctors?.id,
+          doctorName: selectedAppointment.doctors?.full_name || '',
+          doctorQualification: selectedAppointment.doctors?.qualification || undefined,
+          doctorSpecialization: selectedAppointment.doctors?.doctor_specializations?.name || undefined,
+          doctorPhone: selectedAppointment.doctors?.phone || undefined,
+          clinicName: selectedAppointment.doctors?.clinic_name || undefined,
+          appointmentDate: format(new Date(selectedAppointment.appointment_date), "dd MMM yyyy"),
+          appointmentTime: selectedAppointment.appointment_time,
+          consultationType: selectedAppointment.consultation_type,
+          appointmentFee: selectedAppointment.fee,
+        }).catch(console.error);
+      }
+
       toast.success(`Appointment ${newStatus}`);
       fetchAppointments();
       setIsDialogOpen(false);

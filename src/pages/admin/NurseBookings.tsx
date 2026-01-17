@@ -168,6 +168,32 @@ const AdminNurseBookings = () => {
 
       if (error) throw error;
 
+      // Send confirmation notification with PDF when status changes to confirmed
+      if (newStatus === 'confirmed' && selectedBooking) {
+        const { sendAdminEmailNotification } = await import("@/utils/adminNotifications");
+        const { data: authUser } = selectedBooking.patient_id 
+          ? await supabase.auth.admin.getUserById(selectedBooking.patient_id)
+          : { data: null };
+        
+        sendAdminEmailNotification({
+          type: 'nurse_booking',
+          status: 'confirmed',
+          bookingId: id.slice(0, 8).toUpperCase(),
+          patientName: selectedBooking.patient_name,
+          patientPhone: selectedBooking.patient_phone,
+          patientEmail: authUser?.user?.email || undefined,
+          patientAddress: selectedBooking.patient_address || undefined,
+          nurseId: selectedBooking.nurse_id,
+          nurseName: selectedBooking.nurses?.full_name || '',
+          nurseQualification: selectedBooking.nurses?.qualification || undefined,
+          nursePhone: selectedBooking.nurses?.phone || undefined,
+          serviceNeeded: selectedBooking.service_needed,
+          preferredDate: format(new Date(selectedBooking.preferred_date), "dd MMM yyyy"),
+          preferredTime: selectedBooking.preferred_time,
+          nurseNotes: selectedBooking.nurse_notes || undefined,
+        }).catch(console.error);
+      }
+
       toast.success(`Booking ${newStatus}`);
       fetchBookings();
       setIsDialogOpen(false);

@@ -10,13 +10,17 @@ type NotificationType =
   | 'emergency_request' 
   | 'medicine_order';
 
+type NotificationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+
 interface BaseNotificationData {
   patientName: string;
   patientPhone?: string;
-  patientEmail?: string; // Customer email for confirmation
+  patientEmail?: string;
   patientAge?: number;
   patientGender?: string;
   patientCity?: string;
+  bookingId?: string;
+  status?: NotificationStatus;
 }
 
 interface TestDetail {
@@ -35,7 +39,6 @@ interface OrderNotification extends BaseNotificationData {
   labName?: string;
   testNames?: string[];
   totalAmount?: number;
-  // PDF generation data
   tests?: TestDetail[];
   totalOriginal?: number;
   totalDiscounted?: number;
@@ -47,7 +50,13 @@ interface OrderNotification extends BaseNotificationData {
 
 interface DoctorAppointmentNotification extends BaseNotificationData {
   type: 'doctor_appointment';
+  doctorId?: string;
   doctorName: string;
+  doctorQualification?: string;
+  doctorSpecialization?: string;
+  doctorPhone?: string;
+  clinicName?: string;
+  clinicAddress?: string;
   appointmentDate: string;
   appointmentTime: string;
   consultationType?: string;
@@ -56,10 +65,16 @@ interface DoctorAppointmentNotification extends BaseNotificationData {
 
 interface NurseBookingNotification extends BaseNotificationData {
   type: 'nurse_booking';
+  nurseId?: string;
   nurseName: string;
+  nurseQualification?: string;
+  nursePhone?: string;
   serviceNeeded: string;
   preferredDate: string;
   preferredTime?: string;
+  patientAddress?: string;
+  nurseNotes?: string;
+  serviceFee?: number;
 }
 
 interface EmergencyRequestNotification extends BaseNotificationData {
@@ -71,6 +86,7 @@ interface EmergencyRequestNotification extends BaseNotificationData {
 
 interface MedicineOrderNotification extends BaseNotificationData {
   type: 'medicine_order';
+  storeId?: string;
   orderId: string;
   pharmacyName?: string;
   deliveryAddress?: string;
@@ -86,6 +102,9 @@ type NotificationData =
 
 /**
  * Send email notification to admin and optionally confirmation to customer
+ * For doctor/nurse bookings, the status determines the message:
+ * - 'pending': "Your booking request has been received, we will confirm soon"
+ * - 'confirmed': "Your booking has been confirmed" + PDF slip
  */
 export const sendAdminEmailNotification = async (data: NotificationData) => {
   try {
@@ -107,4 +126,19 @@ export const sendAdminEmailNotification = async (data: NotificationData) => {
     console.error('Error invoking notification function:', error);
     return { success: false, error };
   }
+};
+
+/**
+ * Send confirmation notification when a booking is confirmed
+ * This should be called from admin panels when status changes to 'confirmed'
+ */
+export const sendBookingConfirmationNotification = async (
+  type: 'doctor_appointment' | 'nurse_booking',
+  bookingData: Partial<DoctorAppointmentNotification | NurseBookingNotification>
+) => {
+  return sendAdminEmailNotification({
+    ...bookingData,
+    type,
+    status: 'confirmed',
+  } as NotificationData);
 };

@@ -32,7 +32,6 @@ export const useReviews = (entityType?: ReviewEntityType, entityId?: string | nu
       let query = supabase
         .from('reviews')
         .select('*')
-        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (entityType) {
@@ -116,7 +115,8 @@ export const useReviews = (entityType?: ReviewEntityType, entityId?: string | nu
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reviews', entityType, entityId] });
       queryClient.invalidateQueries({ queryKey: ['user-review', entityType, entityId, user?.id] });
-      toast.success('Review submitted! It will be visible after admin approval.');
+      queryClient.invalidateQueries({ queryKey: ['featured-reviews'] });
+      toast.success('Review submitted successfully!');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to submit review');
@@ -146,7 +146,6 @@ export const useFeaturedReviews = (limit = 6) => {
       const { data: reviewsData, error } = await supabase
         .from('reviews')
         .select('*')
-        .eq('status', 'approved')
         .eq('entity_type', 'platform')
         .gte('rating', 4)
         .order('created_at', { ascending: false })

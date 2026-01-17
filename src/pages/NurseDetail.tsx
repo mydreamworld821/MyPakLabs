@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { generateBookingUniqueId } from "@/utils/generateBookingId";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { 
@@ -85,6 +86,7 @@ interface HospitalAffiliation {
 const NurseDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  const { addCredits, creditsPerBooking, isEnabled: walletEnabled } = useWallet();
   const [nurse, setNurse] = useState<Nurse | null>(null);
   const [hospitals, setHospitals] = useState<HospitalAffiliation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,6 +210,21 @@ const NurseDetail = () => {
         preferredDate: bookingForm.preferred_date,
         preferredTime: bookingForm.preferred_time,
       }).catch(console.error);
+
+      // Award wallet credits for booking
+      if (walletEnabled && user) {
+        try {
+          await addCredits.mutateAsync({
+            credits: creditsPerBooking,
+            serviceType: "nursing_booking",
+            referenceId: uniqueId,
+            description: `Nurse booking with ${nurse.full_name}`,
+          });
+          toast.success(`🎉 You earned ${creditsPerBooking} wallet credits!`);
+        } catch (e) {
+          console.error("Failed to add wallet credits:", e);
+        }
+      }
 
       toast.success("Booking request submitted! The nurse will contact you shortly.");
       setShowBookingDialog(false);

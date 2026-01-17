@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format, isSameDay, parseISO } from "date-fns";
 import { 
   Store, 
   Package, 
@@ -21,7 +25,10 @@ import {
   Settings,
   TrendingUp,
   Phone,
-  MapPin
+  MapPin,
+  CalendarIcon,
+  Eye,
+  Receipt
 } from "lucide-react";
 import { Json } from "@/integrations/supabase/types";
 
@@ -64,6 +71,9 @@ const PharmacyDashboard = () => {
   const [orders, setOrders] = useState<MedicineOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pending");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedOrder, setSelectedOrder] = useState<MedicineOrder | null>(null);
+  const [showOrderDetail, setShowOrderDetail] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -225,26 +235,64 @@ const PharmacyDashboard = () => {
     );
   }
 
+  const completedOrders = useMemo(() => 
+    orders.filter(o => o.status === "completed" || o.status === "delivered"), 
+    [orders]
+  );
+
   const orderCounts = {
     pending: orders.filter(o => o.status === "pending").length,
     accepted: orders.filter(o => o.status === "accepted").length,
     preparing: orders.filter(o => o.status === "preparing").length,
     out_for_delivery: orders.filter(o => o.status === "out_for_delivery").length,
-    completed: orders.filter(o => o.status === "completed").length,
+    completed: completedOrders.length,
   };
 
+  // Get unique dates that have completed orders (for calendar highlighting)
+  const completedOrderDates = useMemo(() => {
+    return completedOrders.map(o => parseISO(o.created_at));
+  }, [completedOrders]);
+
   const getFilteredOrders = () => {
+    let filtered: MedicineOrder[] = [];
+    
     switch (activeTab) {
       case "pending":
-        return orders.filter(o => o.status === "pending");
+        filtered = orders.filter(o => o.status === "pending");
+        break;
       case "active":
-        return orders.filter(o => ["accepted", "preparing", "out_for_delivery"].includes(o.status));
+        filtered = orders.filter(o => ["accepted", "preparing", "out_for_delivery"].includes(o.status));
+        break;
       case "completed":
-        return orders.filter(o => o.status === "completed");
+        filtered = completedOrders;
+        // Apply date filter for completed orders
+        if (selectedDate) {
+          filtered = filtered.filter(o => isSameDay(parseISO(o.created_at), selectedDate));
+        }
+        break;
       default:
-        return orders;
+        filtered = orders;
     }
+    
+    return filtered;
   };
+
+  const handleViewOrderDetail = (order: MedicineOrder) => {
+    setSelectedOrder(order);
+    setShowOrderDetail(true);
+  };
+
+  const clearDateFilter = () => {
+    setSelectedDate(undefined);
+  };
+
+  // Calculate revenue from completed orders
+  const totalRevenue = useMemo(() => {
+    const dateFilteredOrders = selectedDate 
+      ? completedOrders.filter(o => isSameDay(parseISO(o.created_at), selectedDate))
+      : completedOrders;
+    return dateFilteredOrders.reduce((sum, o) => sum + (o.final_price || o.estimated_price || 0), 0);
+  }, [completedOrders, selectedDate]);
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { className: string; label: string }> = {
@@ -334,10 +382,57 @@ const PharmacyDashboard = () => {
           {/* Orders */}
           <Card>
             <CardHeader className="py-3">
-              <CardTitle className="text-sm">Orders</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">Orders</CardTitle>
+                {activeTab === "completed" && (
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-xs">
+                          <CalendarIcon className="w-3 h-3 mr-1" />
+                          {selectedDate ? format(selectedDate, "PP") : "Filter by Date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          modifiers={{
+                            hasOrders: completedOrderDates
+                          }}
+                          modifiersStyles={{
+                            hasOrders: { 
+                              backgroundColor: 'hsl(var(--primary) / 0.1)',
+                              fontWeight: 'bold'
+                            }
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {selectedDate && (
+                      <Button variant="ghost" size="sm" onClick={clearDateFilter} className="text-xs">
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {activeTab === "completed" && (
+                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Receipt className="w-3 h-3" />
+                    {selectedDate ? `Orders on ${format(selectedDate, "PP")}` : "All time"}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    Revenue: Rs. {totalRevenue.toLocaleString()}
+                  </span>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); if (val !== "completed") setSelectedDate(undefined); }}>
                 <TabsList className="grid grid-cols-3 mb-4">
                   <TabsTrigger value="pending" className="text-xs">
                     New ({orderCounts.pending})
@@ -359,6 +454,7 @@ const PharmacyDashboard = () => {
                   ) : (
                     getFilteredOrders().map((order) => {
                       const medicines = (Array.isArray(order.medicines) ? order.medicines : []) as unknown as Medicine[];
+                      const isCompletedOrder = order.status === "completed" || order.status === "delivered";
                       return (
                         <Card key={order.id} className="border">
                           <CardContent className="p-4">
@@ -366,7 +462,7 @@ const PharmacyDashboard = () => {
                               <div>
                                 <p className="font-semibold text-sm">Order #{order.unique_id}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {new Date(order.created_at).toLocaleDateString()}
+                                  {format(parseISO(order.created_at), "PPP 'at' p")}
                                 </p>
                               </div>
                               {getStatusBadge(order.status)}
@@ -462,6 +558,17 @@ const PharmacyDashboard = () => {
                                   Mark Delivered
                                 </Button>
                               )}
+                              {isCompletedOrder && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="flex-1 text-xs"
+                                  onClick={() => handleViewOrderDetail(order)}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  View Details
+                                </Button>
+                              )}
                             </div>
                           </CardContent>
                         </Card>
@@ -475,6 +582,118 @@ const PharmacyDashboard = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Order Detail Dialog */}
+      <Dialog open={showOrderDetail} onOpenChange={setShowOrderDetail}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              Order Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="space-y-4">
+              {/* Order ID & Status */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold">#{selectedOrder.unique_id}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(parseISO(selectedOrder.created_at), "EEEE, MMMM d, yyyy")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(parseISO(selectedOrder.created_at), "hh:mm a")}
+                  </p>
+                </div>
+                {getStatusBadge(selectedOrder.status)}
+              </div>
+
+              {/* Medicines */}
+              <div className="border rounded-lg p-3 bg-muted/30">
+                <p className="text-sm font-semibold mb-2 flex items-center gap-1">
+                  <Package className="w-4 h-4" />
+                  Medicines
+                </p>
+                {(() => {
+                  const medicines = (Array.isArray(selectedOrder.medicines) ? selectedOrder.medicines : []) as unknown as Medicine[];
+                  return medicines.length > 0 ? (
+                    <div className="space-y-2">
+                      {medicines.map((med, idx) => (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span>{med.name} {med.strength}</span>
+                          <span className="text-muted-foreground">× {med.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Prescription-based order</p>
+                  );
+                })()}
+              </div>
+
+              {/* Prescription */}
+              {selectedOrder.prescription_url && (
+                <div className="border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-2">Prescription</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => window.open(selectedOrder.prescription_url!, "_blank")}
+                  >
+                    View Prescription
+                  </Button>
+                </div>
+              )}
+
+              {/* Delivery Address */}
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-semibold mb-1 flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  Delivery Address
+                </p>
+                <p className="text-sm text-muted-foreground">{selectedOrder.delivery_address}</p>
+              </div>
+
+              {/* Pricing */}
+              <div className="border rounded-lg p-3 bg-primary/5">
+                <p className="text-sm font-semibold mb-2">Order Summary</p>
+                <div className="space-y-1 text-sm">
+                  {selectedOrder.estimated_price && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Estimated Price</span>
+                      <span>Rs. {selectedOrder.estimated_price.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {selectedOrder.final_price && (
+                    <div className="flex justify-between font-semibold text-primary">
+                      <span>Final Price</span>
+                      <span>Rs. {selectedOrder.final_price.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pharmacy Notes */}
+              {selectedOrder.pharmacy_notes && (
+                <div className="border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-1">Pharmacy Notes</p>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.pharmacy_notes}</p>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t">
+                <p>Order placed: {format(parseISO(selectedOrder.created_at), "PPp")}</p>
+                {selectedOrder.estimated_delivery_time && (
+                  <p>Est. Delivery: {selectedOrder.estimated_delivery_time}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

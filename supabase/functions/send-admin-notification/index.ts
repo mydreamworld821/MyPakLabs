@@ -71,6 +71,7 @@ interface NotificationRequest {
   services?: string[];
   // Medicine order specific
   pharmacyName?: string;
+  pharmacyPhone?: string;
   deliveryAddress?: string;
   // Lab order specific
   testNames?: string[];
@@ -1541,34 +1542,48 @@ const generateCustomerConfirmationHtml = (data: NotificationRequest): { subject:
 
     case "medicine_order":
       return {
-        subject: `✅ Medicine Order Confirmed - ${data.orderId}`,
+        subject: `💊 Medicine Order Received - ${data.orderId}`,
         html: `
           <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">💊 Order Confirmed!</h1>
+              <h1 style="color: white; margin: 0; font-size: 24px;">💊 Order Received!</h1>
             </div>
             <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
               <p style="color: #334155; font-size: 16px; line-height: 1.6;">
                 Dear <strong>${data.patientName}</strong>,
               </p>
               <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-                Your medicine order has been placed! Here are the details:
+                Your medicine order has been received! The pharmacy will process your order and contact you shortly for delivery.
               </p>
               <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
                 <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
                   <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Order ID</p>
                   <p style="margin: 5px 0 0; color: #14b8a6; font-size: 20px; font-weight: 700;">${data.orderId}</p>
                 </div>
-                <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
                   <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Pharmacy</p>
                   <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 600;">${data.pharmacyName || 'N/A'}</p>
+                  ${data.pharmacyPhone ? `
+                  <p style="margin: 8px 0 0; color: #14b8a6; font-size: 14px;">📞 Contact: <a href="tel:${data.pharmacyPhone}" style="color: #14b8a6; text-decoration: none; font-weight: 600;">${data.pharmacyPhone}</a></p>
+                  ` : ''}
                 </div>
                 ${data.deliveryAddress ? `
                 <div style="margin-bottom: 12px;">
-                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Delivery Address</p>
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📍 Delivery Address</p>
                   <p style="margin: 5px 0 0; color: #1e293b; font-size: 14px;">${data.deliveryAddress}</p>
                 </div>
                 ` : ''}
+              </div>
+              <div style="background: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 0; color: #065f46; font-size: 14px;">
+                  📱 <strong>Need to contact the pharmacy?</strong><br>
+                  ${data.pharmacyPhone ? `Call or WhatsApp: <a href="https://wa.me/92${data.pharmacyPhone.replace(/^0/, '').replace(/[^0-9]/g, '')}" style="color: #065f46; font-weight: 600;">${data.pharmacyPhone}</a>` : 'Contact details will be shared by the pharmacy.'}
+                </p>
+              </div>
+              <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                  ⏰ <strong>What's Next:</strong> The pharmacy will review your order and contact you to confirm availability, pricing, and delivery time.
+                </p>
               </div>
               <a href="${baseUrl}/my-bookings" 
                  style="display: block; background: #14b8a6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
@@ -2086,11 +2101,18 @@ const handler = async (req: Request): Promise<Response> => {
                 <div style="margin-bottom: 12px;">
                   <p style="margin: 0; color: #64748b; font-size: 14px;">Pharmacy</p>
                   <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.pharmacyName || 'N/A'}</p>
+                  ${data.pharmacyPhone ? `<p style="margin: 5px 0 0; color: #14b8a6; font-size: 14px;">📞 ${data.pharmacyPhone}</p>` : ''}
                 </div>
-                <div>
+                <div style="margin-bottom: 12px;">
                   <p style="margin: 0; color: #64748b; font-size: 14px;">Patient Phone</p>
                   <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.patientPhone || 'N/A'}</p>
                 </div>
+                ${data.deliveryAddress ? `
+                <div>
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">📍 Delivery Address</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 14px;">${data.deliveryAddress}</p>
+                </div>
+                ` : ''}
               </div>
               <a href="${baseUrl}/admin/medicine-orders" 
                  style="display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">

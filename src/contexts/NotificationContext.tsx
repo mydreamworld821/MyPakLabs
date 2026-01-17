@@ -1,9 +1,38 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, Component, ErrorInfo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useFirebasePushNotifications } from '@/hooks/useFirebasePushNotifications';
 import EmergencyFlashNotification from '@/components/EmergencyFlashNotification';
+
+// Global Error Boundary for the entire notification system
+class NotificationSystemErrorBoundary extends Component<
+  { children: ReactNode; onError?: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; onError?: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('NotificationSystem Error:', error, errorInfo);
+    this.props.onError?.();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Reset state after a delay so the component can recover
+      setTimeout(() => this.setState({ hasError: false }), 5000);
+      return null;
+    }
+    return this.props.children;
+  }
+}
 
 interface EmergencyNotification {
   id: string;
@@ -129,33 +158,8 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   }, [user]);
 
   // Subscribe to emergency requests if user is an approved nurse
-  useEffect(() => {
-    if (!isApprovedNurse || !nurseId) return;
-
-    console.log('Setting up emergency request notifications for nurse:', nurseId);
-
-    const channel = supabase
-      .channel('nurse-emergency-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'emergency_nursing_requests',
-        },
-        (payload) => {
-          console.log('New emergency request received:', payload);
-          handleNewEmergencyRequest(payload.new);
-        }
-      )
-      .subscribe((status) => {
-        console.log('Notification channel status:', status);
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isApprovedNurse, nurseId, nurseLocation, nurseRadius, permission]);
+  // NOTE: This hook must come AFTER the handleNewEmergencyRequest definition
+  // so it's moved down in the file
 
   // Service worker message listener is defined after handleNewEmergencyRequest
 
@@ -256,6 +260,55 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     }
   }, [permission, showNotification, playNotificationSound, nurseLocation, nurseRadius]);
 
+  // Subscribe to emergency requests if user is an approved nurse
+  // This useEffect MUST come AFTER handleNewEmergencyRequest definition
+  useEffect(() => {
+    if (!isApprovedNurse || !nurseId) {
+      console.log('Not an approved nurse or no nurseId, skipping emergency notifications');
+      return;
+    }
+
+    console.log('Setting up emergency request notifications for nurse:', nurseId);
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    try {
+      channel = supabase
+        .channel('nurse-emergency-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'emergency_nursing_requests',
+          },
+          (payload) => {
+            console.log('New emergency request received:', payload);
+            try {
+              handleNewEmergencyRequest(payload.new);
+            } catch (err) {
+              console.error('Error handling emergency request:', err);
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Notification channel status:', status);
+        });
+    } catch (err) {
+      console.error('Failed to setup notification channel:', err);
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (err) {
+          console.error('Error removing channel:', err);
+        }
+      }
+    };
+  }, [isApprovedNurse, nurseId, nurseLocation, nurseRadius, permission, handleNewEmergencyRequest]);
+
   // Listen for service worker messages (notification clicks from background)
   useEffect(() => {
     const handleServiceWorkerMessage = async (event: MessageEvent) => {
@@ -302,6 +355,17 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
 
   const currentNotification = pendingNotifications[0];
 
+  // Safe dismiss function that won't crash
+  const safelyDismissNotification = useCallback((id: string) => {
+    try {
+      dismissNotification(id);
+    } catch (err) {
+      console.error('Error dismissing notification:', err);
+      // Force clear all notifications as fallback
+      setPendingNotifications([]);
+    }
+  }, [dismissNotification]);
+
   return (
     <NotificationContext.Provider
       value={{
@@ -314,24 +378,31 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     >
       {children}
       
-      {/* InDrive-Style Emergency Flash Notification */}
-      {currentNotification && nurseId && (
-        <EmergencyFlashNotification
-          requestId={currentNotification.id}
-          patientName={currentNotification.patientName}
-          patientPhone={currentNotification.patientPhone || undefined}
-          city={currentNotification.city}
-          locationAddress={currentNotification.locationAddress}
-          services={currentNotification.services}
-          urgency={currentNotification.urgency}
-          distance={currentNotification.distance}
-          patientOfferPrice={currentNotification.patientOfferPrice}
-          nurseId={nurseId}
-          onDismiss={() => dismissNotification(currentNotification.id)}
-          onAccepted={() => dismissNotification(currentNotification.id)}
-          autoHideSeconds={45}
-        />
-      )}
+      {/* InDrive-Style Emergency Flash Notification - wrapped in error boundary */}
+      <NotificationSystemErrorBoundary 
+        onError={() => {
+          console.error('Emergency notification crashed, clearing notifications');
+          setPendingNotifications([]);
+        }}
+      >
+        {currentNotification && nurseId && isApprovedNurse && (
+          <EmergencyFlashNotification
+            requestId={currentNotification.id}
+            patientName={currentNotification.patientName}
+            patientPhone={currentNotification.patientPhone || undefined}
+            city={currentNotification.city}
+            locationAddress={currentNotification.locationAddress}
+            services={currentNotification.services}
+            urgency={currentNotification.urgency}
+            distance={currentNotification.distance}
+            patientOfferPrice={currentNotification.patientOfferPrice}
+            nurseId={nurseId}
+            onDismiss={() => safelyDismissNotification(currentNotification.id)}
+            onAccepted={() => safelyDismissNotification(currentNotification.id)}
+            autoHideSeconds={45}
+          />
+        )}
+      </NotificationSystemErrorBoundary>
     </NotificationContext.Provider>
   );
 };

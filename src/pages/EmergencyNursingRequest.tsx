@@ -193,64 +193,85 @@ export default function EmergencyNursingRequest() {
 
     setLoading(true);
     
-    const { data, error } = await supabase
-      .from("emergency_nursing_requests")
-      .insert({
-        patient_id: user.id,
-        patient_name: formData.patientName,
-        patient_phone: formData.patientPhone,
-        location_lat: formData.locationLat,
-        location_lng: formData.locationLng,
-        location_address: formData.locationAddress,
-        city: formData.city,
-        services_needed: formData.servicesNeeded,
-        urgency: formData.urgency,
-        patient_offer_price: formData.patientOfferPrice ? parseInt(formData.patientOfferPrice) : null,
-        notes: formData.notes,
-        status: "live",
-      })
-      .select()
-      .single();
+    try {
+      console.log('Submitting emergency request...');
+      
+      const { data, error } = await supabase
+        .from("emergency_nursing_requests")
+        .insert({
+          patient_id: user.id,
+          patient_name: formData.patientName,
+          patient_phone: formData.patientPhone,
+          location_lat: formData.locationLat,
+          location_lng: formData.locationLng,
+          location_address: formData.locationAddress,
+          city: formData.city,
+          services_needed: formData.servicesNeeded,
+          urgency: formData.urgency,
+          patient_offer_price: formData.patientOfferPrice ? parseInt(formData.patientOfferPrice) : null,
+          notes: formData.notes,
+          status: "live",
+        })
+        .select()
+        .single();
 
-    setLoading(false);
+      if (error) {
+        console.error('Error submitting emergency request:', error);
+        setLoading(false);
+        toast({
+          title: "Error",
+          description: "Failed to submit request. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
+      console.log('Emergency request submitted successfully:', data.id);
+
+      // Send FCM push notification to all nurses (don't await)
+      sendEmergencyNotificationToNurses(
+        data.id,
+        formData.city,
+        formData.servicesNeeded,
+        formData.urgency
+      ).then((result) => {
+        console.log('FCM notification sent:', result);
+      }).catch((err) => {
+        console.error('FCM notification error:', err);
+      });
+
+      // Send email notification to admin and customer (don't await)
+      supabase.auth.getUser().then(({ data: authData }) => {
+        sendAdminEmailNotification({
+          type: 'emergency_request',
+          patientName: formData.patientName,
+          patientPhone: formData.patientPhone,
+          patientEmail: authData?.user?.email || undefined,
+          city: formData.city,
+          urgency: formData.urgency,
+          services: formData.servicesNeeded,
+        }).catch((err) => {
+          console.error('Admin notification error:', err);
+        });
+      });
+
+      toast({
+        title: "🚨 Emergency Request Live!",
+        description: "Nearby nurses are being notified. You'll receive offers soon.",
+      });
+
+      setLoading(false);
+      console.log('Navigating to status page:', `/emergency-request/${data.id}`);
+      navigate(`/emergency-request/${data.id}`);
+    } catch (err) {
+      console.error('Unexpected error in handleSubmit:', err);
+      setLoading(false);
       toast({
         title: "Error",
-        description: "Failed to submit request. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-
-    // Send FCM push notification to all nurses
-    sendEmergencyNotificationToNurses(
-      data.id,
-      formData.city,
-      formData.servicesNeeded,
-      formData.urgency
-    ).then((result) => {
-      console.log('FCM notification sent:', result);
-    });
-
-    // Send email notification to admin and customer
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    sendAdminEmailNotification({
-      type: 'emergency_request',
-      patientName: formData.patientName,
-      patientPhone: formData.patientPhone,
-      patientEmail: authUser?.email || undefined,
-      city: formData.city,
-      urgency: formData.urgency,
-      services: formData.servicesNeeded,
-    }).catch(console.error);
-
-    toast({
-      title: "🚨 Emergency Request Live!",
-      description: "Nearby nurses are being notified. You'll receive offers soon.",
-    });
-
-    navigate(`/emergency-request/${data.id}`);
   };
 
   const canProceedStep1 = formData.patientName && formData.patientPhone && formData.locationLat;

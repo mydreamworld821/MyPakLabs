@@ -10,8 +10,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Temporary sender while domain verifies - switch to support@mypaklabs.com once fully verified
-const OFFICIAL_EMAIL = "MyPakLabs <onboarding@resend.dev>";
+// Official sender email - domain verified in Resend
+const OFFICIAL_EMAIL = "MyPakLabs <support@mypaklabs.com>";
 
 interface TestDetail {
   name: string;

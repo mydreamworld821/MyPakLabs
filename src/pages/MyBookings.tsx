@@ -55,6 +55,8 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
+import { generateDoctorAppointmentPDF } from "@/utils/generateDoctorAppointmentPDF";
+import { generateNurseBookingPDF } from "@/utils/generateNurseBookingPDF";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1034,6 +1036,33 @@ const MyBookings = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <div className="flex items-center justify-end gap-1">
+                                        {appointment.status === 'confirmed' && appointment.unique_id && (
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="text-primary hover:text-primary/80"
+                                            onClick={() => generateDoctorAppointmentPDF({
+                                              bookingId: appointment.unique_id!,
+                                              doctorName: appointment.doctors?.full_name || 'Doctor',
+                                              doctorQualification: appointment.doctors?.qualification || undefined,
+                                              doctorSpecialization: appointment.doctors?.doctor_specializations?.name || undefined,
+                                              clinicName: appointment.doctors?.clinic_name || undefined,
+                                              clinicAddress: appointment.doctors?.clinic_address || undefined,
+                                              doctorPhone: appointment.doctors?.phone || undefined,
+                                              patientName: userProfile?.full_name || undefined,
+                                              patientPhone: userProfile?.phone || undefined,
+                                              patientAge: userProfile?.age || undefined,
+                                              patientGender: userProfile?.gender || undefined,
+                                              appointmentDate: format(new Date(appointment.appointment_date), "dd MMM yyyy"),
+                                              appointmentTime: appointment.appointment_time,
+                                              consultationType: appointment.consultation_type,
+                                              fee: appointment.fee,
+                                            })}
+                                            title="Download Slip"
+                                          >
+                                            <Download className="w-4 h-4" />
+                                          </Button>
+                                        )}
                                         {(appointment.status === 'pending' || appointment.status === 'confirmed') && (
                                           <Button 
                                             variant="ghost" 
@@ -1127,6 +1156,31 @@ const MyBookings = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <div className="flex items-center justify-end gap-1">
+                                        {booking.status === 'confirmed' && booking.unique_id && (
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="text-primary hover:text-primary/80"
+                                            onClick={() => generateNurseBookingPDF({
+                                              bookingId: booking.unique_id!,
+                                              nurseName: booking.nurses?.full_name || 'Nurse',
+                                              nurseQualification: booking.nurses?.qualification || undefined,
+                                              nursePhone: booking.nurses?.phone || undefined,
+                                              patientName: userProfile?.full_name || booking.patient_name || undefined,
+                                              patientPhone: userProfile?.phone || booking.patient_phone || undefined,
+                                              patientAge: userProfile?.age || undefined,
+                                              patientGender: userProfile?.gender || undefined,
+                                              patientAddress: booking.patient_address || undefined,
+                                              serviceNeeded: booking.service_needed,
+                                              preferredDate: format(new Date(booking.preferred_date), "dd MMM yyyy"),
+                                              preferredTime: booking.preferred_time,
+                                              fee: booking.nurses?.per_visit_fee || undefined,
+                                            })}
+                                            title="Download Slip"
+                                          >
+                                            <Download className="w-4 h-4" />
+                                          </Button>
+                                        )}
                                         {(booking.status === 'pending' || booking.status === 'confirmed') && (
                                           <Button 
                                             variant="ghost" 
@@ -1720,6 +1774,39 @@ const MyBookings = () => {
                 </Card>
               )}
 
+              {/* Download Slip for Confirmed Appointments */}
+              {selectedAppointment.status === 'confirmed' && selectedAppointment.unique_id && (
+                <div className="flex gap-3">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => generateDoctorAppointmentPDF({
+                      bookingId: selectedAppointment.unique_id!,
+                      doctorName: selectedAppointment.doctors?.full_name || 'Doctor',
+                      doctorQualification: selectedAppointment.doctors?.qualification || undefined,
+                      doctorSpecialization: selectedAppointment.doctors?.doctor_specializations?.name || undefined,
+                      clinicName: selectedAppointment.doctors?.clinic_name || undefined,
+                      clinicAddress: selectedAppointment.doctors?.clinic_address || undefined,
+                      doctorPhone: selectedAppointment.doctors?.phone || undefined,
+                      patientName: userProfile?.full_name || undefined,
+                      patientPhone: userProfile?.phone || undefined,
+                      patientAge: userProfile?.age || undefined,
+                      patientGender: userProfile?.gender || undefined,
+                      appointmentDate: format(new Date(selectedAppointment.appointment_date), "dd MMM yyyy"),
+                      appointmentTime: selectedAppointment.appointment_time,
+                      consultationType: selectedAppointment.consultation_type,
+                      fee: selectedAppointment.fee,
+                    })}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Slip
+                  </Button>
+                  <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </Button>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button className="flex-1" onClick={() => navigate(`/doctor/${selectedAppointment.doctors?.id}`)}>
                   View Doctor Profile
@@ -1823,6 +1910,37 @@ const MyBookings = () => {
                     <p className="text-sm">{selectedNurseBooking.nurse_notes}</p>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Download Slip for Confirmed Nurse Bookings */}
+              {selectedNurseBooking.status === 'confirmed' && selectedNurseBooking.unique_id && (
+                <div className="flex gap-3">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => generateNurseBookingPDF({
+                      bookingId: selectedNurseBooking.unique_id!,
+                      nurseName: selectedNurseBooking.nurses?.full_name || 'Nurse',
+                      nurseQualification: selectedNurseBooking.nurses?.qualification || undefined,
+                      nursePhone: selectedNurseBooking.nurses?.phone || undefined,
+                      patientName: userProfile?.full_name || selectedNurseBooking.patient_name || undefined,
+                      patientPhone: userProfile?.phone || selectedNurseBooking.patient_phone || undefined,
+                      patientAge: userProfile?.age || undefined,
+                      patientGender: userProfile?.gender || undefined,
+                      patientAddress: selectedNurseBooking.patient_address || undefined,
+                      serviceNeeded: selectedNurseBooking.service_needed,
+                      preferredDate: format(new Date(selectedNurseBooking.preferred_date), "dd MMM yyyy"),
+                      preferredTime: selectedNurseBooking.preferred_time,
+                      fee: selectedNurseBooking.nurses?.per_visit_fee || undefined,
+                    })}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Slip
+                  </Button>
+                  <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </Button>
+                </div>
               )}
 
               <div className="flex gap-3">

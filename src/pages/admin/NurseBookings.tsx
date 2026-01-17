@@ -171,17 +171,26 @@ const AdminNurseBookings = () => {
       // Send confirmation notification with PDF when status changes to confirmed
       if (newStatus === 'confirmed' && selectedBooking) {
         const { sendAdminEmailNotification } = await import("@/utils/adminNotifications");
-        const { data: authUser } = selectedBooking.patient_id 
-          ? await supabase.auth.admin.getUserById(selectedBooking.patient_id)
-          : { data: null };
         
-        sendAdminEmailNotification({
+        // Get patient email from auth using edge function if patient_id exists
+        let patientEmail: string | undefined;
+        if (selectedBooking.patient_id) {
+          const { data: emailData } = await supabase.functions.invoke('send-admin-notification', {
+            body: { 
+              action: 'get_user_email',
+              userId: selectedBooking.patient_id 
+            }
+          });
+          patientEmail = emailData?.email;
+        }
+        
+        await sendAdminEmailNotification({
           type: 'nurse_booking',
           status: 'confirmed',
           bookingId: id.slice(0, 8).toUpperCase(),
           patientName: selectedBooking.patient_name,
           patientPhone: selectedBooking.patient_phone,
-          patientEmail: authUser?.user?.email || undefined,
+          patientEmail: patientEmail || undefined,
           patientAddress: selectedBooking.patient_address || undefined,
           nurseId: selectedBooking.nurse_id,
           nurseName: selectedBooking.nurses?.full_name || '',
@@ -190,8 +199,10 @@ const AdminNurseBookings = () => {
           serviceNeeded: selectedBooking.service_needed,
           preferredDate: format(new Date(selectedBooking.preferred_date), "dd MMM yyyy"),
           preferredTime: selectedBooking.preferred_time,
-          nurseNotes: selectedBooking.nurse_notes || undefined,
-        }).catch(console.error);
+          nurseNotes: selectedBooking.nurse_notes || selectedBooking.notes || undefined,
+          serviceFee: undefined,
+        });
+        console.log('Confirmation notification sent for nurse booking');
       }
 
       toast.success(`Booking ${newStatus}`);

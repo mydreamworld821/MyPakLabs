@@ -160,81 +160,100 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   // Service worker message listener is defined after handleNewEmergencyRequest
 
   const handleNewEmergencyRequest = useCallback((request: any) => {
-    console.log('handleNewEmergencyRequest called:', request);
-    
-    // Check distance if we have nurse location
-    let distance: number | null = null;
-    if (nurseLocation) {
-      distance = calculateDistance(
-        nurseLocation.lat,
-        nurseLocation.lng,
-        request.location_lat,
-        request.location_lng
-      );
+    try {
+      console.log('handleNewEmergencyRequest called:', request);
       
-      console.log('Distance to request:', distance, 'km, Nurse radius:', nurseRadius, 'km');
-      
-      // Only notify if within radius (default 10km if not set)
-      if (distance > nurseRadius) {
-        console.log('Request too far, skipping notification');
+      // Validate request data - prevent crashes from missing data
+      if (!request || !request.id) {
+        console.warn('Invalid emergency request data received:', request);
         return;
       }
-    }
-    
-    const urgencyType = request.urgency === 'critical' ? 'critical' : 
-                        request.urgency === 'within_1_hour' ? 'urgent' : 'info';
-    
-    const urgencyLabel = request.urgency === 'critical' ? '🚨 CRITICAL' :
-                         request.urgency === 'within_1_hour' ? '⏰ URGENT' : '📅 Scheduled';
+      
+      // Check distance if we have nurse location
+      let distance: number | null = null;
+      if (nurseLocation && request.location_lat && request.location_lng) {
+        distance = calculateDistance(
+          nurseLocation.lat,
+          nurseLocation.lng,
+          request.location_lat,
+          request.location_lng
+        );
+        
+        console.log('Distance to request:', distance, 'km, Nurse radius:', nurseRadius, 'km');
+        
+        // Only notify if within radius (default 10km if not set)
+        if (distance > nurseRadius) {
+          console.log('Request too far, skipping notification');
+          return;
+        }
+      }
+      
+      const urgencyType = request.urgency === 'critical' ? 'critical' : 
+                          request.urgency === 'within_1_hour' ? 'urgent' : 'info';
+      
+      const urgencyLabel = request.urgency === 'critical' ? '🚨 CRITICAL' :
+                           request.urgency === 'within_1_hour' ? '⏰ URGENT' : '📅 Scheduled';
 
-    const servicesText = Array.isArray(request.services_needed) 
-      ? request.services_needed.slice(0, 2).join(', ')
-      : 'Nursing care';
+      const servicesText = Array.isArray(request.services_needed) 
+        ? request.services_needed.slice(0, 2).join(', ')
+        : 'Nursing care';
 
-    const title = `${urgencyLabel} - New Emergency Request!`;
-    const message = `Patient needs: ${servicesText}${request.city ? ` in ${request.city}` : ''}${distance ? ` (${distance.toFixed(1)}km away)` : ''}`;
+      const title = `${urgencyLabel} - New Emergency Request!`;
+      const message = `Patient needs: ${servicesText}${request.city ? ` in ${request.city}` : ''}${distance ? ` (${distance.toFixed(1)}km away)` : ''}`;
 
-    // Play sound immediately
-    console.log('Playing notification sound');
-    playNotificationSound();
+      // Play sound immediately - wrapped in try-catch
+      try {
+        console.log('Playing notification sound');
+        playNotificationSound();
+      } catch (soundError) {
+        console.warn('Could not play notification sound:', soundError);
+      }
 
-    // Show browser/system notification
-    console.log('Notification permission:', permission);
-    if (permission === 'granted') {
-      console.log('Showing system notification');
-      showNotification({
+      // Show browser/system notification - wrapped in try-catch
+      console.log('Notification permission:', permission);
+      if (permission === 'granted') {
+        try {
+          console.log('Showing system notification');
+          showNotification({
+            title,
+            body: message,
+            data: { url: '/nurse-emergency-feed' }
+          });
+        } catch (notifError) {
+          console.warn('Could not show system notification:', notifError);
+        }
+      }
+
+      // Add to flash notifications queue (in-app InDrive-style notification)
+      const notification: EmergencyNotification = {
+        id: request.id,
         title,
-        body: message,
-        data: { url: '/nurse-emergency-feed' }
+        message,
+        type: urgencyType,
+        navigateTo: '/nurse-emergency-feed',
+        createdAt: new Date(),
+        patientName: request.patient_name || 'Patient',
+        patientPhone: request.patient_phone || null,
+        city: request.city || null,
+        locationAddress: request.location_address || null,
+        services: Array.isArray(request.services_needed) ? request.services_needed : [],
+        urgency: request.urgency || 'scheduled',
+        distance: distance ? Math.round(distance * 10) / 10 : null,
+        patientOfferPrice: request.patient_offer_price || null,
+      };
+
+      console.log('Adding flash notification:', notification);
+      setPendingNotifications((prev) => {
+        // Don't add duplicate notifications
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        const updated = [notification, ...prev];
+        console.log('Updated pending notifications:', updated.length);
+        return updated;
       });
+    } catch (error) {
+      console.error('Error in handleNewEmergencyRequest:', error);
+      // Don't crash - just log the error
     }
-
-    // Add to flash notifications queue (in-app InDrive-style notification)
-    const notification: EmergencyNotification = {
-      id: request.id,
-      title,
-      message,
-      type: urgencyType,
-      navigateTo: '/nurse-emergency-feed',
-      createdAt: new Date(),
-      patientName: request.patient_name || 'Patient',
-      patientPhone: request.patient_phone || null,
-      city: request.city,
-      locationAddress: request.location_address || null,
-      services: request.services_needed || [],
-      urgency: request.urgency,
-      distance: distance ? Math.round(distance * 10) / 10 : null,
-      patientOfferPrice: request.patient_offer_price,
-    };
-
-    console.log('Adding flash notification:', notification);
-    setPendingNotifications((prev) => {
-      // Don't add duplicate notifications
-      if (prev.some((n) => n.id === notification.id)) return prev;
-      const updated = [notification, ...prev];
-      console.log('Updated pending notifications:', updated.length);
-      return updated;
-    });
   }, [permission, showNotification, playNotificationSound, nurseLocation, nurseRadius]);
 
   // Listen for service worker messages (notification clicks from background)

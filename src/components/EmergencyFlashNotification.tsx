@@ -1,10 +1,39 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, MapPin, Clock, Star, User, Navigation, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+
+// Error Boundary to prevent white screen crashes
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class NotificationErrorBoundary extends Component<{ children: ReactNode; onError?: () => void }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode; onError?: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('EmergencyFlashNotification Error:', error, errorInfo);
+    // Don't crash the whole app - just hide the notification
+    this.props.onError?.();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // Render nothing if there's an error - prevents white screen
+    }
+    return this.props.children;
+  }
+}
 
 interface EmergencyFlashNotificationProps {
   requestId: string;
@@ -35,7 +64,7 @@ const SERVICES_MAP: Record<string, string> = {
   post_surgical: "Post-Surgical",
 };
 
-const EmergencyFlashNotification = ({
+const EmergencyFlashNotificationContent = ({
   requestId,
   patientName,
   patientPhone: _patientPhone,
@@ -50,7 +79,14 @@ const EmergencyFlashNotification = ({
   onAccepted,
   autoHideSeconds = 45,
 }: EmergencyFlashNotificationProps) => {
-  const navigate = useNavigate();
+  // Safely handle navigation - wrap in try-catch
+  let navigate: ReturnType<typeof useNavigate> | null = null;
+  try {
+    navigate = useNavigate();
+  } catch (e) {
+    console.error('useNavigate failed:', e);
+  }
+
   const [isVisible, setIsVisible] = useState(false);
   const [countdown, setCountdown] = useState(autoHideSeconds);
   const [showOfferInput, setShowOfferInput] = useState(false);
@@ -211,7 +247,12 @@ const EmergencyFlashNotification = ({
   };
 
   const handleViewDetails = () => {
-    navigate('/nurse-emergency-feed');
+    if (navigate) {
+      navigate('/nurse-emergency-feed');
+    } else {
+      // Fallback: use window.location for navigation if router is not available
+      window.location.href = '/nurse-emergency-feed';
+    }
     handleDismiss();
   };
 
@@ -436,6 +477,15 @@ const EmergencyFlashNotification = ({
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrapper component with error boundary to prevent white screen crashes
+const EmergencyFlashNotification = (props: EmergencyFlashNotificationProps) => {
+  return (
+    <NotificationErrorBoundary onError={props.onDismiss}>
+      <EmergencyFlashNotificationContent {...props} />
+    </NotificationErrorBoundary>
   );
 };
 

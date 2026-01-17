@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -12,6 +13,12 @@ const corsHeaders = {
 
 // Official sender email - domain verified in Resend
 const OFFICIAL_EMAIL = "MyPakLabs <support@mypaklabs.com>";
+const FALLBACK_EMAIL = "MyPakLabs <onboarding@resend.dev>";
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 interface TestDetail {
   name: string;
@@ -30,6 +37,10 @@ interface NotificationRequest {
   labName?: string;
   orderId?: string;
   adminEmail: string;
+  // Provider IDs for routing notifications
+  doctorId?: string;
+  nurseId?: string;
+  storeId?: string;
   // Doctor appointment specific
   doctorName?: string;
   appointmentDate?: string;
@@ -63,6 +74,65 @@ interface NotificationRequest {
 
 // MyPakLabs logo as base64 PNG (small purple/teal medical logo)
 const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAGpGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcDpDcmVhdGVEYXRlPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiB4bXA6TWV0YWRhdGFEYXRlPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiB4bXA6TW9kaWZ5RGF0ZT0iMjAyNC0wMS0xNVQxMjowMDowMCswNTowMCIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDowMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiBkYzpmb3JtYXQ9ImltYWdlL3BuZyIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyI+IDx4bXBNTTpIaXN0b3J5PiA8cmRmOlNlcT4gPHJkZjpsaSBzdEV2dDphY3Rpb249ImNyZWF0ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiBzdEV2dDp3aGVuPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiLz4gPC9yZGY6U2VxPiA8L3htcE1NOkhpc3Rvcnk+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+AAACkklEQVR4nO3dQW7CMBBA0XT/h+5dde1VJYiT2DNvieQQO/+TmATyx8/Pz+8P0N+vpy8A8xQAuAoAXAUArgLAf3cHwK+A/n58u4r+Mv0N7D/wu+6fJ+Be4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgO4A6Arg7gDoDuDuAOgO4O4A6A6ArgDuDoDuAO4OgO4A6A7g7gD4K+DuAOgO4O4A6A6ArgDuDoDuAO4OgO4A7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgKgO4A6A7g7gDoDuDuAOgO4O4A+Cvg7gDoDoDuAO4OgO4A6A6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6A/gq4OwC6A6A7gLsDoDuAuwOgK4C7A6A7gLsDoDuAuwOgOwC6Arg7ALoD/AUAAP//dHNLCwDU/5YAAAAASUVORK5CYII=";
+
+// Fetch provider email from database
+async function getProviderEmail(type: string, id: string): Promise<string | null> {
+  try {
+    let tableName = "";
+    
+    switch (type) {
+      case "doctor":
+        tableName = "doctors";
+        break;
+      case "nurse":
+        tableName = "nurses";
+        break;
+      case "pharmacy":
+        tableName = "medical_stores";
+        break;
+      default:
+        return null;
+    }
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("email")
+      .eq("id", id)
+      .single();
+    
+    if (error || !data) {
+      console.log(`Could not fetch ${type} email for ID ${id}:`, error?.message);
+      return null;
+    }
+    
+    return (data as { email: string | null }).email || null;
+  } catch (err) {
+    console.error(`Error fetching ${type} email:`, err);
+    return null;
+  }
+}
+
+// Fetch all approved nurses' emails for emergency notifications
+async function getApprovedNursesEmails(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from("nurses")
+      .select("email")
+      .eq("status", "approved")
+      .eq("emergency_available", true)
+      .not("email", "is", null);
+    
+    if (error || !data) {
+      console.log("Could not fetch approved nurses emails:", error?.message);
+      return [];
+    }
+    
+    return data.map(n => n.email).filter(Boolean) as string[];
+  } catch (err) {
+    console.error("Error fetching nurses emails:", err);
+    return [];
+  }
+}
 
 // Generate PDF for lab booking
 const generateLabBookingPDF = (data: NotificationRequest): string | null => {
@@ -584,6 +654,210 @@ const generateCustomerConfirmationHtml = (data: NotificationRequest): { subject:
   }
 };
 
+// Generate provider notification email HTML
+const generateProviderNotificationHtml = (data: NotificationRequest, providerType: string): { subject: string; html: string } | null => {
+  const baseUrl = "https://mypaklab.lovable.app";
+  
+  switch (data.type) {
+    case "doctor_appointment":
+      return {
+        subject: `🔔 New Appointment - ${data.patientName} on ${data.appointmentDate}`,
+        html: `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #8b5cf6, #6366f1); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">🔔 New Appointment Booking</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                You have a new appointment booking from <strong>${data.patientName}</strong>.
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Patient Name</p>
+                  <p style="margin: 5px 0 0; color: #8b5cf6; font-size: 20px; font-weight: 700;">${data.patientName}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📅 Date & Time</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 600;">${data.appointmentDate} at ${data.appointmentTime}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Consultation Type</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.consultationType || 'Physical Visit'}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📞 Patient Phone</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.patientPhone || 'N/A'}</p>
+                </div>
+                ${data.appointmentFee ? `
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Consultation Fee</p>
+                  <p style="margin: 5px 0 0; color: #22c55e; font-size: 20px; font-weight: 700;">Rs. ${data.appointmentFee}</p>
+                </div>
+                ` : ''}
+              </div>
+              <a href="${baseUrl}/doctor-dashboard" 
+                 style="display: block; background: #8b5cf6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
+                View in Dashboard
+              </a>
+              <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
+                This is an automated notification from MyPakLabs.
+              </p>
+            </div>
+          </div>
+        `
+      };
+
+    case "nurse_booking":
+      return {
+        subject: `🔔 New Booking Request - ${data.patientName}`,
+        html: `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #ec4899, #f43f5e); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">🔔 New Booking Request</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                You have a new booking request from <strong>${data.patientName}</strong>.
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Patient Name</p>
+                  <p style="margin: 5px 0 0; color: #ec4899; font-size: 20px; font-weight: 700;">${data.patientName}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Service Needed</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 600;">${data.serviceNeeded || 'N/A'}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📅 Preferred Date</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.preferredDate || 'N/A'}</p>
+                </div>
+                ${data.preferredTime ? `
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">🕐 Preferred Time</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.preferredTime}</p>
+                </div>
+                ` : ''}
+                <div>
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📞 Patient Phone</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.patientPhone || 'N/A'}</p>
+                </div>
+              </div>
+              <a href="${baseUrl}/nurse-dashboard" 
+                 style="display: block; background: #ec4899; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
+                View in Dashboard
+              </a>
+              <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
+                This is an automated notification from MyPakLabs.
+              </p>
+            </div>
+          </div>
+        `
+      };
+
+    case "emergency_request":
+      const urgencyColor = data.urgency === 'critical' ? '#ef4444' : data.urgency === 'within_1_hour' ? '#f97316' : '#3b82f6';
+      const urgencyLabel = data.urgency === 'critical' ? '🚨 CRITICAL' : data.urgency === 'within_1_hour' ? '⏰ URGENT' : '📅 SCHEDULED';
+      return {
+        subject: `${urgencyLabel} Emergency Request Near You - ${data.city}`,
+        html: `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: ${urgencyColor}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">${urgencyLabel} Emergency Request!</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                A patient needs immediate nursing assistance in your area!
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Patient Name</p>
+                  <p style="margin: 5px 0 0; color: ${urgencyColor}; font-size: 20px; font-weight: 700;">${data.patientName}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📍 Location</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 600;">${data.city || 'N/A'}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Services Needed</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 14px;">${data.services?.join(', ') || 'N/A'}</p>
+                </div>
+                <div>
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📞 Patient Phone</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.patientPhone || 'N/A'}</p>
+                </div>
+              </div>
+              <div style="background: #fef2f2; border: 1px solid #ef4444; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 0; color: #991b1b; font-size: 14px;">
+                  ⚡ <strong>Act Now:</strong> Open the app to submit your offer and help this patient!
+                </p>
+              </div>
+              <a href="${baseUrl}/nurse-emergency-feed" 
+                 style="display: block; background: ${urgencyColor}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
+                View & Submit Offer
+              </a>
+              <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
+                This is an automated notification from MyPakLabs.
+              </p>
+            </div>
+          </div>
+        `
+      };
+
+    case "medicine_order":
+      return {
+        subject: `🔔 New Medicine Order - ${data.orderId}`,
+        html: `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">🔔 New Medicine Order</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                You have received a new medicine order from <strong>${data.patientName}</strong>.
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Order ID</p>
+                  <p style="margin: 5px 0 0; color: #14b8a6; font-size: 20px; font-weight: 700;">${data.orderId}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Patient Name</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 600;">${data.patientName}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📞 Patient Phone</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${data.patientPhone || 'N/A'}</p>
+                </div>
+                ${data.deliveryAddress ? `
+                <div>
+                  <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">📍 Delivery Address</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 14px;">${data.deliveryAddress}</p>
+                </div>
+                ` : ''}
+              </div>
+              <div style="background: #ccfbf1; border: 1px solid #14b8a6; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 0; color: #134e4a; font-size: 14px;">
+                  💡 <strong>Action Required:</strong> Please review the order and confirm availability to the patient.
+                </p>
+              </div>
+              <a href="${baseUrl}/pharmacy-dashboard" 
+                 style="display: block; background: #14b8a6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center;">
+                View in Dashboard
+              </a>
+              <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
+                This is an automated notification from MyPakLabs.
+              </p>
+            </div>
+          </div>
+        `
+      };
+
+    default:
+      return null;
+  }
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -833,8 +1107,6 @@ const handler = async (req: Request): Promise<Response> => {
       ? [{ filename: `MyPakLabs-Booking-${data.orderId}.pdf`, content: pdfBase64 }]
       : undefined;
 
-    const FALLBACK_EMAIL = "MyPakLabs <onboarding@resend.dev>";
-
     const isDomainNotVerified = (err: unknown) => {
       const msg = (err as any)?.message ?? "";
       const name = (err as any)?.name ?? "";
@@ -852,13 +1124,14 @@ const handler = async (req: Request): Promise<Response> => {
       to: string[];
       subject: string;
       html: string;
+      attachments?: any[];
     }) => {
       const primary = await resend.emails.send({
         from: OFFICIAL_EMAIL,
         to: args.to,
         subject: args.subject,
         html: args.html,
-        attachments,
+        attachments: args.attachments,
       });
 
       if (primary?.error && isDomainNotVerified(primary.error)) {
@@ -871,7 +1144,7 @@ const handler = async (req: Request): Promise<Response> => {
           to: args.to,
           subject: args.subject,
           html: args.html,
-          attachments,
+          attachments: args.attachments,
         });
         return { primary, fallback };
       }
@@ -879,16 +1152,64 @@ const handler = async (req: Request): Promise<Response> => {
       return { primary, fallback: null };
     };
 
-    // Send admin notification email
+    // ===== SEND ADMIN NOTIFICATION (Admin receives ALL notifications) =====
     console.log("Sending admin email to:", data.adminEmail);
     const adminSend = await sendWithFallback({
       to: [data.adminEmail],
       subject,
       html,
+      attachments,
     });
     console.log("Admin notification email sent:", adminSend);
 
-    // Send customer confirmation email if patientEmail is provided
+    // ===== SEND PROVIDER NOTIFICATION (based on notification type) =====
+    let providerSend: any = null;
+    let providerEmails: string[] = [];
+
+    // Determine which providers should receive notifications
+    if (data.type === "doctor_appointment" && data.doctorId) {
+      // Doctor receives their own appointment notifications
+      const doctorEmail = await getProviderEmail("doctor", data.doctorId);
+      if (doctorEmail) {
+        providerEmails.push(doctorEmail);
+        console.log("Doctor email found:", doctorEmail);
+      }
+    } else if (data.type === "nurse_booking" && data.nurseId) {
+      // Nurse receives their booking notifications
+      const nurseEmail = await getProviderEmail("nurse", data.nurseId);
+      if (nurseEmail) {
+        providerEmails.push(nurseEmail);
+        console.log("Nurse email found:", nurseEmail);
+      }
+    } else if (data.type === "emergency_request") {
+      // ALL approved emergency-available nurses receive emergency notifications
+      const nursesEmails = await getApprovedNursesEmails();
+      providerEmails = nursesEmails;
+      console.log("Emergency available nurses emails:", providerEmails.length);
+    } else if (data.type === "medicine_order" && data.storeId) {
+      // Pharmacy receives their order notifications
+      const pharmacyEmail = await getProviderEmail("pharmacy", data.storeId);
+      if (pharmacyEmail) {
+        providerEmails.push(pharmacyEmail);
+        console.log("Pharmacy email found:", pharmacyEmail);
+      }
+    }
+
+    // Send provider notifications
+    if (providerEmails.length > 0) {
+      const providerEmailContent = generateProviderNotificationHtml(data, data.type);
+      if (providerEmailContent) {
+        console.log("Sending provider notification to:", providerEmails);
+        providerSend = await sendWithFallback({
+          to: providerEmails,
+          subject: providerEmailContent.subject,
+          html: providerEmailContent.html,
+        });
+        console.log("Provider notification email sent:", providerSend);
+      }
+    }
+
+    // ===== SEND CUSTOMER CONFIRMATION EMAIL =====
     let customerSend: any = null;
     if (data.patientEmail) {
       const customerEmail = generateCustomerConfirmationHtml(data);
@@ -898,6 +1219,7 @@ const handler = async (req: Request): Promise<Response> => {
           to: [data.patientEmail],
           subject: customerEmail.subject,
           html: customerEmail.html,
+          attachments,
         });
         console.log("Customer confirmation email sent:", customerSend);
       }
@@ -905,6 +1227,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const adminError = adminSend?.fallback?.error || adminSend?.primary?.error || null;
     const customerError = customerSend?.fallback?.error || customerSend?.primary?.error || null;
+    const providerError = providerSend?.fallback?.error || providerSend?.primary?.error || null;
     const ok = !adminError && (!data.patientEmail || !customerError);
 
     return new Response(
@@ -912,7 +1235,9 @@ const handler = async (req: Request): Promise<Response> => {
         success: ok,
         adminEmail: adminSend,
         customerEmail: customerSend,
+        providerEmail: providerSend,
         pdfGenerated: !!pdfBase64,
+        providerEmailsCount: providerEmails.length,
       }),
       {
         status: ok ? 200 : 502,

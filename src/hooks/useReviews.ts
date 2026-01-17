@@ -123,6 +123,57 @@ export const useReviews = (entityType?: ReviewEntityType, entityId?: string | nu
     },
   });
 
+  // Update a review (only comment can be changed, rating stays the same)
+  const updateReview = useMutation({
+    mutationFn: async ({ reviewId, comment }: { reviewId: string; comment: string }) => {
+      if (!user) throw new Error('Must be logged in to update a review');
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ comment: comment || null })
+        .eq('id', reviewId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews', entityType, entityId] });
+      queryClient.invalidateQueries({ queryKey: ['user-review', entityType, entityId, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['featured-reviews'] });
+      toast.success('Review updated successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update review');
+    },
+  });
+
+  // Delete a review
+  const deleteReview = useMutation({
+    mutationFn: async (reviewId: string) => {
+      if (!user) throw new Error('Must be logged in to delete a review');
+
+      const { error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', reviewId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews', entityType, entityId] });
+      queryClient.invalidateQueries({ queryKey: ['user-review', entityType, entityId, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['featured-reviews'] });
+      toast.success('Review deleted successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete review');
+    },
+  });
+
   // Calculate average rating
   const averageRating = reviews?.length
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
@@ -133,6 +184,8 @@ export const useReviews = (entityType?: ReviewEntityType, entityId?: string | nu
     isLoading,
     userReview,
     submitReview,
+    updateReview,
+    deleteReview,
     averageRating,
     reviewCount: reviews?.length || 0,
   };

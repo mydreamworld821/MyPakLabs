@@ -5,31 +5,75 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StarRating } from "./StarRating";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { MessageSquarePlus, Clock, CheckCircle2 } from "lucide-react";
+import { MessageSquarePlus, Clock, CheckCircle2, Pencil, Trash2, X, Save } from "lucide-react";
 import { Review } from "@/hooks/useReviews";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ReviewFormProps {
   entityName: string;
   onSubmit: (data: { rating: number; comment: string }) => void;
+  onUpdate?: (data: { reviewId: string; comment: string }) => void;
+  onDelete?: (reviewId: string) => void;
   isSubmitting?: boolean;
+  isUpdating?: boolean;
+  isDeleting?: boolean;
   existingReview?: Review | null;
 }
 
 export const ReviewForm = ({
   entityName,
   onSubmit,
+  onUpdate,
+  onDelete,
   isSubmitting = false,
+  isUpdating = false,
+  isDeleting = false,
   existingReview,
 }: ReviewFormProps) => {
   const { user } = useAuth();
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [comment, setComment] = useState(existingReview?.comment || "");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editComment, setEditComment] = useState(existingReview?.comment || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) return;
     onSubmit({ rating, comment });
+  };
+
+  const handleUpdate = () => {
+    if (existingReview && onUpdate) {
+      onUpdate({ reviewId: existingReview.id, comment: editComment });
+      setIsEditing(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (existingReview && onDelete) {
+      onDelete(existingReview.id);
+    }
+  };
+
+  const startEditing = () => {
+    setEditComment(existingReview?.comment || "");
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditComment(existingReview?.comment || "");
+    setIsEditing(false);
   };
 
   if (!user) {
@@ -52,31 +96,109 @@ export const ReviewForm = ({
     return (
       <Card>
         <CardContent className="p-6 space-y-3">
-          <div className="flex items-center gap-2">
-            {existingReview.status === 'pending' ? (
-              <>
-                <Clock className="h-5 w-5 text-yellow-500" />
-                <span className="font-medium">Your review is pending approval</span>
-              </>
-            ) : existingReview.status === 'approved' ? (
-              <>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <span className="font-medium">Your review has been published</span>
-              </>
-            ) : (
-              <Badge variant="destructive">Review was rejected</Badge>
-            )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {existingReview.status === 'pending' ? (
+                <>
+                  <Clock className="h-5 w-5 text-yellow-500" />
+                  <span className="font-medium">Your review is pending</span>
+                </>
+              ) : existingReview.status === 'approved' ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <span className="font-medium">Your review is published</span>
+                </>
+              ) : (
+                <Badge variant="destructive">Review was rejected</Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {!isEditing && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={startEditing}
+                  className="h-8 w-8 p-0"
+                  title="Edit comment"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                    title="Delete review"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Review?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete your review. You can submit a new review afterwards.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
+          
           <div className="flex items-center gap-2">
             <StarRating rating={existingReview.rating} size="sm" />
             <span className="text-sm text-muted-foreground">
-              ({existingReview.rating}/5)
+              ({existingReview.rating}/5) - Rating cannot be changed
             </span>
           </div>
-          {existingReview.comment && (
-            <p className="text-sm text-muted-foreground italic">
-              "{existingReview.comment}"
-            </p>
+
+          {isEditing ? (
+            <div className="space-y-3">
+              <Textarea
+                value={editComment}
+                onChange={(e) => setEditComment(e.target.value)}
+                placeholder="Update your comment..."
+                rows={3}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleUpdate}
+                  disabled={isUpdating}
+                  className="flex items-center gap-1"
+                >
+                  <Save className="h-4 w-4" />
+                  {isUpdating ? "Saving..." : "Save"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={cancelEditing}
+                  className="flex items-center gap-1"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            existingReview.comment && (
+              <p className="text-sm text-muted-foreground italic">
+                "{existingReview.comment}"
+              </p>
+            )
           )}
         </CardContent>
       </Card>
@@ -131,7 +253,7 @@ export const ReviewForm = ({
             {isSubmitting ? "Submitting..." : "Submit Review"}
           </Button>
           <p className="text-xs text-muted-foreground text-center">
-            Your review will be visible after admin approval
+            Rating can only be given once. Comments can be edited anytime.
           </p>
         </form>
       </CardContent>

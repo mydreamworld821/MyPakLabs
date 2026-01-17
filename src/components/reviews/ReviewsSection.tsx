@@ -18,7 +18,7 @@ export const ReviewsSection = ({
   entityName,
   showForm = true,
 }: ReviewsSectionProps) => {
-  const { reviews, isLoading, userReview, submitReview, averageRating, reviewCount } =
+  const { reviews, isLoading, userReview, submitReview, updateReview, deleteReview, averageRating, reviewCount } =
     useReviews(entityType, entityId);
 
   if (isLoading) {
@@ -59,7 +59,11 @@ export const ReviewsSection = ({
         <ReviewForm
           entityName={entityName}
           onSubmit={(data) => submitReview.mutate(data)}
+          onUpdate={(data) => updateReview.mutate(data)}
+          onDelete={(reviewId) => deleteReview.mutate(reviewId)}
           isSubmitting={submitReview.isPending}
+          isUpdating={updateReview.isPending}
+          isDeleting={deleteReview.isPending}
           existingReview={userReview}
         />
       )}

@@ -6,13 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { playNotificationSound } from "@/utils/notificationSound";
 import {
-  FlaskConical,
   FileText,
   LogOut,
   Menu,
   X,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  LayoutDashboard,
+  Calendar,
+  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +23,10 @@ interface ModeratorLayoutProps {
 }
 
 const navItems = [
+  { href: "/moderator", label: "Dashboard", icon: LayoutDashboard },
   { href: "/moderator/prescriptions", label: "Prescriptions", icon: FileText },
+  { href: "/moderator/doctor-appointments", label: "Doctor Appointments", icon: Calendar },
+  { href: "/moderator/nurse-bookings", label: "Nurse Bookings", icon: UserRound },
 ];
 
 const ModeratorLayout = ({ children }: ModeratorLayoutProps) => {

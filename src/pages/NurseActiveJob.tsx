@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin,
-  Clock,
   Phone,
   Loader2,
   Navigation,
@@ -149,7 +148,19 @@ export default function NurseActiveJob() {
 
       if (offerData) {
         setJob({
-          ...requestData,
+          id: requestData.id,
+          patient_name: requestData.patient_name,
+          patient_phone: requestData.patient_phone,
+          location_lat: requestData.location_lat,
+          location_lng: requestData.location_lng,
+          location_address: requestData.location_address,
+          house_address: requestData.house_address,
+          city: requestData.city,
+          services_needed: requestData.services_needed,
+          urgency: requestData.urgency,
+          notes: requestData.notes,
+          status: requestData.status,
+          created_at: requestData.created_at,
           offer: offerData,
         });
       }

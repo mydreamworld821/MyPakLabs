@@ -820,49 +820,96 @@ const handler = async (req: Request): Promise<Response> => {
     `);
 
     // Prepare attachments if PDF was generated
-    const attachments = pdfBase64 ? [{
-      filename: `MyPakLabs-Booking-${data.orderId}.pdf`,
-      content: pdfBase64,
-    }] : undefined;
+    const attachments = pdfBase64
+      ? [{ filename: `MyPakLabs-Booking-${data.orderId}.pdf`, content: pdfBase64 }]
+      : undefined;
+
+    const FALLBACK_EMAIL = "MyPakLabs <onboarding@resend.dev>";
+
+    const isDomainNotVerified = (err: unknown) => {
+      const msg = (err as any)?.message ?? "";
+      const name = (err as any)?.name ?? "";
+      const statusCode = (err as any)?.statusCode ?? (err as any)?.status ?? undefined;
+      return (
+        name === "validation_error" &&
+        statusCode === 403 &&
+        typeof msg === "string" &&
+        msg.toLowerCase().includes("domain") &&
+        msg.toLowerCase().includes("not verified")
+      );
+    };
+
+    const sendWithFallback = async (args: {
+      to: string[];
+      subject: string;
+      html: string;
+    }) => {
+      const primary = await resend.emails.send({
+        from: OFFICIAL_EMAIL,
+        to: args.to,
+        subject: args.subject,
+        html: args.html,
+        attachments,
+      });
+
+      if (primary?.error && isDomainNotVerified(primary.error)) {
+        console.warn(
+          "Sender domain not verified for OFFICIAL_EMAIL. Retrying with fallback sender.",
+          primary.error
+        );
+        const fallback = await resend.emails.send({
+          from: FALLBACK_EMAIL,
+          to: args.to,
+          subject: args.subject,
+          html: args.html,
+          attachments,
+        });
+        return { primary, fallback };
+      }
+
+      return { primary, fallback: null };
+    };
 
     // Send admin notification email
     console.log("Sending admin email to:", data.adminEmail);
-    const adminEmailResponse = await resend.emails.send({
-      from: OFFICIAL_EMAIL,
+    const adminSend = await sendWithFallback({
       to: [data.adminEmail],
       subject,
       html,
-      attachments,
     });
-
-    console.log("Admin notification email sent:", adminEmailResponse);
+    console.log("Admin notification email sent:", adminSend);
 
     // Send customer confirmation email if patientEmail is provided
-    let customerEmailResponse = null;
+    let customerSend: any = null;
     if (data.patientEmail) {
       const customerEmail = generateCustomerConfirmationHtml(data);
       if (customerEmail) {
         console.log("Sending customer confirmation email to:", data.patientEmail);
-        customerEmailResponse = await resend.emails.send({
-          from: OFFICIAL_EMAIL,
+        customerSend = await sendWithFallback({
           to: [data.patientEmail],
           subject: customerEmail.subject,
           html: customerEmail.html,
-          attachments,
         });
-        console.log("Customer confirmation email sent:", customerEmailResponse);
+        console.log("Customer confirmation email sent:", customerSend);
       }
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      adminEmail: adminEmailResponse,
-      customerEmail: customerEmailResponse,
-      pdfGenerated: !!pdfBase64
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    const adminError = adminSend?.fallback?.error || adminSend?.primary?.error || null;
+    const customerError = customerSend?.fallback?.error || customerSend?.primary?.error || null;
+    const ok = !adminError && (!data.patientEmail || !customerError);
+
+    return new Response(
+      JSON.stringify({
+        success: ok,
+        adminEmail: adminSend,
+        customerEmail: customerSend,
+        pdfGenerated: !!pdfBase64,
+      }),
+      {
+        status: ok ? 200 : 502,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   } catch (error: unknown) {
     console.error("Error sending notification:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

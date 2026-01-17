@@ -85,6 +85,65 @@ interface NotificationRequest {
   bookingDate?: string;
 }
 
+// Helper to format Pakistan timezone (PKT = UTC+5) with 12-hour format
+const getPakistanDateTime = (): string => {
+  const now = new Date();
+  // Pakistan Standard Time is UTC+5
+  const pktOffset = 5 * 60; // minutes
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const pktTime = new Date(utc + (pktOffset * 60000));
+  
+  const day = pktTime.getDate().toString().padStart(2, '0');
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[pktTime.getMonth()];
+  const year = pktTime.getFullYear();
+  
+  let hours = pktTime.getHours();
+  const minutes = pktTime.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 should be 12
+  
+  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm} PKT`;
+};
+
+// Helper to generate unique booking IDs
+// Doctor: MPL-DD-DR-NNNNN
+// Nurse: MPL-DD-NS-NNNNN
+const generateBookingUniqueId = async (type: 'doctor' | 'nurse'): Promise<string> => {
+  const now = new Date();
+  // Get Pakistan time for date
+  const pktOffset = 5 * 60;
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const pktTime = new Date(utc + (pktOffset * 60000));
+  
+  const day = pktTime.getDate().toString().padStart(2, '0');
+  const prefix = type === 'doctor' ? 'DR' : 'NS';
+  const idPrefix = `MPL-${day}-${prefix}`;
+  
+  try {
+    // Get count from database for sequential numbering
+    const tableName = type === 'doctor' ? 'appointments' : 'nurse_bookings';
+    const { count, error } = await supabase
+      .from(tableName)
+      .select('*', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error(`Error getting ${type} count:`, error);
+      // Fallback to random
+      const randomNum = Math.floor(Math.random() * 99999) + 1;
+      return `${idPrefix}-${randomNum.toString().padStart(5, '0')}`;
+    }
+    
+    const nextSeq = (count || 0) + 1;
+    return `${idPrefix}-${nextSeq.toString().padStart(5, '0')}`;
+  } catch (err) {
+    console.error(`Error generating ${type} booking ID:`, err);
+    const randomNum = Math.floor(Math.random() * 99999) + 1;
+    return `${idPrefix}-${randomNum.toString().padStart(5, '0')}`;
+  }
+};
+
 // MyPakLabs official logo as SVG path for jsPDF (professional vector format)
 // We'll draw the logo programmatically for crisp quality at any size
 const drawLogo = (doc: jsPDF, x: number, y: number, size: number = 30) => {
@@ -406,7 +465,7 @@ const generateLabBookingPDF = (data: NotificationRequest): string | null => {
     doc.text('My Pak Labs', margin, y);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(107, 114, 128);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(`Generated: ${getPakistanDateTime()}`, pageWidth / 2, y, { align: 'center' });
     doc.text('www.mypaklabs.com', pageWidth - margin, y, { align: 'right' });
 
     return doc.output('datauristring').split(',')[1];
@@ -726,7 +785,7 @@ const generateDoctorAppointmentPDF = (data: NotificationRequest): string | null 
     doc.text('MyPakLabs - Trusted Healthcare Services', pageWidth / 2, pageHeight - 12, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Generated: ${new Date().toLocaleString('en-PK')}  |  www.mypaklabs.com`, pageWidth / 2, pageHeight - 6, { align: 'center' });
+    doc.text(`Generated: ${getPakistanDateTime()}  |  www.mypaklabs.com`, pageWidth / 2, pageHeight - 6, { align: 'center' });
 
     return doc.output('datauristring').split(',')[1];
   } catch (error) {
@@ -1039,10 +1098,10 @@ const generateNurseBookingPDF = (data: NotificationRequest): string | null => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('MyPakLabs - Trusted Healthcare Services', pageWidth / 2, pageHeight - 12, { align: 'center' });
+    doc.text('MyPakLabs - Home Nursing Services', pageWidth / 2, pageHeight - 12, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Generated: ${new Date().toLocaleString('en-PK')}  |  www.mypaklabs.com`, pageWidth / 2, pageHeight - 6, { align: 'center' });
+    doc.text(`Generated: ${getPakistanDateTime()}  |  www.mypaklabs.com`, pageWidth / 2, pageHeight - 6, { align: 'center' });
 
     return doc.output('datauristring').split(',')[1];
   } catch (error) {
@@ -1892,9 +1951,19 @@ const handler = async (req: Request): Promise<Response> => {
       pdfBase64 = generateLabBookingPDF({...data, type: 'order'});
     } else if (data.type === 'doctor_appointment' && isConfirmation) {
       console.log("Generating PDF for doctor appointment confirmation...");
+      // Generate unique booking ID if not provided
+      if (!data.bookingId) {
+        data.bookingId = await generateBookingUniqueId('doctor');
+        console.log("Generated doctor booking ID:", data.bookingId);
+      }
       pdfBase64 = generateDoctorAppointmentPDF(data);
     } else if (data.type === 'nurse_booking' && isConfirmation) {
       console.log("Generating PDF for nurse booking confirmation...");
+      // Generate unique booking ID if not provided
+      if (!data.bookingId) {
+        data.bookingId = await generateBookingUniqueId('nurse');
+        console.log("Generated nurse booking ID:", data.bookingId);
+      }
       pdfBase64 = generateNurseBookingPDF(data);
     }
     

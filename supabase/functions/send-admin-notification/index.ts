@@ -9,8 +9,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Official sender email - domain must be verified in Resend
-const OFFICIAL_EMAIL = "MyPakLabs <support@mypaklabs.com>";
+// Temporary sender while domain verifies - switch to support@mypaklabs.com once verified
+const OFFICIAL_EMAIL = "MyPakLabs <onboarding@resend.dev>";
 
 interface NotificationRequest {
   type: "prescription" | "order" | "doctor_appointment" | "nurse_booking" | "emergency_request" | "medicine_order";

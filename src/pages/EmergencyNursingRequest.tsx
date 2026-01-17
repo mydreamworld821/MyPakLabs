@@ -65,6 +65,7 @@ export default function EmergencyNursingRequest() {
     locationLat: null as number | null,
     locationLng: null as number | null,
     locationAddress: "",
+    houseAddress: "", // Manual detailed address: house no, street, sector, area
     city: "",
     servicesNeeded: [] as string[],
     urgency: "critical" as "critical" | "within_1_hour" | "scheduled",
@@ -182,6 +183,15 @@ export default function EmergencyNursingRequest() {
       return;
     }
 
+    if (!formData.houseAddress.trim()) {
+      toast({
+        title: "House Address Required",
+        description: "Please enter your complete house address",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.servicesNeeded.length === 0) {
       toast({
         title: "Service Required",
@@ -205,6 +215,7 @@ export default function EmergencyNursingRequest() {
           location_lat: formData.locationLat,
           location_lng: formData.locationLng,
           location_address: formData.locationAddress,
+          house_address: formData.houseAddress.trim(),
           city: formData.city,
           services_needed: formData.servicesNeeded,
           urgency: formData.urgency,
@@ -274,7 +285,7 @@ export default function EmergencyNursingRequest() {
     }
   };
 
-  const canProceedStep1 = formData.patientName && formData.patientPhone && formData.locationLat;
+  const canProceedStep1 = formData.patientName && formData.patientPhone && formData.locationLat && formData.houseAddress.trim();
   const canProceedStep2 = formData.servicesNeeded.length > 0;
 
   return (
@@ -381,6 +392,20 @@ export default function EmergencyNursingRequest() {
                   onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
                   placeholder="Your city"
                 />
+              </div>
+
+              {/* Manual House Address */}
+              <div className="space-y-2">
+                <Label htmlFor="houseAddress">Complete House Address *</Label>
+                <Input
+                  id="houseAddress"
+                  value={formData.houseAddress}
+                  onChange={(e) => setFormData(prev => ({ ...prev, houseAddress: e.target.value }))}
+                  placeholder="House #, Street, Sector, Area (e.g., House 123, Street 5, Sector G-10, Islamabad)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter detailed address for nurse navigation
+                </p>
               </div>
 
               <Button
@@ -524,7 +549,8 @@ export default function EmergencyNursingRequest() {
                 <div className="text-sm space-y-1">
                   <p><span className="text-muted-foreground">Patient:</span> {formData.patientName}</p>
                   <p><span className="text-muted-foreground">Phone:</span> {formData.patientPhone}</p>
-                  <p><span className="text-muted-foreground">Location:</span> {formData.city || "GPS Captured"}</p>
+                  <p><span className="text-muted-foreground">City:</span> {formData.city || "GPS Captured"}</p>
+                  <p><span className="text-muted-foreground">Address:</span> {formData.houseAddress}</p>
                   <p>
                     <span className="text-muted-foreground">Services:</span>{" "}
                     {formData.servicesNeeded.map(s => 

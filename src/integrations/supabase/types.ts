@@ -345,6 +345,7 @@ export type Database = {
           city: string | null
           completed_at: string | null
           created_at: string
+          house_address: string | null
           id: string
           location_address: string | null
           location_lat: number
@@ -371,6 +372,7 @@ export type Database = {
           city?: string | null
           completed_at?: string | null
           created_at?: string
+          house_address?: string | null
           id?: string
           location_address?: string | null
           location_lat: number
@@ -397,6 +399,7 @@ export type Database = {
           city?: string | null
           completed_at?: string | null
           created_at?: string
+          house_address?: string | null
           id?: string
           location_address?: string | null
           location_lat?: number

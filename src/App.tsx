@@ -72,6 +72,9 @@ import AdminPageLayouts from "./pages/admin/PageLayouts";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminHealthPosts from "./pages/admin/HealthPosts";
 import ModeratorPrescriptions from "./pages/moderator/Prescriptions";
+import ModeratorDashboard from "./pages/moderator/Dashboard";
+import ModeratorDoctorAppointments from "./pages/moderator/DoctorAppointments";
+import ModeratorNurseBookings from "./pages/moderator/NurseBookings";
 import EmergencyNursingRequest from "./pages/EmergencyNursingRequest";
 import EmergencyRequestStatus from "./pages/EmergencyRequestStatus";
 import NurseEmergencyFeed from "./pages/NurseEmergencyFeed";
@@ -201,7 +204,10 @@ const App = () => (
               <Route path="/admin/wallets" element={<ProtectedRoute requireAdmin><AdminWallets /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
+              <Route path="/moderator" element={<ProtectedRoute requireModerator><ModeratorDashboard /></ProtectedRoute>} />
               <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />
+              <Route path="/moderator/doctor-appointments" element={<ProtectedRoute requireModerator><ModeratorDoctorAppointments /></ProtectedRoute>} />
+              <Route path="/moderator/nurse-bookings" element={<ProtectedRoute requireModerator><ModeratorNurseBookings /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

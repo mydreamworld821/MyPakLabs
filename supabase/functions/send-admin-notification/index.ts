@@ -61,6 +61,9 @@ interface NotificationRequest {
   bookingDate?: string;
 }
 
+// MyPakLabs logo as base64 PNG (small purple/teal medical logo)
+const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAGpGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcDpDcmVhdGVEYXRlPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiB4bXA6TWV0YWRhdGFEYXRlPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiB4bXA6TW9kaWZ5RGF0ZT0iMjAyNC0wMS0xNVQxMjowMDowMCswNTowMCIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDowMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiBkYzpmb3JtYXQ9ImltYWdlL3BuZyIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyI+IDx4bXBNTTpIaXN0b3J5PiA8cmRmOlNlcT4gPHJkZjpsaSBzdEV2dDphY3Rpb249ImNyZWF0ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiBzdEV2dDp3aGVuPSIyMDI0LTAxLTE1VDEyOjAwOjAwKzA1OjAwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiLz4gPC9yZGY6U2VxPiA8L3htcE1NOkhpc3Rvcnk+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+AAACkklEQVR4nO3dQW7CMBBA0XT/h+5dde1VJYiT2DNvieQQO/+TmATyx8/Pz+8P0N+vpy8A8xQAuAoAXAUArgLAf3cHwK+A/n58u4r+Mv0N7D/wu+6fJ+Be4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgO4A6Arg7gDoDuDuAOgO4O4A6A6ArgDuDoDuAO4OgO4A6A7g7gD4K+DuAOgO4O4A6A6ArgDuDoDuAO4OgO4A7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgKgO4A6A7g7gDoDuDuAOgO4O4A+Cvg7gDoDoDuAO4OgO4A6A6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6AvwLuDoDuAOgO4O4A6A7g7gDoCuDuAOgO4O4A6A7g7gDoDoCuAO4OgO4A7g6A7gDuDoDuAO4OgL8C7g6A7gDoDoC/Au4OgO4A6A7g7gDoDuDuAOgK4O4A6A7g7gDoDuDuAOgOgK4A7g6A7gDuDoDuAO4OgO4A7g6A/gq4OwC6A6A7gLsDoDuAuwOgK4C7A6A7gLsDoDuAuwOgOwC6Arg7ALoD/AUAAP//dHNLCwDU/5YAAAAASUVORK5CYII=";
+
 // Generate PDF for lab booking
 const generateLabBookingPDF = (data: NotificationRequest): string | null => {
   if (data.type !== 'order' || !data.tests || data.tests.length === 0) {
@@ -71,32 +74,38 @@ const generateLabBookingPDF = (data: NotificationRequest): string | null => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
-    let y = 15;
+    let y = 10;
+
+    // Add logo
+    try {
+      doc.addImage(LOGO_BASE64, 'PNG', margin, y, 22, 22);
+    } catch (e) {
+      console.log('Logo could not be loaded in PDF');
+    }
 
     // Company Name - Center
     doc.setTextColor(75, 0, 130);
     doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
-    doc.text('My Pak Labs', pageWidth / 2, y, { align: 'center' });
+    doc.text('My Pak Labs', pageWidth / 2, y + 12, { align: 'center' });
 
-    y += 8;
-    
-    // Contact Details
+    // Contact Details - Two rows below company name
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(75, 85, 99);
-    doc.text('Web: www.mypaklabs.com  |  Phone: 0316-7523434', pageWidth / 2, y, { align: 'center' });
-    y += 5;
-    doc.text('Email: support@mypaklabs.com  |  Address: Islamabad, Pakistan', pageWidth / 2, y, { align: 'center' });
+    
+    // Center align contact details
+    doc.text('Web: www.mypaklabs.com  |  Phone: 0316-7523434', pageWidth / 2, y + 18, { align: 'center' });
+    doc.text('Email: support@mypaklabs.com  |  Address: Islamabad, Pakistan', pageWidth / 2, y + 24, { align: 'center' });
 
-    y += 8;
+    y += 30;
 
     // Separator line
     doc.setDrawColor(75, 0, 130);
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
     
-    y += 10;
+    y += 8;
 
     // Patient Details Section
     doc.setFontSize(11);

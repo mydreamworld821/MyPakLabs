@@ -97,6 +97,7 @@ interface Order {
 
 interface DoctorAppointment {
   id: string;
+  unique_id: string | null;
   appointment_date: string;
   appointment_time: string;
   consultation_type: string;
@@ -114,6 +115,7 @@ interface DoctorAppointment {
     qualification: string | null;
     clinic_name: string | null;
     clinic_address: string | null;
+    phone: string | null;
     doctor_specializations?: {
       name: string;
     } | null;
@@ -122,6 +124,7 @@ interface DoctorAppointment {
 
 interface NurseBooking {
   id: string;
+  unique_id: string | null;
   nurse_id: string;
   patient_name: string;
   patient_phone: string;
@@ -139,6 +142,7 @@ interface NurseBooking {
     photo_url: string | null;
     qualification: string;
     phone: string | null;
+    per_visit_fee: number | null;
   };
 }
 
@@ -370,6 +374,7 @@ const MyBookings = () => {
             qualification,
             clinic_name,
             clinic_address,
+            phone,
             doctor_specializations:specialization_id (
               name
             )
@@ -396,7 +401,8 @@ const MyBookings = () => {
             full_name,
             photo_url,
             qualification,
-            phone
+            phone,
+            per_visit_fee
           )
         `)
         .eq("patient_id", user?.id)
@@ -965,8 +971,8 @@ const MyBookings = () => {
                           <Table>
                             <TableHeader>
                               <TableRow>
+                                <TableHead>Booking ID</TableHead>
                                 <TableHead>Doctor</TableHead>
-                                <TableHead>Specialization</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Date & Time</TableHead>
                                 <TableHead>Fee</TableHead>
@@ -981,6 +987,9 @@ const MyBookings = () => {
                                 return (
                                   <TableRow key={appointment.id}>
                                     <TableCell>
+                                      <span className="font-mono font-medium text-sm text-primary">{appointment.unique_id || 'Pending'}</span>
+                                    </TableCell>
+                                    <TableCell>
                                       <div className="flex items-center gap-2">
                                         {appointment.doctors?.photo_url ? (
                                           <img src={appointment.doctors.photo_url} alt={appointment.doctors.full_name} className="w-8 h-8 rounded-full object-cover" />
@@ -991,12 +1000,9 @@ const MyBookings = () => {
                                         )}
                                         <div>
                                           <p className="font-medium">{appointment.doctors?.full_name}</p>
-                                          <p className="text-xs text-muted-foreground">{appointment.doctors?.qualification}</p>
+                                          <p className="text-xs text-muted-foreground">{appointment.doctors?.doctor_specializations?.name || "General"}</p>
                                         </div>
                                       </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <span className="text-sm">{appointment.doctors?.doctor_specializations?.name || "General"}</span>
                                     </TableCell>
                                     <TableCell>
                                       <Badge variant="outline" className="capitalize">
@@ -1072,10 +1078,10 @@ const MyBookings = () => {
                           <Table>
                             <TableHeader>
                               <TableRow>
+                                <TableHead>Booking ID</TableHead>
                                 <TableHead>Nurse</TableHead>
                                 <TableHead>Service</TableHead>
                                 <TableHead>Date & Time</TableHead>
-                                <TableHead>Address</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
@@ -1086,6 +1092,9 @@ const MyBookings = () => {
                                 const StatusIcon = config.icon;
                                 return (
                                   <TableRow key={booking.id}>
+                                    <TableCell>
+                                      <span className="font-mono font-medium text-sm text-primary">{booking.unique_id || 'Pending'}</span>
+                                    </TableCell>
                                     <TableCell>
                                       <div className="flex items-center gap-2">
                                         {booking.nurses?.photo_url ? (
@@ -1109,9 +1118,6 @@ const MyBookings = () => {
                                         <p className="font-medium">{format(new Date(booking.preferred_date), "dd MMM yyyy")}</p>
                                         <p className="text-xs text-muted-foreground">{booking.preferred_time}</p>
                                       </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <span className="text-sm truncate max-w-[150px] block">{booking.patient_address || "-"}</span>
                                     </TableCell>
                                     <TableCell>
                                       <Badge className={config.color}>
@@ -1559,13 +1565,18 @@ const MyBookings = () => {
           {dialogType === 'appointment' && selectedAppointment && (
             <div className="space-y-6 mt-4">
               <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Booking ID</p>
+                  <p className="font-mono font-bold text-lg text-primary">{selectedAppointment.unique_id || 'Pending'}</p>
+                </div>
                 <Badge className={statusConfig[selectedAppointment.status]?.color || ""}>
                   {statusConfig[selectedAppointment.status]?.label}
                 </Badge>
-                <Badge variant="outline" className="capitalize">
-                  {selectedAppointment.consultation_type} Consultation
-                </Badge>
               </div>
+
+              <Badge variant="outline" className="capitalize w-fit">
+                {selectedAppointment.consultation_type} Consultation
+              </Badge>
 
               <Card>
                 <CardContent className="p-4">
@@ -1730,12 +1741,13 @@ const MyBookings = () => {
           {dialogType === 'nurse' && selectedNurseBooking && (
             <div className="space-y-6 mt-4">
               <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Booking ID</p>
+                  <p className="font-mono font-bold text-lg text-primary">{selectedNurseBooking.unique_id || 'Pending'}</p>
+                </div>
                 <Badge className={statusConfig[selectedNurseBooking.status]?.color || ""}>
                   {statusConfig[selectedNurseBooking.status]?.label}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
-                  Booked on {format(new Date(selectedNurseBooking.created_at), "dd MMM yyyy")}
-                </span>
               </div>
 
               <Card>

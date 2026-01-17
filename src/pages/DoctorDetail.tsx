@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { format, startOfDay } from "date-fns";
 import { sendAdminEmailNotification } from "@/utils/adminNotifications";
+import { generateBookingUniqueId } from "@/utils/generateBookingId";
 import {
   ArrowLeft,
   Star,
@@ -303,6 +304,9 @@ const DoctorDetail = () => {
         return;
       }
 
+      // Generate unique booking ID
+      const uniqueId = await generateBookingUniqueId('doctor');
+
       const { error } = await supabase
         .from("appointments")
         .insert({
@@ -313,6 +317,7 @@ const DoctorDetail = () => {
           consultation_type: consultationType,
           fee,
           status: "pending",
+          unique_id: uniqueId,
         })
         .select("id")
         .single();
@@ -322,6 +327,7 @@ const DoctorDetail = () => {
       // Send email notification to admin and customer
       sendAdminEmailNotification({
         type: 'doctor_appointment',
+        bookingId: uniqueId,
         patientName: authUser.email?.split('@')[0] || 'Patient',
         patientEmail: authUser.email || undefined,
         doctorName: doctor.full_name,

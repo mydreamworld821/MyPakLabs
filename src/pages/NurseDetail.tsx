@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { generateBookingUniqueId } from "@/utils/generateBookingId";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { sendAdminEmailNotification } from "@/utils/adminNotifications";
@@ -176,6 +177,9 @@ const NurseDetail = () => {
 
     setSubmittingBooking(true);
     try {
+      // Generate unique booking ID
+      const uniqueId = await generateBookingUniqueId('nurse');
+
       const { error } = await supabase.from("nurse_bookings").insert({
         nurse_id: nurse.id,
         patient_id: user?.id || null,
@@ -186,6 +190,7 @@ const NurseDetail = () => {
         preferred_date: bookingForm.preferred_date,
         preferred_time: bookingForm.preferred_time,
         notes: bookingForm.notes || null,
+        unique_id: uniqueId,
       });
 
       if (error) throw error;
@@ -194,6 +199,7 @@ const NurseDetail = () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       sendAdminEmailNotification({
         type: 'nurse_booking',
+        bookingId: uniqueId,
         patientName: bookingForm.patient_name,
         patientPhone: bookingForm.patient_phone,
         patientEmail: authUser?.email || undefined,

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { format, parseISO, isToday, isFuture, isPast } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,14 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
     appointmentId: string;
     action: "confirm" | "no_show" | "cancel";
   } | null>(null);
+
+  const [doctorProfile, setDoctorProfile] = useState<{
+    full_name: string;
+    qualification: string | null;
+    phone: string | null;
+    clinic_name: string | null;
+    clinic_address: string | null;
+  } | null>(null);
   
   // Complete appointment dialog state
   const [completeDialog, setCompleteDialog] = useState<{
@@ -92,8 +101,24 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const fetchDoctorProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("doctors")
+        .select("full_name, qualification, phone, clinic_name, clinic_address")
+        .eq("id", doctorId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) setDoctorProfile(data);
+    } catch (err) {
+      console.warn("Could not load doctor profile for notifications", err);
+    }
+  };
+
   useEffect(() => {
     if (doctorId) {
+      fetchDoctorProfile();
       fetchAppointments();
       
       // Set up real-time subscription
@@ -168,10 +193,10 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
 
   const handleAction = async (appointmentId: string, action: "confirm" | "no_show" | "cancel") => {
     setActionLoading(appointmentId);
-    
+
     try {
       const updateData: Record<string, any> = {};
-      
+
       switch (action) {
         case "confirm":
           updateData.status = "confirmed";
@@ -194,7 +219,46 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
 
       if (error) throw error;
 
-      toast.success(`Appointment ${action === "no_show" ? "marked as no-show" : action + "ed"} successfully`);
+      // Send confirmation emails (doctor-confirm flow)
+      if (action === "confirm") {
+        const apt = appointments.find((a) => a.id === appointmentId);
+        if (apt) {
+          try {
+            const { data: emailData, error: emailErr } = await supabase.functions.invoke(
+              "send-admin-notification",
+              {
+                body: { action: "get_user_email", userId: apt.patient_id },
+              }
+            );
+            if (emailErr) throw emailErr;
+
+            await sendAdminEmailNotification({
+              type: "doctor_appointment",
+              status: "confirmed",
+              bookingId: apt.id.slice(0, 8).toUpperCase(),
+              patientName: apt.patient?.full_name || "Patient",
+              patientPhone: apt.patient?.phone || undefined,
+              patientEmail: emailData?.email || undefined,
+              doctorName: doctorProfile?.full_name || "Doctor",
+              doctorQualification: doctorProfile?.qualification || undefined,
+              doctorPhone: doctorProfile?.phone || undefined,
+              clinicName: doctorProfile?.clinic_name || undefined,
+              clinicAddress: doctorProfile?.clinic_address || undefined,
+              appointmentDate: format(parseISO(apt.appointment_date), "d MMM yyyy"),
+              appointmentTime: apt.appointment_time,
+              consultationType: apt.consultation_type,
+              appointmentFee: apt.fee,
+            });
+          } catch (notifyErr: any) {
+            console.error("Doctor confirmation email failed:", notifyErr);
+            toast.error("Appointment confirmed, but email could not be sent.");
+          }
+        }
+      }
+
+      toast.success(
+        `Appointment ${action === "no_show" ? "marked as no-show" : action + "ed"} successfully`
+      );
       fetchAppointments();
     } catch (error: any) {
       toast.error(error.message || `Failed to ${action} appointment`);

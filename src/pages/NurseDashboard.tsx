@@ -26,6 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { toast } from "sonner";
 import { 
   Heart, 
@@ -77,6 +78,7 @@ interface Nurse {
 
 interface Booking {
   id: string;
+  patient_id?: string | null;
   patient_name: string;
   patient_phone: string;
   patient_address: string | null;
@@ -307,7 +309,7 @@ const NurseDashboard = () => {
   const handleUpdateBookingStatus = async (bookingId: string, status: string) => {
     try {
       const updateData: any = { status, nurse_notes: bookingNotes };
-      
+
       if (status === "confirmed") updateData.confirmed_at = new Date().toISOString();
       if (status === "completed") updateData.completed_at = new Date().toISOString();
       if (status === "cancelled") updateData.cancelled_at = new Date().toISOString();
@@ -318,6 +320,45 @@ const NurseDashboard = () => {
         .eq("id", bookingId);
 
       if (error) throw error;
+
+      // Send confirmation emails (nurse-confirm flow)
+      if (status === "confirmed") {
+        const booking = bookings.find((b) => b.id === bookingId);
+        if (booking) {
+          try {
+            let patientEmail: string | undefined;
+            if (booking.patient_id) {
+              const { data: emailData, error: emailErr } = await supabase.functions.invoke(
+                "send-admin-notification",
+                { body: { action: "get_user_email", userId: booking.patient_id } }
+              );
+              if (emailErr) throw emailErr;
+              patientEmail = emailData?.email || undefined;
+            }
+
+            await sendAdminEmailNotification({
+              type: "nurse_booking",
+              status: "confirmed",
+              bookingId: booking.id.slice(0, 8).toUpperCase(),
+              patientName: booking.patient_name,
+              patientPhone: booking.patient_phone || undefined,
+              patientEmail,
+              patientAddress: booking.patient_address || undefined,
+              nurseName: nurse?.full_name || "Nurse",
+              nurseQualification: nurse?.qualification || undefined,
+              nursePhone: nurse?.phone || undefined,
+              serviceNeeded: booking.service_needed,
+              preferredDate: format(new Date(booking.preferred_date), "d MMM yyyy"),
+              preferredTime: booking.preferred_time || undefined,
+              nurseNotes: bookingNotes || undefined,
+              serviceFee: nurse?.per_visit_fee || undefined,
+            });
+          } catch (notifyErr: any) {
+            console.error("Nurse confirmation email failed:", notifyErr);
+            toast.error("Booking confirmed, but email could not be sent.");
+          }
+        }
+      }
 
       toast.success(`Booking ${status}`);
       setSelectedBooking(null);

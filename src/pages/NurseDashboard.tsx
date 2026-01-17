@@ -91,6 +91,23 @@ interface Booking {
   created_at: string;
 }
 
+interface ActiveEmergencyJob {
+  id: string;
+  patient_name: string;
+  patient_phone: string;
+  city: string | null;
+  location_address: string | null;
+  house_address: string | null;
+  services_needed: string[];
+  urgency: string;
+  status: string;
+  created_at: string;
+  offer: {
+    offered_price: number;
+    eta_minutes: number;
+  } | null;
+}
+
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const SHIFTS = ["Morning", "Evening", "Night"];
 const SERVICES = [
@@ -160,6 +177,7 @@ const NurseDashboard = () => {
   const { user } = useAuth();
   const [nurse, setNurse] = useState<Nurse | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [activeJobs, setActiveJobs] = useState<ActiveEmergencyJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -188,7 +206,42 @@ const NurseDashboard = () => {
     }
     fetchNurseProfile();
     fetchBookings();
+    fetchActiveEmergencyJobs();
   }, [user, navigate]);
+
+  // Subscribe to offer status changes (to know when patient accepts)
+  useEffect(() => {
+    if (!nurse) return;
+
+    const channel = supabase
+      .channel('nurse-offer-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'nurse_offers',
+          filter: `nurse_id=eq.${nurse.id}`,
+        },
+        (payload: any) => {
+          if (payload.new.status === 'accepted') {
+            toast.success("🎉 Your offer was accepted! Patient is waiting for you.", {
+              duration: 10000,
+              action: {
+                label: "Go to Job",
+                onClick: () => navigate(`/nurse-active-job/${payload.new.request_id}`)
+              }
+            });
+            fetchActiveEmergencyJobs();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [nurse, navigate]);
 
   const fetchNurseProfile = async () => {
     if (!user) return;
@@ -258,6 +311,51 @@ const NurseDashboard = () => {
       setBookings(data || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
+    }
+  };
+
+  const fetchActiveEmergencyJobs = async () => {
+    if (!user) return;
+
+    try {
+      const { data: nurseData } = await supabase
+        .from("nurses")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!nurseData) return;
+
+      // Get accepted emergency requests for this nurse
+      const { data: requests, error } = await supabase
+        .from("emergency_nursing_requests")
+        .select("*")
+        .eq("accepted_nurse_id", nurseData.id)
+        .in("status", ["accepted", "in_progress"])
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Get offers for these requests
+      const jobs: ActiveEmergencyJob[] = [];
+      for (const request of requests || []) {
+        const { data: offerData } = await supabase
+          .from("nurse_offers")
+          .select("offered_price, eta_minutes")
+          .eq("request_id", request.id)
+          .eq("nurse_id", nurseData.id)
+          .eq("status", "accepted")
+          .maybeSingle();
+
+        jobs.push({
+          ...request,
+          offer: offerData,
+        });
+      }
+
+      setActiveJobs(jobs);
+    } catch (error) {
+      console.error("Error fetching active jobs:", error);
     }
   };
 
@@ -477,6 +575,49 @@ const NurseDashboard = () => {
               </Link>
             </div>
           </div>
+
+          {/* Active Emergency Jobs Banner */}
+          {activeJobs.length > 0 && (
+            <div className="mb-6 space-y-3">
+              {activeJobs.map((job) => (
+                <Card key={job.id} className="border-2 border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                            <AlertTriangle className="w-6 h-6 text-white" />
+                          </div>
+                          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-bold text-green-800 text-sm">🎉 ACTIVE JOB - PATIENT WAITING</p>
+                          <p className="text-sm text-green-700">{job.patient_name} • {job.city || 'Location shared'}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className="bg-green-600 text-white text-xs">
+                              PKR {job.offer?.offered_price?.toLocaleString() || 'N/A'}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs border-green-500 text-green-700">
+                              {job.status === "in_progress" ? "In Progress" : "Accepted"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        className="bg-green-600 hover:bg-green-700 shrink-0"
+                        onClick={() => navigate(`/nurse-active-job/${job.id}`)}
+                      >
+                        Start Service →
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

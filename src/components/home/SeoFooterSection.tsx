@@ -27,7 +27,7 @@ const specialists = [
 const labServices = [
   { name: "Best Diagnostic Labs", link: "/labs-in-islamabad" },
   { name: "ISO Certified Medical Labs", link: "/labs-in-islamabad" },
-  { name: "Discounted Lab Tests (Up to 35% Off)", link: "/labs" },
+  { name: "Discounted Lab Tests (Up to 30% Off)", link: "/labs" },
   { name: "Home Sample Collection", link: "/labs" },
   { name: "Ultrasound & X-Ray Centers", link: "/labs" },
   { name: "MRI & CT Scan Centers", link: "/labs" },

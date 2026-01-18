@@ -24,6 +24,8 @@ interface TestDetail {
   name: string;
   originalPrice: number;
   discountedPrice: number;
+  isPackage?: boolean;
+  packageDiscountPercent?: number;
 }
 
 interface NotificationRequest {
@@ -371,29 +373,62 @@ const generateLabBookingPDF = (data: NotificationRequest): string | null => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     
+    // Helper function to wrap text
+    const wrapText = (text: string, maxWidth: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      
+      words.forEach(word => {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const width = doc.getTextWidth(testLine);
+        if (width > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    };
+    
+    const nameColumnWidth = pageWidth - margin - 90 - margin - 5;
+    
     data.tests.forEach((test) => {
-      if (y > 250) {
+      const nameLines = wrapText(test.name, nameColumnWidth);
+      const rowHeight = Math.max(10, nameLines.length * 5 + 5);
+      
+      if (y + rowHeight > 250) {
         doc.addPage();
         y = 20;
       }
       
       doc.setDrawColor(220, 220, 220);
-      doc.line(margin, y + 4, pageWidth - margin, y + 4);
+      doc.line(margin, y + rowHeight - 6, pageWidth - margin, y + rowHeight - 6);
       
-      const testName = test.name.length > 35 ? test.name.substring(0, 35) + '...' : test.name;
-      const discPercent = test.originalPrice > 0 
-        ? Math.round((1 - test.discountedPrice / test.originalPrice) * 100)
-        : 0;
+      // Calculate discount - use package-specific discount if available
+      let discPercent = 0;
+      if (test.isPackage && test.packageDiscountPercent) {
+        discPercent = test.packageDiscountPercent;
+      } else if (test.originalPrice > 0 && test.originalPrice !== test.discountedPrice) {
+        discPercent = Math.round((1 - test.discountedPrice / test.originalPrice) * 100);
+      }
       
       doc.setTextColor(0, 0, 0);
-      doc.text(testName, margin + 5, y);
+      
+      // Render wrapped name lines
+      nameLines.forEach((line, lineIndex) => {
+        doc.text(line, margin + 5, y + (lineIndex * 5));
+      });
+      
       doc.text(`${test.originalPrice.toLocaleString()}`, pageWidth - margin - 80, y);
       doc.text(`${discPercent}%`, pageWidth - margin - 50, y);
       doc.setFont('helvetica', 'bold');
       doc.text(`${test.discountedPrice.toLocaleString()}`, pageWidth - margin - 5, y, { align: 'right' });
       doc.setFont('helvetica', 'normal');
       
-      y += 10;
+      y += rowHeight;
     });
 
     // Total Row

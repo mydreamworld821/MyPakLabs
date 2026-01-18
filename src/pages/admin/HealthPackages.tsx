@@ -84,7 +84,7 @@ const AdminHealthPackages = () => {
     lab_id: "",
     name: "",
     description: "",
-    discount_percentage: 0,
+    discounted_price: 0,
     is_featured: false,
     featured_order: null as number | null,
     is_active: true,
@@ -149,7 +149,7 @@ const AdminHealthPackages = () => {
         lab_id: pkg.lab_id,
         name: pkg.name,
         description: pkg.description || "",
-        discount_percentage: pkg.discount_percentage,
+        discounted_price: pkg.discounted_price,
         is_featured: pkg.is_featured,
         featured_order: pkg.featured_order,
         is_active: pkg.is_active,
@@ -166,7 +166,7 @@ const AdminHealthPackages = () => {
         lab_id: "",
         name: "",
         description: "",
-        discount_percentage: 0,
+        discounted_price: 0,
         is_featured: false,
         featured_order: null,
         is_active: true,
@@ -235,15 +235,18 @@ const AdminHealthPackages = () => {
 
     setSaving(true);
     try {
-      const { originalPrice, discountedPrice } = calculatePrices(selectedTests, formData.discount_percentage);
+      const originalPrice = selectedTests.reduce((sum, t) => sum + t.test_price, 0);
+      const discountPercentage = originalPrice > 0 
+        ? Math.round(((originalPrice - formData.discounted_price) / originalPrice) * 100) 
+        : 0;
 
       const packageData = {
         lab_id: formData.lab_id,
         name: formData.name,
         description: formData.description || null,
         original_price: originalPrice,
-        discount_percentage: formData.discount_percentage,
-        discounted_price: discountedPrice,
+        discount_percentage: Math.max(0, discountPercentage),
+        discounted_price: formData.discounted_price,
         is_featured: formData.is_featured,
         featured_order: formData.is_featured ? formData.featured_order : null,
         is_active: formData.is_active,
@@ -344,8 +347,6 @@ const AdminHealthPackages = () => {
     t.name.toLowerCase().includes(testSearchQuery.toLowerCase()) ||
     t.category?.toLowerCase().includes(testSearchQuery.toLowerCase())
   );
-
-  const { originalPrice, discountedPrice } = calculatePrices(selectedTests, formData.discount_percentage);
 
   return (
     <AdminLayout>
@@ -621,31 +622,15 @@ const AdminHealthPackages = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Original Price (Auto)</Label>
-                <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center">
-                  Rs. {originalPrice.toLocaleString()}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Discount %</Label>
-                <Input
-                  type="number"
-                  value={formData.discount_percentage}
-                  onChange={(e) => setFormData({ ...formData, discount_percentage: parseFloat(e.target.value) || 0 })}
-                  min={0}
-                  max={100}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Final Price (Auto)</Label>
-                <div className="h-10 px-3 py-2 bg-primary/10 text-primary font-semibold rounded-md flex items-center">
-                  Rs. {discountedPrice.toLocaleString()}
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label>Package Price (Rs.) *</Label>
+              <Input
+                type="number"
+                value={formData.discounted_price}
+                onChange={(e) => setFormData({ ...formData, discounted_price: parseFloat(e.target.value) || 0 })}
+                placeholder="Enter package price"
+                min={0}
+              />
             </div>
 
             <div className="flex flex-wrap gap-6">

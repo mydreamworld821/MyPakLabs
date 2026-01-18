@@ -416,7 +416,7 @@ const LabDetail = () => {
       // Combine tests + packages for notifications
       const allItemNames = [
         ...selectedTestItems.map(t => t.name),
-        ...selectedPackages.map(p => `📦 ${p.name}`)
+        ...selectedPackages.map(p => `[Package] ${p.name}`)
       ];
       
       const allPdfItems = [
@@ -426,7 +426,7 @@ const LabDetail = () => {
           discountedPrice: test.discountedPrice,
         })),
         ...selectedPackages.map((pkg) => ({
-          name: `📦 ${pkg.name}`,
+          name: `[Package] ${pkg.name}`,
           originalPrice: pkg.discounted_price,
           discountedPrice: pkg.discounted_price,
         }))
@@ -503,7 +503,7 @@ const LabDetail = () => {
         discountedPrice: test.discountedPrice,
       })),
       ...selectedPackages.map((pkg) => ({
-        name: `📦 ${pkg.name}`,
+        name: `[Package] ${pkg.name}`,
         originalPrice: pkg.discounted_price,
         discountedPrice: pkg.discounted_price,
       }))

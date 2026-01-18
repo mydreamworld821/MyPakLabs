@@ -90,6 +90,7 @@ import Reviews from "./pages/Reviews";
 import PartnerRegistration from "./pages/PartnerRegistration";
 import AdminPartners from "./pages/admin/Partners";
 import AdminWallets from "./pages/admin/Wallets";
+import AdminHealthPackages from "./pages/admin/HealthPackages";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
@@ -202,6 +203,7 @@ const App = () => (
               <Route path="/admin/health-posts" element={<ProtectedRoute requireAdmin><AdminHealthPosts /></ProtectedRoute>} />
               <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
               <Route path="/admin/wallets" element={<ProtectedRoute requireAdmin><AdminWallets /></ProtectedRoute>} />
+              <Route path="/admin/health-packages" element={<ProtectedRoute requireAdmin><AdminHealthPackages /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator" element={<ProtectedRoute requireModerator><ModeratorDashboard /></ProtectedRoute>} />

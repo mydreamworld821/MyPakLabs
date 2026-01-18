@@ -18,6 +18,7 @@ import FAQSection from "@/components/home/FAQSection";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { PatientTestimonials } from "@/components/home/PatientTestimonials";
 import OurPartners from "@/components/home/OurPartners";
+import FeaturedHealthPackages from "@/components/home/FeaturedHealthPackages";
 
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";
@@ -366,6 +367,9 @@ const Index = () => {
           <CustomSections />
         </div>
       </main>
+
+      {/* Featured Health Packages Section */}
+      <FeaturedHealthPackages />
 
       {/* Patient Testimonials Section */}
       <PatientTestimonials />

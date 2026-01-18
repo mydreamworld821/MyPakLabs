@@ -112,6 +112,8 @@ interface SelectedPackage {
   id: string;
   name: string;
   description: string | null;
+  original_price: number;
+  discount_percentage: number;
   discounted_price: number;
   tests_included: { name: string; details?: string }[];
   is_featured: boolean;
@@ -327,13 +329,15 @@ const LabDetail = () => {
   const testsOriginal = selectedTestItems.reduce((sum, t) => sum + t.originalPrice, 0);
   const testsDiscounted = selectedTestItems.reduce((sum, t) => sum + t.discountedPrice, 0);
   
-  // Calculate package totals (packages have fixed discounted_price, no original price)
+  // Calculate package totals - packages can have their own discount
+  const packagesOriginal = selectedPackages.reduce((sum, pkg) => sum + (pkg.original_price || pkg.discounted_price), 0);
   const packagesTotal = selectedPackages.reduce((sum, pkg) => sum + pkg.discounted_price, 0);
+  const packagesSavings = packagesOriginal - packagesTotal;
   
   // Combined totals
-  const totalOriginal = testsOriginal + packagesTotal; // Packages don't have original price, use discounted
+  const totalOriginal = testsOriginal + packagesOriginal;
   const totalDiscounted = testsDiscounted + packagesTotal;
-  const totalSavings = testsOriginal - testsDiscounted; // Only tests have savings
+  const totalSavings = (testsOriginal - testsDiscounted) + packagesSavings;
   const finalTotal = Math.max(0, totalDiscounted - walletDiscount);
   
   const hasSelection = selectedTests.length > 0 || selectedPackages.length > 0;
@@ -424,11 +428,14 @@ const LabDetail = () => {
           name: test.name,
           originalPrice: test.originalPrice,
           discountedPrice: test.discountedPrice,
+          isPackage: false,
         })),
         ...selectedPackages.map((pkg) => ({
           name: `[Package] ${pkg.name}`,
-          originalPrice: pkg.discounted_price,
+          originalPrice: pkg.original_price || pkg.discounted_price,
           discountedPrice: pkg.discounted_price,
+          isPackage: true,
+          packageDiscountPercent: pkg.discount_percentage || 0,
         }))
       ];
 
@@ -501,11 +508,14 @@ const LabDetail = () => {
         name: test.name,
         originalPrice: test.originalPrice,
         discountedPrice: test.discountedPrice,
+        isPackage: false,
       })),
       ...selectedPackages.map((pkg) => ({
         name: `[Package] ${pkg.name}`,
-        originalPrice: pkg.discounted_price,
+        originalPrice: pkg.original_price || pkg.discounted_price,
         discountedPrice: pkg.discounted_price,
+        isPackage: true,
+        packageDiscountPercent: pkg.discount_percentage || 0,
       }))
     ];
 
@@ -663,20 +673,36 @@ const LabDetail = () => {
                     </span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Discount ({discount}%)</span>
+                    <span className="text-muted-foreground">Lab Discount ({discount}%)</span>
                     <span className="text-medical-green font-medium">
-                      - Rs. {totalSavings.toLocaleString()}
+                      - Rs. {(testsOriginal - testsDiscounted).toLocaleString()}
                     </span>
                   </div>
                 </>
               )}
-              {packagesTotal > 0 && (
-                <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Packages Total</span>
-                  <span className="font-medium">
-                    Rs. {packagesTotal.toLocaleString()}
-                  </span>
-                </div>
+              {packagesOriginal > 0 && (
+                <>
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Packages Subtotal</span>
+                    {packagesSavings > 0 ? (
+                      <span className="text-muted-foreground line-through">
+                        Rs. {packagesOriginal.toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="font-medium">
+                        Rs. {packagesTotal.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {packagesSavings > 0 && (
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Package Discount</span>
+                      <span className="text-medical-green font-medium">
+                        - Rs. {packagesSavings.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex justify-between py-2">
                 <span className="font-semibold">Final Price</span>
@@ -977,23 +1003,39 @@ const LabDetail = () => {
                             </div>
                             <div className="flex justify-between text-xs sm:text-sm">
                               <span className="text-muted-foreground">
-                                Discount ({discount}%)
+                                Lab Discount ({discount}%)
                               </span>
                               <span className="text-medical-green">
-                                - Rs. {totalSavings.toLocaleString()}
+                                - Rs. {(testsOriginal - testsDiscounted).toLocaleString()}
                               </span>
                             </div>
                           </>
                         )}
                         {selectedPackages.length > 0 && (
-                          <div className="flex justify-between text-xs sm:text-sm">
-                            <span className="text-muted-foreground">
-                              Packages ({selectedPackages.length})
-                            </span>
-                            <span className="font-medium">
-                              Rs. {packagesTotal.toLocaleString()}
-                            </span>
-                          </div>
+                          <>
+                            <div className="flex justify-between text-xs sm:text-sm">
+                              <span className="text-muted-foreground">
+                                Packages ({selectedPackages.length})
+                              </span>
+                              {packagesSavings > 0 ? (
+                                <span className="line-through text-muted-foreground">
+                                  Rs. {packagesOriginal.toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="font-medium">
+                                  Rs. {packagesTotal.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                            {packagesSavings > 0 && (
+                              <div className="flex justify-between text-xs sm:text-sm">
+                                <span className="text-muted-foreground">Package Discount</span>
+                                <span className="text-medical-green">
+                                  - Rs. {packagesSavings.toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                          </>
                         )}
                         {walletDiscount > 0 && (
                           <div className="flex justify-between text-xs sm:text-sm">

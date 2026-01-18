@@ -139,97 +139,96 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     if (jsonData.length > 0) {
       const columns = Object.keys(jsonData[0]);
       console.log("Detected columns in file:", columns);
+      console.log("First row sample:", jsonData[0]);
     }
     
     // Use Map to automatically handle duplicates (last occurrence wins)
     const uniqueTests = new Map<string, TestRow>();
     
+    // First, detect column mappings from the first row
+    const firstRowKeys = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+    
+    // Find test name column
+    let testNameColumn = "";
+    const testNamePatterns = [
+      "test_name", "test name", "testname", "name", "test",
+      "investigation", "test_description", "description", "item"
+    ];
+    for (const key of firstRowKeys) {
+      const lowerKey = key.toLowerCase().trim();
+      if (testNamePatterns.some(p => lowerKey === p || lowerKey.includes(p))) {
+        testNameColumn = key;
+        break;
+      }
+    }
+    // Fallback to first column if not found
+    if (!testNameColumn && firstRowKeys.length > 0) {
+      testNameColumn = firstRowKeys[0];
+    }
+    
+    // Find price column - look for "price", "rate", "amount", "fee", "cost" or second numeric column
+    let priceColumn = "";
+    const pricePatterns = ["price", "rate", "amount", "fee", "cost", "charges", "rs", "pkr"];
+    for (const key of firstRowKeys) {
+      const lowerKey = key.toLowerCase().trim();
+      if (pricePatterns.some(p => lowerKey.includes(p))) {
+        priceColumn = key;
+        break;
+      }
+    }
+    // Fallback: find second column or any column with numeric values
+    if (!priceColumn && firstRowKeys.length > 1) {
+      // Check columns after the first one for numeric values
+      for (let i = 1; i < firstRowKeys.length; i++) {
+        const key = firstRowKeys[i];
+        const sampleValue = jsonData[0][key];
+        if (sampleValue !== undefined && !isNaN(parsePrice(sampleValue) || NaN)) {
+          priceColumn = key;
+          break;
+        }
+      }
+    }
+    
+    // Find discount column
+    let discountColumn = "";
+    const discountPatterns = ["discount", "disc", "%", "off"];
+    for (const key of firstRowKeys) {
+      const lowerKey = key.toLowerCase().trim();
+      if (discountPatterns.some(p => lowerKey.includes(p))) {
+        discountColumn = key;
+        break;
+      }
+    }
+    
+    console.log(`Column mapping - Test: "${testNameColumn}", Price: "${priceColumn}", Discount: "${discountColumn}"`);
+    
     jsonData.forEach((row, index) => {
-      const keys = Object.keys(row);
-      
-      // Find the test name column - be VERY flexible
+      // Get test name from detected column
       let test_name = "";
-      
-      // Check for common column names first
-      const testNameKeys = [
-        "test_name", "Test Name", "test name", "Test_Name", 
-        "name", "Name", "TEST NAME", "TEST_NAME",
-        "testname", "TestName", "TESTNAME",
-        "test", "Test", "TEST",
-        "investigation", "Investigation", "INVESTIGATION",
-        "test_description", "Test Description"
-      ];
-      
-      for (const key of testNameKeys) {
-        if (row[key]) {
-          test_name = String(row[key]).trim();
-          break;
-        }
+      if (testNameColumn && row[testNameColumn]) {
+        test_name = String(row[testNameColumn]).trim();
       }
       
-      // If still not found, try finding any column with "name" or "test" in it
-      if (!test_name) {
-        for (const key of keys) {
-          const lowerKey = key.toLowerCase();
-          if (lowerKey.includes("name") || lowerKey.includes("test") || lowerKey.includes("investigation")) {
-            const value = row[key];
-            if (value && typeof value === "string" && value.trim().length > 0) {
-              test_name = value.trim();
-              break;
-            }
-          }
-        }
-      }
-      
-      // Last resort: use the first column if it looks like a test name (not a number)
-      if (!test_name && keys.length > 0) {
-        const firstValue = row[keys[0]];
-        if (firstValue && typeof firstValue === "string" && isNaN(Number(firstValue))) {
-          test_name = String(firstValue).trim();
-        }
-      }
-      
-      // Parse price - allow empty/0, handle comma-formatted numbers
-      const priceKeys = ["original_price", "Original Price", "price", "Price", "PRICE", "original price", "rate", "Rate", "RATE", "amount", "Amount"];
-      let priceValue = "";
-      for (const key of priceKeys) {
-        if (row[key] !== undefined && row[key] !== "") {
-          priceValue = row[key];
-          break;
-        }
-      }
-      // Also check for columns containing "price" or "rate"
-      if (!priceValue) {
-        for (const key of keys) {
-          const lowerKey = key.toLowerCase();
-          if (lowerKey.includes("price") || lowerKey.includes("rate") || lowerKey.includes("amount")) {
-            if (row[key] !== undefined && row[key] !== "") {
-              priceValue = row[key];
-              break;
-            }
-          }
-        }
-      }
-      const original_price = parsePrice(priceValue);
-      
-      // Parse discount - allow empty/0
-      const discountKeys = ["discount_%", "discount", "Discount", "DISCOUNT", "discount_percentage", "Discount %", "discount %", "disc", "Disc"];
-      let discountValue = "";
-      for (const key of discountKeys) {
-        if (row[key] !== undefined && row[key] !== "") {
-          discountValue = row[key];
-          break;
-        }
-      }
-      const discount_percentage = discountValue === "" ? null : (parseFloat(String(discountValue).replace(/,/g, '').replace('%', '')) || 0);
-      
-      // Skip if no test name
-      if (!test_name) {
-        if (index < 3) console.log("Row skipped (no test name):", row);
+      // Skip if no test name or it looks like a header
+      if (!test_name || test_name.toLowerCase() === "test_name" || test_name.toLowerCase() === "name") {
+        if (index < 3) console.log("Row skipped (invalid test name):", row);
         return;
       }
       
-      // Auto-calculate discounted price only if we have price and discount
+      // Get price from detected column
+      let original_price: number | null = null;
+      if (priceColumn && row[priceColumn] !== undefined) {
+        original_price = parsePrice(row[priceColumn]);
+      }
+      
+      // Get discount from detected column
+      let discount_percentage: number | null = null;
+      if (discountColumn && row[discountColumn] !== undefined && row[discountColumn] !== "") {
+        const discVal = String(row[discountColumn]).replace(/,/g, '').replace('%', '').trim();
+        discount_percentage = parseFloat(discVal) || null;
+      }
+      
+      // Auto-calculate discounted price
       let discounted_price: number | null = null;
       if (original_price !== null && original_price > 0) {
         if (discount_percentage !== null && discount_percentage > 0) {
@@ -237,6 +236,11 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
         } else {
           discounted_price = original_price; // No discount = same as original
         }
+      }
+      
+      // Log first few parsed rows for debugging
+      if (index < 3) {
+        console.log(`Parsed row ${index}:`, { test_name, original_price, discount_percentage, discounted_price });
       }
       
       // Use lowercase name as key to handle case-insensitive duplicates

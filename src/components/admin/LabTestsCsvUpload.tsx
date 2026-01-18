@@ -135,33 +135,99 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json<any>(firstSheet);
     
+    // Debug: Log detected columns
+    if (jsonData.length > 0) {
+      const columns = Object.keys(jsonData[0]);
+      console.log("Detected columns in file:", columns);
+    }
+    
     // Use Map to automatically handle duplicates (last occurrence wins)
     const uniqueTests = new Map<string, TestRow>();
     
-    jsonData.forEach(row => {
-      // Support various column name formats - FLEXIBLE: only test_name is required
-      const test_name = (
-        row["test_name"] || 
-        row["Test Name"] || 
-        row["test name"] || 
-        row["Test_Name"] || 
-        row["name"] || 
-        row["Name"] ||
-        row["TEST NAME"] ||
-        row["TEST_NAME"] ||
-        ""
-      ).toString().trim();
+    jsonData.forEach((row, index) => {
+      const keys = Object.keys(row);
+      
+      // Find the test name column - be VERY flexible
+      let test_name = "";
+      
+      // Check for common column names first
+      const testNameKeys = [
+        "test_name", "Test Name", "test name", "Test_Name", 
+        "name", "Name", "TEST NAME", "TEST_NAME",
+        "testname", "TestName", "TESTNAME",
+        "test", "Test", "TEST",
+        "investigation", "Investigation", "INVESTIGATION",
+        "test_description", "Test Description"
+      ];
+      
+      for (const key of testNameKeys) {
+        if (row[key]) {
+          test_name = String(row[key]).trim();
+          break;
+        }
+      }
+      
+      // If still not found, try finding any column with "name" or "test" in it
+      if (!test_name) {
+        for (const key of keys) {
+          const lowerKey = key.toLowerCase();
+          if (lowerKey.includes("name") || lowerKey.includes("test") || lowerKey.includes("investigation")) {
+            const value = row[key];
+            if (value && typeof value === "string" && value.trim().length > 0) {
+              test_name = value.trim();
+              break;
+            }
+          }
+        }
+      }
+      
+      // Last resort: use the first column if it looks like a test name (not a number)
+      if (!test_name && keys.length > 0) {
+        const firstValue = row[keys[0]];
+        if (firstValue && typeof firstValue === "string" && isNaN(Number(firstValue))) {
+          test_name = String(firstValue).trim();
+        }
+      }
       
       // Parse price - allow empty/0, handle comma-formatted numbers
-      const priceValue = row["original_price"] || row["Original Price"] || row["price"] || row["Price"] || row["PRICE"] || row["original price"] || "";
+      const priceKeys = ["original_price", "Original Price", "price", "Price", "PRICE", "original price", "rate", "Rate", "RATE", "amount", "Amount"];
+      let priceValue = "";
+      for (const key of priceKeys) {
+        if (row[key] !== undefined && row[key] !== "") {
+          priceValue = row[key];
+          break;
+        }
+      }
+      // Also check for columns containing "price" or "rate"
+      if (!priceValue) {
+        for (const key of keys) {
+          const lowerKey = key.toLowerCase();
+          if (lowerKey.includes("price") || lowerKey.includes("rate") || lowerKey.includes("amount")) {
+            if (row[key] !== undefined && row[key] !== "") {
+              priceValue = row[key];
+              break;
+            }
+          }
+        }
+      }
       const original_price = parsePrice(priceValue);
       
       // Parse discount - allow empty/0
-      const discountValue = row["discount_%"] || row["discount"] || row["Discount"] || row["DISCOUNT"] || row["discount_percentage"] || row["Discount %"] || row["discount %"] || "";
-      const discount_percentage = discountValue === "" ? null : (parseFloat(String(discountValue).replace(/,/g, '')) || 0);
+      const discountKeys = ["discount_%", "discount", "Discount", "DISCOUNT", "discount_percentage", "Discount %", "discount %", "disc", "Disc"];
+      let discountValue = "";
+      for (const key of discountKeys) {
+        if (row[key] !== undefined && row[key] !== "") {
+          discountValue = row[key];
+          break;
+        }
+      }
+      const discount_percentage = discountValue === "" ? null : (parseFloat(String(discountValue).replace(/,/g, '').replace('%', '')) || 0);
       
       // Skip if no test name
-      if (!test_name) return;
+      if (!test_name) {
+        if (index < 3) console.log("Row skipped (no test name):", row);
+        return;
+      }
       
       // Auto-calculate discounted price only if we have price and discount
       let discounted_price: number | null = null;
@@ -182,6 +248,7 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
       });
     });
     
+    console.log(`Parsed ${uniqueTests.size} unique tests from file`);
     return Array.from(uniqueTests.values());
   };
 
@@ -215,10 +282,25 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
 
     try {
       const arrayBuffer = await file.arrayBuffer();
+      
+      // First, check what columns exist in the file
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const previewData = XLSX.utils.sheet_to_json<any>(firstSheet, { range: 0 });
+      
+      if (previewData.length === 0) {
+        toast.error("File is empty or has no data rows");
+        setIsUploading(false);
+        return;
+      }
+      
+      const detectedColumns = Object.keys(previewData[0]);
+      console.log("Detected columns:", detectedColumns);
+      
       const rows = parseExcel(arrayBuffer);
 
       if (rows.length === 0) {
-        toast.error("No valid test names found in the file");
+        toast.error(`No valid test names found. Detected columns: ${detectedColumns.join(", ")}. Please ensure you have a column for test names.`);
         setIsUploading(false);
         return;
       }

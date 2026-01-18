@@ -41,6 +41,7 @@ import {
   Search,
   Map,
   Wallet,
+  Package,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -107,6 +108,15 @@ interface TestItem {
   discount: number;
 }
 
+interface SelectedPackage {
+  id: string;
+  name: string;
+  description: string | null;
+  discounted_price: number;
+  tests_included: { name: string; details?: string }[];
+  is_featured: boolean;
+}
+
 const LabDetail = () => {
   const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const navigate = useNavigate();
@@ -118,7 +128,7 @@ const LabDetail = () => {
   const [tests, setTests] = useState<TestItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [selectedPackages, setSelectedPackages] = useState<SelectedPackage[]>([]);
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [uniqueId, setUniqueId] = useState("");
@@ -314,10 +324,19 @@ const LabDetail = () => {
   const cities = lab.cities || [];
 
   const selectedTestItems = tests.filter((t) => selectedTests.includes(t.id));
-  const totalOriginal = selectedTestItems.reduce((sum, t) => sum + t.originalPrice, 0);
-  const totalDiscounted = selectedTestItems.reduce((sum, t) => sum + t.discountedPrice, 0);
-  const totalSavings = totalOriginal - totalDiscounted;
+  const testsOriginal = selectedTestItems.reduce((sum, t) => sum + t.originalPrice, 0);
+  const testsDiscounted = selectedTestItems.reduce((sum, t) => sum + t.discountedPrice, 0);
+  
+  // Calculate package totals (packages have fixed discounted_price, no original price)
+  const packagesTotal = selectedPackages.reduce((sum, pkg) => sum + pkg.discounted_price, 0);
+  
+  // Combined totals
+  const totalOriginal = testsOriginal + packagesTotal; // Packages don't have original price, use discounted
+  const totalDiscounted = testsDiscounted + packagesTotal;
+  const totalSavings = testsOriginal - testsDiscounted; // Only tests have savings
   const finalTotal = Math.max(0, totalDiscounted - walletDiscount);
+  
+  const hasSelection = selectedTests.length > 0 || selectedPackages.length > 0;
 
   const handleConfirmBooking = async () => {
     // Get fresh auth state to ensure user is authenticated
@@ -331,8 +350,8 @@ const LabDetail = () => {
 
     console.log("Booking attempt by user:", authUser.id, authUser.email);
 
-    if (selectedTests.length === 0) {
-      toast.error("Please select at least one test");
+    if (!hasSelection) {
+      toast.error("Please select at least one test or health package");
       return;
     }
 
@@ -345,16 +364,30 @@ const LabDetail = () => {
       const validityDate = new Date();
       validityDate.setDate(validityDate.getDate() + 7);
 
+      // Combine tests and packages into the order
+      const orderTests = [
+        ...selectedTestItems.map(t => ({
+          test_id: t.id,
+          test_name: t.name,
+          price: t.originalPrice,
+          discounted_price: t.discountedPrice,
+          type: 'test' as const
+        })),
+        ...selectedPackages.map(pkg => ({
+          test_id: pkg.id,
+          test_name: `📦 ${pkg.name}`,
+          price: pkg.discounted_price,
+          discounted_price: pkg.discounted_price,
+          type: 'package' as const,
+          tests_included: pkg.tests_included
+        }))
+      ];
+
       const orderData = {
         user_id: authUser.id,
         lab_id: lab.id,
         unique_id: newId,
-        tests: selectedTestItems.map(t => ({
-          test_id: t.id,
-          test_name: t.name,
-          price: t.originalPrice,
-          discounted_price: t.discountedPrice
-        })),
+        tests: orderTests,
         original_total: totalOriginal,
         discount_percentage: discount,
         discounted_total: finalTotal,
@@ -380,6 +413,25 @@ const LabDetail = () => {
 
       console.log("Order saved successfully:", data);
 
+      // Combine tests + packages for notifications
+      const allItemNames = [
+        ...selectedTestItems.map(t => t.name),
+        ...selectedPackages.map(p => `📦 ${p.name}`)
+      ];
+      
+      const allPdfItems = [
+        ...selectedTestItems.map((test) => ({
+          name: test.name,
+          originalPrice: test.originalPrice,
+          discountedPrice: test.discountedPrice,
+        })),
+        ...selectedPackages.map((pkg) => ({
+          name: `📦 ${pkg.name}`,
+          originalPrice: pkg.discounted_price,
+          discountedPrice: pkg.discounted_price,
+        }))
+      ];
+
       // Send email notification to admin and customer with PDF data
       sendAdminEmailNotification({
         type: 'order',
@@ -391,14 +443,10 @@ const LabDetail = () => {
         patientCity: userProfile?.city,
         orderId: newId,
         labName: lab.name,
-        testNames: selectedTestItems.map(t => t.name),
+        testNames: allItemNames,
         totalAmount: totalDiscounted,
         // PDF generation data
-        tests: selectedTestItems.map((test) => ({
-          name: test.name,
-          originalPrice: test.originalPrice,
-          discountedPrice: test.discountedPrice,
-        })),
+        tests: allPdfItems,
         totalOriginal,
         totalDiscounted,
         totalSavings,
@@ -447,6 +495,20 @@ const LabDetail = () => {
   };
 
   const handleDownloadPDF = async () => {
+    // Combine tests + packages for PDF
+    const allPdfItems = [
+      ...selectedTestItems.map((test) => ({
+        name: test.name,
+        originalPrice: test.originalPrice,
+        discountedPrice: test.discountedPrice,
+      })),
+      ...selectedPackages.map((pkg) => ({
+        name: `📦 ${pkg.name}`,
+        originalPrice: pkg.discounted_price,
+        discountedPrice: pkg.discounted_price,
+      }))
+    ];
+
     try {
       await generateBookingPDF({
         uniqueId,
@@ -456,11 +518,7 @@ const LabDetail = () => {
         patientCity: userProfile?.city || undefined,
         patientAge: userProfile?.age || undefined,
         patientGender: userProfile?.gender || undefined,
-        tests: selectedTestItems.map((test) => ({
-          name: test.name,
-          originalPrice: test.originalPrice,
-          discountedPrice: test.discountedPrice,
-        })),
+        tests: allPdfItems,
         totalOriginal,
         totalDiscounted,
         totalSavings,
@@ -584,26 +642,46 @@ const LabDetail = () => {
                 <span className="text-muted-foreground">Lab</span>
                 <span className="font-medium">{lab.name}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Tests</span>
-                <span className="font-medium">{selectedTests.length} test(s)</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Original Price</span>
-                <span className="text-muted-foreground line-through">
-                  Rs. {totalOriginal.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Discount ({discount}%)</span>
-                <span className="text-medical-green font-medium">
-                  - Rs. {totalSavings.toLocaleString()}
-                </span>
-              </div>
+              {selectedTests.length > 0 && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground">Tests</span>
+                  <span className="font-medium">{selectedTests.length} test(s)</span>
+                </div>
+              )}
+              {selectedPackages.length > 0 && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground">Health Packages</span>
+                  <span className="font-medium">{selectedPackages.length} package(s)</span>
+                </div>
+              )}
+              {testsOriginal > 0 && (
+                <>
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Tests Subtotal</span>
+                    <span className="text-muted-foreground line-through">
+                      Rs. {testsOriginal.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Discount ({discount}%)</span>
+                    <span className="text-medical-green font-medium">
+                      - Rs. {totalSavings.toLocaleString()}
+                    </span>
+                  </div>
+                </>
+              )}
+              {packagesTotal > 0 && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground">Packages Total</span>
+                  <span className="font-medium">
+                    Rs. {packagesTotal.toLocaleString()}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between py-2">
                 <span className="font-semibold">Final Price</span>
                 <span className="text-xl font-bold text-primary">
-                  Rs. {totalDiscounted.toLocaleString()}
+                  Rs. {finalTotal.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -847,12 +925,8 @@ const LabDetail = () => {
                 <HealthPackagesSection
                   labId={lab.id}
                   labName={lab.name}
-                  onSelectPackage={(pkg) => {
-                    setSelectedPackage(pkg);
-                    // Package now uses manually added tests, not linked test IDs
-                    toast.success(`${pkg.name} selected! Contact lab for booking.`);
-                  }}
-                  selectedPackageId={selectedPackage?.id}
+                  selectedPackageIds={selectedPackages.map(p => p.id)}
+                  onSelectionChange={setSelectedPackages}
                 />
               )}
             </div>
@@ -863,11 +937,12 @@ const LabDetail = () => {
               <Card className="lg:sticky lg:top-24 border-primary/20 shadow-md">
                 <CardContent className="p-4">
                   <h3 className="font-semibold text-base mb-3">Order Summary</h3>
-                  {selectedTests.length > 0 ? (
+                  {hasSelection ? (
                     <div className="space-y-3">
-                      {/* Selected tests - Scrollable list */}
-                      <ScrollArea className="max-h-32 sm:max-h-40">
+                      {/* Selected items - Scrollable list */}
+                      <ScrollArea className="max-h-40 sm:max-h-48">
                         <div className="space-y-1.5 pr-2">
+                          {/* Individual Tests */}
                           {selectedTestItems.map((test) => (
                             <div key={test.id} className="flex justify-between text-xs sm:text-sm">
                               <span className="truncate flex-1 pr-2">{test.name}</span>
@@ -876,24 +951,50 @@ const LabDetail = () => {
                               </span>
                             </div>
                           ))}
+                          {/* Health Packages */}
+                          {selectedPackages.map((pkg) => (
+                            <div key={pkg.id} className="flex justify-between text-xs sm:text-sm bg-primary/5 rounded p-1.5 -mx-1.5">
+                              <span className="truncate flex-1 pr-2 flex items-center gap-1">
+                                <Package className="w-3 h-3 text-primary shrink-0" />
+                                {pkg.name}
+                              </span>
+                              <span className="font-medium shrink-0 text-primary">
+                                Rs. {pkg.discounted_price.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </ScrollArea>
 
                       <div className="border-t border-border pt-3 space-y-1.5">
-                        <div className="flex justify-between text-xs sm:text-sm">
-                          <span className="text-muted-foreground">Subtotal</span>
-                          <span className="line-through text-muted-foreground">
-                            Rs. {totalOriginal.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
-                          <span className="text-muted-foreground">
-                            Discount ({discount}%)
-                          </span>
-                          <span className="text-medical-green">
-                            - Rs. {totalSavings.toLocaleString()}
-                          </span>
-                        </div>
+                        {selectedTests.length > 0 && (
+                          <>
+                            <div className="flex justify-between text-xs sm:text-sm">
+                              <span className="text-muted-foreground">Tests Subtotal</span>
+                              <span className="line-through text-muted-foreground">
+                                Rs. {testsOriginal.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-xs sm:text-sm">
+                              <span className="text-muted-foreground">
+                                Discount ({discount}%)
+                              </span>
+                              <span className="text-medical-green">
+                                - Rs. {totalSavings.toLocaleString()}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                        {selectedPackages.length > 0 && (
+                          <div className="flex justify-between text-xs sm:text-sm">
+                            <span className="text-muted-foreground">
+                              Packages ({selectedPackages.length})
+                            </span>
+                            <span className="font-medium">
+                              Rs. {packagesTotal.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
                         {walletDiscount > 0 && (
                           <div className="flex justify-between text-xs sm:text-sm">
                             <span className="text-muted-foreground flex items-center gap-1">
@@ -912,9 +1013,11 @@ const LabDetail = () => {
                         </div>
                       </div>
 
-                      <Badge variant="success" className="w-full justify-center py-1.5 text-xs">
-                        You save Rs. {(totalSavings + walletDiscount).toLocaleString()}!
-                      </Badge>
+                      {totalSavings > 0 && (
+                        <Badge variant="success" className="w-full justify-center py-1.5 text-xs">
+                          You save Rs. {(totalSavings + walletDiscount).toLocaleString()}!
+                        </Badge>
+                      )}
 
                       {/* Wallet Redemption */}
                       {user && (
@@ -944,15 +1047,15 @@ const LabDetail = () => {
                     <div className="text-center py-4">
                       <ShoppingCart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
                       <p className="text-xs sm:text-sm text-muted-foreground">
-                        Select tests to see pricing
+                        Select tests or packages to see pricing
                       </p>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Quick Info - Hidden on mobile when no tests selected */}
-              <Card className={cn(selectedTests.length === 0 ? "block" : "hidden lg:block")}>
+              {/* Quick Info - Hidden on mobile when items selected */}
+              <Card className={cn(!hasSelection ? "block" : "hidden lg:block")}>
                 <CardContent className="p-4 space-y-2">
                   <h3 className="font-semibold text-base mb-2">Quick Info</h3>
                   {(lab.opening_time || lab.closing_time) && (

@@ -11,27 +11,18 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-interface Test {
-  id: string;
+interface TestItem {
   name: string;
-  category: string | null;
-}
-
-interface PackageTest {
-  test_id: string;
-  test_price: number;
-  test?: Test;
+  details?: string;
 }
 
 interface HealthPackage {
   id: string;
   name: string;
   description: string | null;
-  original_price: number;
-  discount_percentage: number;
   discounted_price: number;
+  tests_included: TestItem[];
   is_featured: boolean;
-  package_tests?: PackageTest[];
 }
 
 interface HealthPackagesSectionProps {
@@ -61,11 +52,9 @@ const HealthPackagesSection = ({
             id,
             name,
             description,
-            original_price,
-            discount_percentage,
             discounted_price,
-            is_featured,
-            package_tests(test_id, test_price, test:tests(id, name, category))
+            tests_included,
+            is_featured
           `)
           .eq("lab_id", labId)
           .eq("is_active", true)
@@ -73,7 +62,10 @@ const HealthPackagesSection = ({
           .order("featured_order", { ascending: true });
 
         if (error) throw error;
-        setPackages(data || []);
+        setPackages((data || []).map(pkg => ({
+          ...pkg,
+          tests_included: (pkg.tests_included as unknown as TestItem[]) || []
+        })));
       } catch (error) {
         console.error("Error fetching packages:", error);
       } finally {
@@ -127,7 +119,6 @@ const HealthPackagesSection = ({
         {packages.map(pkg => {
           const isExpanded = expandedPackages.has(pkg.id);
           const isSelected = selectedPackageId === pkg.id;
-          const savings = pkg.original_price - pkg.discounted_price;
 
           return (
             <Card
@@ -155,27 +146,14 @@ const HealthPackagesSection = ({
 
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-primary">
-                        Rs. {pkg.discounted_price.toLocaleString()}
-                      </span>
-                      <Badge variant="destructive" className="text-xs">
-                        {pkg.discount_percentage}% OFF
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="line-through">Rs. {pkg.original_price.toLocaleString()}</span>
-                      <span className="text-green-600 font-medium">
-                        Save Rs. {savings.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
+                  <span className="text-2xl font-bold text-primary">
+                    Rs. {pkg.discounted_price.toLocaleString()}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>{pkg.package_tests?.length || 0} tests included</span>
+                  <span>{pkg.tests_included?.length || 0} tests included</span>
                 </div>
 
                 <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(pkg.id)}>
@@ -191,15 +169,15 @@ const HealthPackagesSection = ({
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2">
                     <div className="bg-muted/50 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-                      {pkg.package_tests?.map(pt => (
-                        <div key={pt.test_id} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <Check className="h-3 w-3 text-green-500" />
-                            <span>{pt.test?.name}</span>
+                      {pkg.tests_included?.map((test, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm">
+                          <Check className="h-3 w-3 text-green-500 mt-1 shrink-0" />
+                          <div>
+                            <span className="font-medium">{test.name}</span>
+                            {test.details && (
+                              <span className="text-muted-foreground ml-1">({test.details})</span>
+                            )}
                           </div>
-                          <span className="text-muted-foreground">
-                            Rs. {pt.test_price.toLocaleString()}
-                          </span>
                         </div>
                       ))}
                     </div>

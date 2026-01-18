@@ -849,10 +849,8 @@ const LabDetail = () => {
                   labName={lab.name}
                   onSelectPackage={(pkg) => {
                     setSelectedPackage(pkg);
-                    // Add all package tests to selectedTests
-                    const testIds = pkg.package_tests?.map((pt: any) => pt.test_id) || [];
-                    setSelectedTests(testIds);
-                    toast.success(`${pkg.name} selected!`);
+                    // Package now uses manually added tests, not linked test IDs
+                    toast.success(`${pkg.name} selected! Contact lab for booking.`);
                   }}
                   selectedPackageId={selectedPackage?.id}
                 />

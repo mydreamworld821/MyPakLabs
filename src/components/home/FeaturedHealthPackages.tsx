@@ -71,10 +71,10 @@ const FeaturedHealthPackages = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Package className="h-6 w-6 text-primary" />
-                Featured Health Packages
-              </h2>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Package className="h-6 w-6 text-primary" />
+              Health Packages
+            </h2>
               <p className="text-muted-foreground">
                 Comprehensive health checkups at best prices
               </p>
@@ -101,7 +101,7 @@ const FeaturedHealthPackages = () => {
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Package className="h-6 w-6 text-primary" />
-              Featured Health Packages
+              Health Packages
             </h2>
             <p className="text-muted-foreground">
               Comprehensive health checkups at best prices

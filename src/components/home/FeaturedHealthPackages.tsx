@@ -24,6 +24,8 @@ interface FeaturedPackage {
   id: string;
   name: string;
   description: string | null;
+  original_price: number;
+  discount_percentage: number;
   discounted_price: number;
   tests_included: TestItem[];
   lab?: Lab;
@@ -43,6 +45,8 @@ const FeaturedHealthPackages = () => {
             id,
             name,
             description,
+            original_price,
+            discount_percentage,
             discounted_price,
             tests_included,
             lab:labs(id, name, slug, logo_url)
@@ -219,13 +223,23 @@ const FeaturedHealthPackages = () => {
                     <span>{pkg.tests_included?.length || 0} tests included</span>
                   </div>
 
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t flex items-center gap-2 flex-wrap">
                     <span 
                       className="text-xl font-bold"
                       style={{ color: config?.accent_color || 'hsl(var(--primary))' }}
                     >
                       Rs. {pkg.discounted_price.toLocaleString()}
                     </span>
+                    {pkg.discount_percentage > 0 && (
+                      <>
+                        <span className="text-sm text-muted-foreground line-through">
+                          Rs. {pkg.original_price.toLocaleString()}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {pkg.discount_percentage}% OFF
+                        </Badge>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>

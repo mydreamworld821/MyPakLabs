@@ -22,6 +22,8 @@ export interface HealthPackage {
   id: string;
   name: string;
   description: string | null;
+  original_price: number;
+  discount_percentage: number;
   discounted_price: number;
   tests_included: TestItem[];
   is_featured: boolean;
@@ -54,6 +56,8 @@ const HealthPackagesSection = ({
             id,
             name,
             description,
+            original_price,
+            discount_percentage,
             discounted_price,
             tests_included,
             is_featured
@@ -179,10 +183,22 @@ const HealthPackagesSection = ({
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary">
-                    Rs. {pkg.discounted_price.toLocaleString()}
-                  </span>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-2xl font-bold text-primary">
+                      Rs. {pkg.discounted_price.toLocaleString()}
+                    </span>
+                    {pkg.discount_percentage > 0 && (
+                      <>
+                        <span className="text-sm text-muted-foreground line-through">
+                          Rs. {pkg.original_price.toLocaleString()}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {pkg.discount_percentage}% OFF
+                        </Badge>
+                      </>
+                    )}
+                  </div>
                   {isSelected && (
                     <Badge variant="success" className="gap-1">
                       <Check className="h-3 w-3" />

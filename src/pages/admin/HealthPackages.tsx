@@ -48,6 +48,8 @@ interface HealthPackage {
   lab_id: string;
   name: string;
   description: string | null;
+  original_price: number;
+  discount_percentage: number;
   discounted_price: number;
   tests_included: TestItem[];
   is_featured: boolean;
@@ -72,7 +74,8 @@ const AdminHealthPackages = () => {
     lab_id: "",
     name: "",
     description: "",
-    discounted_price: 0,
+    original_price: 0,
+    discount_percentage: 0,
     is_featured: false,
     featured_order: null as number | null,
     is_active: true,
@@ -105,6 +108,8 @@ const AdminHealthPackages = () => {
           lab_id,
           name,
           description,
+          original_price,
+          discount_percentage,
           discounted_price,
           tests_included,
           is_featured,
@@ -131,11 +136,17 @@ const AdminHealthPackages = () => {
   const handleOpenDialog = (pkg?: HealthPackage) => {
     if (pkg) {
       setEditingPackage(pkg);
+      // Calculate original price from discounted_price and discount_percentage
+      const discountPct = (pkg as any).discount_percentage || 0;
+      const originalPrice = discountPct > 0 
+        ? Math.round(pkg.discounted_price / (1 - discountPct / 100))
+        : pkg.discounted_price;
       setFormData({
         lab_id: pkg.lab_id,
         name: pkg.name,
         description: pkg.description || "",
-        discounted_price: pkg.discounted_price,
+        original_price: originalPrice,
+        discount_percentage: discountPct,
         is_featured: pkg.is_featured,
         featured_order: pkg.featured_order,
         is_active: pkg.is_active,
@@ -147,7 +158,8 @@ const AdminHealthPackages = () => {
         lab_id: "",
         name: "",
         description: "",
-        discounted_price: 0,
+        original_price: 0,
+        discount_percentage: 0,
         is_featured: false,
         featured_order: null,
         is_active: true,
@@ -189,10 +201,15 @@ const AdminHealthPackages = () => {
       return;
     }
 
-    if (formData.discounted_price <= 0) {
+    if (formData.original_price <= 0) {
       toast.error("Please enter a valid package price");
       return;
     }
+
+    // Calculate discounted price based on discount percentage
+    const discountedPrice = formData.discount_percentage > 0
+      ? Math.round(formData.original_price * (1 - formData.discount_percentage / 100))
+      : formData.original_price;
 
     setSaving(true);
     try {
@@ -200,9 +217,9 @@ const AdminHealthPackages = () => {
         lab_id: formData.lab_id,
         name: formData.name,
         description: formData.description || null,
-        original_price: formData.discounted_price,
-        discount_percentage: 0,
-        discounted_price: formData.discounted_price,
+        original_price: formData.original_price,
+        discount_percentage: formData.discount_percentage || 0,
+        discounted_price: discountedPrice,
         tests_included: JSON.parse(JSON.stringify(testsIncluded)),
         is_featured: formData.is_featured,
         featured_order: formData.is_featured ? formData.featured_order : null,
@@ -364,8 +381,20 @@ const AdminHealthPackages = () => {
                         {pkg.tests_included?.length || 0} tests
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-semibold text-primary">
-                      Rs. {pkg.discounted_price.toLocaleString()}
+                    <TableCell>
+                      <div className="space-y-0.5">
+                        <span className="font-semibold text-primary">
+                          Rs. {pkg.discounted_price.toLocaleString()}
+                        </span>
+                        {pkg.discount_percentage > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            <span className="line-through">Rs. {pkg.original_price.toLocaleString()}</span>
+                            <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                              -{pkg.discount_percentage}%
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -526,15 +555,33 @@ const AdminHealthPackages = () => {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Package Price (Rs.) *</Label>
-              <Input
-                type="number"
-                value={formData.discounted_price}
-                onChange={(e) => setFormData({ ...formData, discounted_price: parseFloat(e.target.value) || 0 })}
-                placeholder="Enter package price"
-                min={0}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Package Price (Rs.) *</Label>
+                <Input
+                  type="number"
+                  value={formData.original_price}
+                  onChange={(e) => setFormData({ ...formData, original_price: parseFloat(e.target.value) || 0 })}
+                  placeholder="Enter package price"
+                  min={0}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Discount % (Optional)</Label>
+                <Input
+                  type="number"
+                  value={formData.discount_percentage || ""}
+                  onChange={(e) => setFormData({ ...formData, discount_percentage: parseFloat(e.target.value) || 0 })}
+                  placeholder="e.g., 10"
+                  min={0}
+                  max={100}
+                />
+                {formData.discount_percentage > 0 && formData.original_price > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Final Price: Rs. {Math.round(formData.original_price * (1 - formData.discount_percentage / 100)).toLocaleString()}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-6">

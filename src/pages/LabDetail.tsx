@@ -10,6 +10,7 @@ import Footer from "@/components/layout/Footer";
 import TestSelector from "@/components/labs/TestSelector";
 import PrescriptionUploader from "@/components/labs/PrescriptionUploader";
 import BranchesSection from "@/components/labs/BranchesSection";
+import HealthPackagesSection from "@/components/labs/HealthPackagesSection";
 import WalletRedemption from "@/components/wallet/WalletRedemption";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { usePrescriptionUpload } from "@/hooks/usePrescriptionUpload";
@@ -117,6 +118,7 @@ const LabDetail = () => {
   const [tests, setTests] = useState<TestItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [uniqueId, setUniqueId] = useState("");
@@ -839,6 +841,22 @@ const LabDetail = () => {
                   </Tabs>
                 </CardContent>
               </Card>
+
+              {/* Health Packages Section */}
+              {lab && (
+                <HealthPackagesSection
+                  labId={lab.id}
+                  labName={lab.name}
+                  onSelectPackage={(pkg) => {
+                    setSelectedPackage(pkg);
+                    // Add all package tests to selectedTests
+                    const testIds = pkg.package_tests?.map((pt: any) => pt.test_id) || [];
+                    setSelectedTests(testIds);
+                    toast.success(`${pkg.name} selected!`);
+                  }}
+                  selectedPackageId={selectedPackage?.id}
+                />
+              )}
             </div>
 
             {/* Sidebar - Order Summary first on mobile */}

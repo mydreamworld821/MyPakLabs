@@ -478,6 +478,59 @@ export type Database = {
           },
         ]
       }
+      health_packages: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          discounted_price: number
+          featured_order: number | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          lab_id: string
+          name: string
+          original_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          discounted_price?: number
+          featured_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          lab_id: string
+          name: string
+          original_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          discounted_price?: number
+          featured_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          lab_id?: string
+          name?: string
+          original_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_packages_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "labs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_post_comments: {
         Row: {
           content: string
@@ -1782,6 +1835,45 @@ export type Database = {
             columns: ["prescription_id"]
             isOneToOne: false
             referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_tests: {
+        Row: {
+          created_at: string
+          id: string
+          package_id: string
+          test_id: string
+          test_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          package_id: string
+          test_id: string
+          test_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          package_id?: string
+          test_id?: string
+          test_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_tests_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "health_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_tests_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
             referencedColumns: ["id"]
           },
         ]

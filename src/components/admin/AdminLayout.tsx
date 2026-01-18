@@ -36,6 +36,7 @@ import {
   Palette,
   Zap,
   Wallet,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ const navItems = [
   { href: "/admin/quick-access-layout", label: "Quick Access Layout", icon: Settings },
   { href: "/admin/labs", label: "Labs", icon: Building2 },
   { href: "/admin/featured-labs", label: "Featured Labs", icon: Star },
+  { href: "/admin/health-packages", label: "Health Packages", icon: Package },
   { href: "/admin/tests", label: "Tests", icon: TestTube },
   { href: "/admin/lab-tests", label: "Lab Pricing", icon: FlaskConical },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },

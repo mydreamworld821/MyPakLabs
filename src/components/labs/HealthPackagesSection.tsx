@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Package, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,13 +11,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 interface TestItem {
   name: string;
   details?: string;
 }
 
-interface HealthPackage {
+export interface HealthPackage {
   id: string;
   name: string;
   description: string | null;
@@ -28,15 +30,15 @@ interface HealthPackage {
 interface HealthPackagesSectionProps {
   labId: string;
   labName: string;
-  onSelectPackage?: (pkg: HealthPackage) => void;
-  selectedPackageId?: string | null;
+  selectedPackageIds?: string[];
+  onSelectionChange?: (packages: HealthPackage[]) => void;
 }
 
 const HealthPackagesSection = ({
   labId,
   labName,
-  onSelectPackage,
-  selectedPackageId,
+  selectedPackageIds = [],
+  onSelectionChange,
 }: HealthPackagesSectionProps) => {
   const [packages, setPackages] = useState<HealthPackage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,9 +90,27 @@ const HealthPackagesSection = ({
     setExpandedPackages(newExpanded);
   };
 
+  const togglePackageSelection = (pkg: HealthPackage) => {
+    if (!onSelectionChange) return;
+    
+    const isSelected = selectedPackageIds.includes(pkg.id);
+    let updatedPackages: HealthPackage[];
+    
+    if (isSelected) {
+      updatedPackages = packages.filter(p => 
+        selectedPackageIds.includes(p.id) && p.id !== pkg.id
+      );
+    } else {
+      const currentlySelected = packages.filter(p => selectedPackageIds.includes(p.id));
+      updatedPackages = [...currentlySelected, pkg];
+    }
+    
+    onSelectionChange(updatedPackages);
+  };
+
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 mt-6">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Package className="h-5 w-5" />
           Health Packages
@@ -109,23 +129,29 @@ const HealthPackagesSection = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-6">
       <h2 className="text-xl font-semibold flex items-center gap-2">
         <Package className="h-5 w-5 text-primary" />
         Health Packages by {labName}
       </h2>
+      <p className="text-sm text-muted-foreground">
+        Select one or more packages to add to your order
+      </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {packages.map(pkg => {
           const isExpanded = expandedPackages.has(pkg.id);
-          const isSelected = selectedPackageId === pkg.id;
+          const isSelected = selectedPackageIds.includes(pkg.id);
 
           return (
             <Card
               key={pkg.id}
-              className={`relative overflow-hidden transition-all ${
-                isSelected ? "ring-2 ring-primary" : ""
-              } ${pkg.is_featured ? "border-primary/50" : ""}`}
+              className={cn(
+                "relative overflow-hidden transition-all cursor-pointer",
+                isSelected ? "ring-2 ring-primary bg-primary/5" : "hover:border-primary/50",
+                pkg.is_featured ? "border-primary/50" : ""
+              )}
+              onClick={() => togglePackageSelection(pkg)}
             >
               {pkg.is_featured && (
                 <div className="absolute top-0 right-0">
@@ -136,12 +162,20 @@ const HealthPackagesSection = ({
               )}
 
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-start justify-between">
-                  <span className="pr-16">{pkg.name}</span>
-                </CardTitle>
-                {pkg.description && (
-                  <p className="text-sm text-muted-foreground">{pkg.description}</p>
-                )}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => togglePackageSelection(pkg)}
+                    className="mt-1 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="flex-1">
+                    <CardTitle className="text-lg pr-16">{pkg.name}</CardTitle>
+                    {pkg.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{pkg.description}</p>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -149,6 +183,12 @@ const HealthPackagesSection = ({
                   <span className="text-2xl font-bold text-primary">
                     Rs. {pkg.discounted_price.toLocaleString()}
                   </span>
+                  {isSelected && (
+                    <Badge variant="success" className="gap-1">
+                      <Check className="h-3 w-3" />
+                      Selected
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -156,8 +196,11 @@ const HealthPackagesSection = ({
                   <span>{pkg.tests_included?.length || 0} tests included</span>
                 </div>
 
-                <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(pkg.id)}>
-                  <CollapsibleTrigger asChild>
+                <Collapsible 
+                  open={isExpanded} 
+                  onOpenChange={() => toggleExpanded(pkg.id)}
+                >
+                  <CollapsibleTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="sm" className="w-full justify-between">
                       <span>View included tests</span>
                       {isExpanded ? (
@@ -167,7 +210,7 @@ const HealthPackagesSection = ({
                       )}
                     </Button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2">
+                  <CollapsibleContent className="mt-2" onClick={(e) => e.stopPropagation()}>
                     <div className="bg-muted/50 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
                       {pkg.tests_included?.map((test, index) => (
                         <div key={index} className="flex items-start gap-2 text-sm">
@@ -183,16 +226,6 @@ const HealthPackagesSection = ({
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
-
-                {onSelectPackage && (
-                  <Button
-                    className="w-full"
-                    variant={isSelected ? "secondary" : "default"}
-                    onClick={() => onSelectPackage(pkg)}
-                  >
-                    {isSelected ? "Selected" : "Select Package"}
-                  </Button>
-                )}
               </CardContent>
             </Card>
           );

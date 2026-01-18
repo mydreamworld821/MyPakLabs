@@ -2166,33 +2166,56 @@ const handler = async (req: Request): Promise<Response> => {
       );
     };
 
+    const isRateLimited = (err: unknown) => {
+      const statusCode = (err as any)?.statusCode ?? (err as any)?.status ?? undefined;
+      const name = (err as any)?.name ?? "";
+      return statusCode === 429 || name === "rate_limit_exceeded";
+    };
+
+    // Helper to delay execution
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
     const sendWithFallback = async (args: {
       to: string[];
       subject: string;
       html: string;
       attachments?: any[];
-    }) => {
-      const primary = await resend.emails.send({
-        from: OFFICIAL_EMAIL,
-        to: args.to,
-        subject: args.subject,
-        html: args.html,
-        attachments: args.attachments,
-      });
-
-      if (primary?.error && isDomainNotVerified(primary.error)) {
-        console.warn("Sender domain not verified. Retrying with fallback sender.");
-        const fallback = await resend.emails.send({
-          from: FALLBACK_EMAIL,
+    }, retryCount = 0): Promise<{ primary: any; fallback: any }> => {
+      try {
+        const primary = await resend.emails.send({
+          from: OFFICIAL_EMAIL,
           to: args.to,
           subject: args.subject,
           html: args.html,
           attachments: args.attachments,
         });
-        return { primary, fallback };
-      }
 
-      return { primary, fallback: null };
+        if (primary?.error) {
+          if (isDomainNotVerified(primary.error)) {
+            console.warn("Sender domain not verified. Retrying with fallback sender.");
+            await delay(600); // Small delay before retry
+            const fallback = await resend.emails.send({
+              from: FALLBACK_EMAIL,
+              to: args.to,
+              subject: args.subject,
+              html: args.html,
+              attachments: args.attachments,
+            });
+            return { primary, fallback };
+          }
+          
+          if (isRateLimited(primary.error) && retryCount < 3) {
+            console.warn(`Rate limited, retrying in ${(retryCount + 1) * 1000}ms...`);
+            await delay((retryCount + 1) * 1000);
+            return sendWithFallback(args, retryCount + 1);
+          }
+        }
+
+        return { primary, fallback: null };
+      } catch (error: any) {
+        console.error("Email send error:", error);
+        return { primary: { error }, fallback: null };
+      }
     };
 
     // ===== SEND ADMIN NOTIFICATION =====
@@ -2204,6 +2227,9 @@ const handler = async (req: Request): Promise<Response> => {
       attachments,
     });
     console.log("Admin notification email sent:", adminSend);
+
+    // Add delay before next email to avoid rate limiting
+    await delay(600);
 
     // ===== SEND PROVIDER NOTIFICATION (only for new bookings, not confirmations) =====
     let providerSend: any = null;
@@ -2244,6 +2270,8 @@ const handler = async (req: Request): Promise<Response> => {
             html: providerEmailContent.html,
           });
           console.log("Provider notification email sent:", providerSend);
+          // Add delay before next email
+          await delay(600);
         }
       }
     }

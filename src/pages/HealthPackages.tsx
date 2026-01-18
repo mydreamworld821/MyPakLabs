@@ -73,7 +73,7 @@ const HealthPackages = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       
-      <main className="flex-1">
+      <main className="flex-1 pt-20">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
             <Link to="/">

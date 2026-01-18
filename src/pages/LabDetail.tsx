@@ -752,7 +752,7 @@ const LabDetail = () => {
 
                 {/* Description */}
                 {lab.description && (
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-foreground/70 leading-relaxed">
                     {lab.description}
                   </p>
                 )}

@@ -75,18 +75,18 @@ const HealthPackages = () => {
       
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
             <Link to="/">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="shrink-0">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Package className="h-8 w-8 text-primary" />
-                Health Packages
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 flex-wrap">
+                <Package className="h-7 w-7 sm:h-8 sm:w-8 text-primary shrink-0" />
+                <span>Health Packages</span>
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mt-1">
                 Comprehensive health checkups at best prices
               </p>
             </div>

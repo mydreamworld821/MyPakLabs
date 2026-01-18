@@ -107,9 +107,9 @@ const FeaturedHealthPackages = () => {
               Comprehensive health checkups at best prices
             </p>
           </div>
-          <Link to="/labs">
+          <Link to="/health-packages">
             <Button variant="outline">
-              View All Labs
+              View All
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>

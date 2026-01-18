@@ -91,6 +91,7 @@ import PartnerRegistration from "./pages/PartnerRegistration";
 import AdminPartners from "./pages/admin/Partners";
 import AdminWallets from "./pages/admin/Wallets";
 import AdminHealthPackages from "./pages/admin/HealthPackages";
+import HealthPackages from "./pages/HealthPackages";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
@@ -160,6 +161,7 @@ const App = () => (
               <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
               <Route path="/ai-tools" element={<AITools />} />
               <Route path="/reviews" element={<Reviews />} />
+              <Route path="/health-packages" element={<HealthPackages />} />
               <Route path="/partner-registration" element={<PartnerRegistration />} />
               {/* SEO City Pages */}
               <Route path="/doctors-in-:city" element={<DoctorsInCity />} />

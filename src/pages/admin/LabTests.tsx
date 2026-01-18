@@ -319,6 +319,14 @@ const LabTests = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Helper function to parse price values with comma formatting (e.g., "1,500" -> 1500)
+  const parsePrice = (value: string): number => {
+    if (!value || value.trim() === "") return NaN;
+    // Remove commas and spaces, then parse
+    const cleanValue = value.replace(/,/g, '').replace(/\s/g, '').trim();
+    return parseFloat(cleanValue);
+  };
+
   // Parse CSV function
   const parseCSV = (text: string): CSVRow[] => {
     const lines = text.split("\n").filter(line => line.trim());
@@ -401,14 +409,14 @@ const LabTests = () => {
             continue;
           }
 
-          const price = parseFloat(row.price);
+          const price = parsePrice(row.price);
           if (isNaN(price) || price < 0) {
             errors.push(`Invalid price for ${row.lab_name} - ${row.test_name}`);
             errorCount++;
             continue;
           }
 
-          const discountedPrice = row.discounted_price ? parseFloat(row.discounted_price) : null;
+          const discountedPrice = row.discounted_price ? parsePrice(row.discounted_price) : null;
           const isAvailable = row.is_available.toLowerCase() !== "false";
 
           // Upsert: check if exists, then update or insert

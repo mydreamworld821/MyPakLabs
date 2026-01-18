@@ -120,6 +120,16 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
     );
   };
 
+  // Helper function to parse price values with comma formatting (e.g., "1,500" -> 1500)
+  const parsePrice = (value: any): number | null => {
+    if (value === "" || value === null || value === undefined) return null;
+    // Convert to string, remove commas and spaces, then parse
+    const cleanValue = String(value).replace(/,/g, '').replace(/\s/g, '').trim();
+    if (cleanValue === "") return null;
+    const parsed = parseFloat(cleanValue);
+    return isNaN(parsed) ? null : parsed;
+  };
+
   const parseExcel = (data: ArrayBuffer): TestRow[] => {
     const workbook = XLSX.read(data, { type: "array" });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -142,13 +152,13 @@ const LabTestsCsvUpload = ({ labId, labName, onSuccess }: LabTestsCsvUploadProps
         ""
       ).toString().trim();
       
-      // Parse price - allow empty/0
+      // Parse price - allow empty/0, handle comma-formatted numbers
       const priceValue = row["original_price"] || row["Original Price"] || row["price"] || row["Price"] || row["PRICE"] || row["original price"] || "";
-      const original_price = priceValue === "" ? null : (parseFloat(priceValue) || null);
+      const original_price = parsePrice(priceValue);
       
       // Parse discount - allow empty/0
       const discountValue = row["discount_%"] || row["discount"] || row["Discount"] || row["DISCOUNT"] || row["discount_percentage"] || row["Discount %"] || row["discount %"] || "";
-      const discount_percentage = discountValue === "" ? null : (parseFloat(discountValue) || 0);
+      const discount_percentage = discountValue === "" ? null : (parseFloat(String(discountValue).replace(/,/g, '')) || 0);
       
       // Skip if no test name
       if (!test_name) return;

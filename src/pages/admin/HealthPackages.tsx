@@ -31,8 +31,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, Package, Star, X } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface Lab {
   id: string;
@@ -40,16 +38,9 @@ interface Lab {
   logo_url: string | null;
 }
 
-interface Test {
-  id: string;
+interface TestItem {
   name: string;
-  category: string | null;
-}
-
-interface PackageTest {
-  test_id: string;
-  test_price: number;
-  test?: Test;
+  details?: string;
 }
 
 interface HealthPackage {
@@ -57,21 +48,18 @@ interface HealthPackage {
   lab_id: string;
   name: string;
   description: string | null;
-  original_price: number;
-  discount_percentage: number;
   discounted_price: number;
+  tests_included: TestItem[];
   is_featured: boolean;
   featured_order: number | null;
   is_active: boolean;
   created_at: string;
   lab?: Lab;
-  package_tests?: PackageTest[];
 }
 
 const AdminHealthPackages = () => {
   const [packages, setPackages] = useState<HealthPackage[]>([]);
   const [labs, setLabs] = useState<Lab[]>([]);
-  const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLab, setSelectedLab] = useState<string>("all");
@@ -89,8 +77,9 @@ const AdminHealthPackages = () => {
     featured_order: null as number | null,
     is_active: true,
   });
-  const [selectedTests, setSelectedTests] = useState<{ test_id: string; test_price: number }[]>([]);
-  const [testSearchQuery, setTestSearchQuery] = useState("");
+  const [testsIncluded, setTestsIncluded] = useState<TestItem[]>([]);
+  const [newTestName, setNewTestName] = useState("");
+  const [newTestDetails, setNewTestDetails] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -108,38 +97,35 @@ const AdminHealthPackages = () => {
       
       setLabs(labsData || []);
 
-      // Fetch tests
-      const { data: testsData } = await supabase
-        .from("tests")
-        .select("id, name, category")
-        .order("name");
-      
-      setTests(testsData || []);
-
-      // Fetch packages with lab info and tests
+      // Fetch packages with lab info
       const { data: packagesData, error } = await supabase
         .from("health_packages")
         .select(`
-          *,
-          lab:labs(id, name, logo_url),
-          package_tests(test_id, test_price, test:tests(id, name, category))
+          id,
+          lab_id,
+          name,
+          description,
+          discounted_price,
+          tests_included,
+          is_featured,
+          featured_order,
+          is_active,
+          created_at,
+          lab:labs(id, name, logo_url)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPackages(packagesData || []);
+      setPackages((packagesData || []).map(pkg => ({
+        ...pkg,
+        tests_included: (pkg.tests_included as unknown as TestItem[]) || []
+      })));
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculatePrices = (tests: { test_id: string; test_price: number }[], discountPercentage: number) => {
-    const originalPrice = tests.reduce((sum, t) => sum + t.test_price, 0);
-    const discountedPrice = originalPrice - (originalPrice * discountPercentage / 100);
-    return { originalPrice, discountedPrice: Math.round(discountedPrice) };
   };
 
   const handleOpenDialog = (pkg?: HealthPackage) => {
@@ -154,12 +140,7 @@ const AdminHealthPackages = () => {
         featured_order: pkg.featured_order,
         is_active: pkg.is_active,
       });
-      setSelectedTests(
-        pkg.package_tests?.map(pt => ({
-          test_id: pt.test_id,
-          test_price: pt.test_price,
-        })) || []
-      );
+      setTestsIncluded(pkg.tests_included || []);
     } else {
       setEditingPackage(null);
       setFormData({
@@ -171,88 +152,62 @@ const AdminHealthPackages = () => {
         featured_order: null,
         is_active: true,
       });
-      setSelectedTests([]);
+      setTestsIncluded([]);
     }
-    setTestSearchQuery("");
+    setNewTestName("");
+    setNewTestDetails("");
     setDialogOpen(true);
   };
 
-  const handleLabChange = async (labId: string) => {
-    setFormData({ ...formData, lab_id: labId });
-    setSelectedTests([]);
-    
-    // Fetch lab-specific test prices
-    if (labId) {
-      const { data: labTests } = await supabase
-        .from("lab_tests")
-        .select("test_id, price, discounted_price")
-        .eq("lab_id", labId)
-        .eq("is_available", true);
-      
-      // Store for reference when adding tests
-      if (labTests) {
-        localStorage.setItem(`lab_tests_${labId}`, JSON.stringify(labTests));
-      }
-    }
-  };
-
-  const handleAddTest = (test: Test) => {
-    if (selectedTests.some(t => t.test_id === test.id)) {
+  const handleAddTest = () => {
+    if (!newTestName.trim()) {
+      toast.error("Please enter test name");
       return;
     }
+    setTestsIncluded([...testsIncluded, { name: newTestName.trim(), details: newTestDetails.trim() || undefined }]);
+    setNewTestName("");
+    setNewTestDetails("");
+  };
 
-    // Get lab-specific price if available
-    let testPrice = 0;
-    const labTestsStr = localStorage.getItem(`lab_tests_${formData.lab_id}`);
-    if (labTestsStr) {
-      const labTests = JSON.parse(labTestsStr);
-      const labTest = labTests.find((lt: any) => lt.test_id === test.id);
-      if (labTest) {
-        testPrice = labTest.discounted_price || labTest.price;
-      }
+  const handleRemoveTest = (index: number) => {
+    setTestsIncluded(testsIncluded.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateTest = (index: number, field: 'name' | 'details', value: string) => {
+    const updated = [...testsIncluded];
+    if (field === 'name') {
+      updated[index].name = value;
+    } else {
+      updated[index].details = value || undefined;
     }
-
-    setSelectedTests([...selectedTests, { test_id: test.id, test_price: testPrice }]);
-  };
-
-  const handleRemoveTest = (testId: string) => {
-    setSelectedTests(selectedTests.filter(t => t.test_id !== testId));
-  };
-
-  const handleTestPriceChange = (testId: string, price: number) => {
-    setSelectedTests(
-      selectedTests.map(t =>
-        t.test_id === testId ? { ...t, test_price: price } : t
-      )
-    );
+    setTestsIncluded(updated);
   };
 
   const handleSave = async () => {
-    if (!formData.lab_id || !formData.name || selectedTests.length === 0) {
+    if (!formData.lab_id || !formData.name || testsIncluded.length === 0) {
       toast.error("Please fill in all required fields and add at least one test");
+      return;
+    }
+
+    if (formData.discounted_price <= 0) {
+      toast.error("Please enter a valid package price");
       return;
     }
 
     setSaving(true);
     try {
-      const originalPrice = selectedTests.reduce((sum, t) => sum + t.test_price, 0);
-      const discountPercentage = originalPrice > 0 
-        ? Math.round(((originalPrice - formData.discounted_price) / originalPrice) * 100) 
-        : 0;
-
       const packageData = {
         lab_id: formData.lab_id,
         name: formData.name,
         description: formData.description || null,
-        original_price: originalPrice,
-        discount_percentage: Math.max(0, discountPercentage),
+        original_price: formData.discounted_price,
+        discount_percentage: 0,
         discounted_price: formData.discounted_price,
+        tests_included: JSON.parse(JSON.stringify(testsIncluded)),
         is_featured: formData.is_featured,
         featured_order: formData.is_featured ? formData.featured_order : null,
         is_active: formData.is_active,
       };
-
-      let packageId: string;
 
       if (editingPackage) {
         const { error } = await supabase
@@ -261,36 +216,13 @@ const AdminHealthPackages = () => {
           .eq("id", editingPackage.id);
 
         if (error) throw error;
-        packageId = editingPackage.id;
-
-        // Delete existing tests
-        await supabase
-          .from("package_tests")
-          .delete()
-          .eq("package_id", packageId);
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("health_packages")
-          .insert(packageData)
-          .select()
-          .single();
+          .insert([packageData]);
 
         if (error) throw error;
-        packageId = data.id;
       }
-
-      // Insert package tests
-      const packageTests = selectedTests.map(t => ({
-        package_id: packageId,
-        test_id: t.test_id,
-        test_price: t.test_price,
-      }));
-
-      const { error: testsError } = await supabase
-        .from("package_tests")
-        .insert(packageTests);
-
-      if (testsError) throw testsError;
 
       toast.success(editingPackage ? "Package updated successfully" : "Package created successfully");
       setDialogOpen(false);
@@ -343,11 +275,6 @@ const AdminHealthPackages = () => {
     return matchesSearch && matchesLab;
   });
 
-  const filteredTests = tests.filter(t =>
-    t.name.toLowerCase().includes(testSearchQuery.toLowerCase()) ||
-    t.category?.toLowerCase().includes(testSearchQuery.toLowerCase())
-  );
-
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -397,9 +324,7 @@ const AdminHealthPackages = () => {
                 <TableHead>Package Name</TableHead>
                 <TableHead>Lab</TableHead>
                 <TableHead>Tests</TableHead>
-                <TableHead>Original Price</TableHead>
-                <TableHead>Discount</TableHead>
-                <TableHead>Final Price</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -408,13 +333,13 @@ const AdminHealthPackages = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : filteredPackages.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     No packages found
                   </TableCell>
                 </TableRow>
@@ -436,13 +361,7 @@ const AdminHealthPackages = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {pkg.package_tests?.length || 0} tests
-                      </Badge>
-                    </TableCell>
-                    <TableCell>Rs. {pkg.original_price.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-green-600">
-                        {pkg.discount_percentage}% OFF
+                        {pkg.tests_included?.length || 0} tests
                       </Badge>
                     </TableCell>
                     <TableCell className="font-semibold text-primary">
@@ -493,7 +412,7 @@ const AdminHealthPackages = () => {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {editingPackage ? "Edit Health Package" : "Create Health Package"}
@@ -506,7 +425,7 @@ const AdminHealthPackages = () => {
                 <Label>Lab *</Label>
                 <Select
                   value={formData.lab_id}
-                  onValueChange={handleLabChange}
+                  onValueChange={(val) => setFormData({ ...formData, lab_id: val })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select lab" />
@@ -541,86 +460,71 @@ const AdminHealthPackages = () => {
               />
             </div>
 
-            {formData.lab_id && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Select Tests *</Label>
-                  <Badge variant="outline">
-                    {selectedTests.length} tests selected
-                  </Badge>
-                </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Tests Included *</Label>
+                <Badge variant="outline">
+                  {testsIncluded.length} tests added
+                </Badge>
+              </div>
 
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              {/* Add new test form */}
+              <div className="flex gap-2">
+                <div className="flex-1">
                   <Input
-                    placeholder="Search tests..."
-                    value={testSearchQuery}
-                    onChange={(e) => setTestSearchQuery(e.target.value)}
-                    className="pl-10"
+                    placeholder="Test name (e.g., CBC - Complete Blood Count)"
+                    value={newTestName}
+                    onChange={(e) => setNewTestName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddTest()}
                   />
                 </div>
-
-                <ScrollArea className="h-48 border rounded-lg p-2">
-                  <div className="space-y-1">
-                    {filteredTests.map(test => {
-                      const isSelected = selectedTests.some(t => t.test_id === test.id);
-                      return (
-                        <div
-                          key={test.id}
-                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-muted ${
-                            isSelected ? "bg-primary/10" : ""
-                          }`}
-                          onClick={() => !isSelected && handleAddTest(test)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Checkbox checked={isSelected} />
-                            <span className="text-sm">{test.name}</span>
-                            {test.category && (
-                              <Badge variant="outline" className="text-xs">
-                                {test.category}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-
-                {selectedTests.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Selected Tests with Prices</Label>
-                    <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
-                      {selectedTests.map(st => {
-                        const test = tests.find(t => t.id === st.test_id);
-                        return (
-                          <div key={st.test_id} className="flex items-center justify-between p-3">
-                            <span className="text-sm font-medium">{test?.name}</span>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                value={st.test_price}
-                                onChange={(e) => handleTestPriceChange(st.test_id, parseFloat(e.target.value) || 0)}
-                                className="w-24 h-8"
-                                placeholder="Price"
-                              />
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleRemoveTest(st.test_id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <div className="w-40">
+                  <Input
+                    placeholder="Details (optional)"
+                    value={newTestDetails}
+                    onChange={(e) => setNewTestDetails(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddTest()}
+                  />
+                </div>
+                <Button type="button" onClick={handleAddTest}>
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
-            )}
+
+              {/* Tests list */}
+              {testsIncluded.length > 0 && (
+                <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+                  {testsIncluded.map((test, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3">
+                      <div className="flex-1">
+                        <Input
+                          value={test.name}
+                          onChange={(e) => handleUpdateTest(index, 'name', e.target.value)}
+                          placeholder="Test name"
+                          className="h-8"
+                        />
+                      </div>
+                      <div className="w-40">
+                        <Input
+                          value={test.details || ""}
+                          onChange={(e) => handleUpdateTest(index, 'details', e.target.value)}
+                          placeholder="Details"
+                          className="h-8"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => handleRemoveTest(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label>Package Price (Rs.) *</Label>

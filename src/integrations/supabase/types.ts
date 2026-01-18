@@ -491,6 +491,7 @@ export type Database = {
           lab_id: string
           name: string
           original_price: number
+          tests_included: Json | null
           updated_at: string
         }
         Insert: {
@@ -505,6 +506,7 @@ export type Database = {
           lab_id: string
           name: string
           original_price?: number
+          tests_included?: Json | null
           updated_at?: string
         }
         Update: {
@@ -519,6 +521,7 @@ export type Database = {
           lab_id?: string
           name?: string
           original_price?: number
+          tests_included?: Json | null
           updated_at?: string
         }
         Relationships: [

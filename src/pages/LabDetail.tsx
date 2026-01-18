@@ -957,187 +957,191 @@ const LabDetail = () => {
               )}
             </div>
 
-            {/* Sidebar - Order Summary first on mobile */}
-            <div className="space-y-4 order-1 lg:order-2">
-              {/* Order Summary - Sticky on desktop, prominent on mobile */}
-              <Card className="lg:sticky lg:top-24 border-primary/20 shadow-md">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-base mb-3">Order Summary</h3>
-                  {hasSelection ? (
-                    <div className="space-y-3">
-                      {/* Selected items - Scrollable list */}
-                      <ScrollArea className="max-h-40 sm:max-h-48">
-                        <div className="space-y-1.5 pr-2">
-                          {/* Individual Tests */}
-                          {selectedTestItems.map((test) => (
-                            <div key={test.id} className="flex justify-between text-xs sm:text-sm">
-                              <span className="truncate flex-1 pr-2">{test.name}</span>
-                              <span className="font-medium shrink-0">
-                                Rs. {test.discountedPrice.toLocaleString()}
-                              </span>
-                            </div>
-                          ))}
-                          {/* Health Packages */}
-                          {selectedPackages.map((pkg) => (
-                            <div key={pkg.id} className="flex justify-between text-xs sm:text-sm bg-primary/5 rounded p-1.5 -mx-1.5">
-                              <span className="truncate flex-1 pr-2 flex items-center gap-1">
-                                <Package className="w-3 h-3 text-primary shrink-0" />
-                                {pkg.name}
-                              </span>
-                              <span className="font-medium shrink-0 text-primary">
-                                Rs. {pkg.discounted_price.toLocaleString()}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-
-                      <div className="border-t border-border pt-3 space-y-1.5">
-                        {selectedTests.length > 0 && (
-                          <>
-                            <div className="flex justify-between text-xs sm:text-sm">
-                              <span className="text-muted-foreground">Tests Subtotal</span>
-                              <span className="line-through text-muted-foreground">
-                                Rs. {testsOriginal.toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-xs sm:text-sm">
-                              <span className="text-muted-foreground">
-                                Lab Discount ({discount}%)
-                              </span>
-                              <span className="text-medical-green">
-                                - Rs. {(testsOriginal - testsDiscounted).toLocaleString()}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                        {selectedPackages.length > 0 && (
-                          <>
-                            <div className="flex justify-between text-xs sm:text-sm">
-                              <span className="text-muted-foreground">
-                                Packages ({selectedPackages.length})
-                              </span>
-                              {packagesSavings > 0 ? (
-                                <span className="line-through text-muted-foreground">
-                                  Rs. {packagesOriginal.toLocaleString()}
-                                </span>
-                              ) : (
-                                <span className="font-medium">
-                                  Rs. {packagesTotal.toLocaleString()}
-                                </span>
-                              )}
-                            </div>
-                            {packagesSavings > 0 && (
-                              <div className="flex justify-between text-xs sm:text-sm">
-                                <span className="text-muted-foreground">Package Discount</span>
-                                <span className="text-medical-green">
-                                  - Rs. {packagesSavings.toLocaleString()}
+            {/* Sidebar - Order Summary sticky on desktop */}
+            <div className="order-1 lg:order-2">
+              <div className="lg:sticky lg:top-20 z-10 space-y-4">
+                {/* Order Summary */}
+                <Card className="border-primary/20 shadow-md bg-background">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-base mb-3">Order Summary</h3>
+                    {hasSelection ? (
+                      <div className="space-y-3">
+                        {/* Selected items - Scrollable list */}
+                        <ScrollArea className="max-h-40 sm:max-h-48">
+                          <div className="space-y-1.5 pr-2">
+                            {/* Individual Tests */}
+                            {selectedTestItems.map((test) => (
+                              <div key={test.id} className="flex justify-between text-xs sm:text-sm">
+                                <span className="truncate flex-1 pr-2">{test.name}</span>
+                                <span className="font-medium shrink-0">
+                                  Rs. {test.discountedPrice.toLocaleString()}
                                 </span>
                               </div>
-                            )}
-                          </>
-                        )}
-                        {walletDiscount > 0 && (
-                          <div className="flex justify-between text-xs sm:text-sm">
-                            <span className="text-muted-foreground flex items-center gap-1">
-                              <Wallet className="w-3 h-3" /> Wallet Discount
-                            </span>
-                            <span className="text-green-600">
-                              - Rs. {walletDiscount.toLocaleString()}
+                            ))}
+                            {/* Health Packages */}
+                            {selectedPackages.map((pkg) => (
+                              <div key={pkg.id} className="flex justify-between text-xs sm:text-sm bg-primary/5 rounded p-1.5 -mx-1.5">
+                                <span className="truncate flex-1 pr-2 flex items-center gap-1">
+                                  <Package className="w-3 h-3 text-primary shrink-0" />
+                                  {pkg.name}
+                                </span>
+                                <span className="font-medium shrink-0 text-primary">
+                                  Rs. {pkg.discounted_price.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+
+                        <div className="border-t border-border pt-3 space-y-1.5">
+                          {selectedTests.length > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs sm:text-sm">
+                                <span className="text-muted-foreground">Tests Subtotal</span>
+                                <span className="line-through text-muted-foreground">
+                                  Rs. {testsOriginal.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-xs sm:text-sm">
+                                <span className="text-muted-foreground">
+                                  Lab Discount ({discount}%)
+                                </span>
+                                <span className="text-medical-green">
+                                  - Rs. {(testsOriginal - testsDiscounted).toLocaleString()}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                          {selectedPackages.length > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs sm:text-sm">
+                                <span className="text-muted-foreground">
+                                  Packages ({selectedPackages.length})
+                                </span>
+                                {packagesSavings > 0 ? (
+                                  <span className="line-through text-muted-foreground">
+                                    Rs. {packagesOriginal.toLocaleString()}
+                                  </span>
+                                ) : (
+                                  <span className="font-medium">
+                                    Rs. {packagesTotal.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                              {packagesSavings > 0 && (
+                                <div className="flex justify-between text-xs sm:text-sm">
+                                  <span className="text-muted-foreground">Package Discount</span>
+                                  <span className="text-medical-green">
+                                    - Rs. {packagesSavings.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {walletDiscount > 0 && (
+                            <div className="flex justify-between text-xs sm:text-sm">
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <Wallet className="w-3 h-3" /> Wallet Discount
+                              </span>
+                              <span className="text-green-600">
+                                - Rs. {walletDiscount.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t border-border">
+                            <span>Total</span>
+                            <span className="text-primary">
+                              Rs. {finalTotal.toLocaleString()}
                             </span>
                           </div>
+                        </div>
+
+                        {totalSavings > 0 && (
+                          <Badge variant="success" className="w-full justify-center py-1.5 text-xs">
+                            You save Rs. {(totalSavings + walletDiscount).toLocaleString()}!
+                          </Badge>
                         )}
-                        <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t border-border">
-                          <span>Total</span>
-                          <span className="text-primary">
-                            Rs. {finalTotal.toLocaleString()}
-                          </span>
+
+                        {/* Wallet Redemption */}
+                        {user && (
+                          <WalletRedemption
+                            maxDiscount={totalDiscounted}
+                            appliedDiscount={walletDiscount}
+                            onApplyDiscount={(discount, credits) => {
+                              setWalletDiscount(discount);
+                              setWalletCreditsUsed(credits);
+                            }}
+                            onRemoveDiscount={() => {
+                              setWalletDiscount(0);
+                              setWalletCreditsUsed(0);
+                            }}
+                          />
+                        )}
+
+                        <Button
+                          className="w-full"
+                          size="default"
+                          onClick={handleConfirmBooking}
+                        >
+                          Confirm & Get Discount ID
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <ShoppingCart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Select tests or packages to see pricing
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Quick Info - Hidden on mobile when items selected */}
+                <Card className={cn(!hasSelection ? "block" : "hidden lg:block", "bg-background")}>
+                  <CardContent className="p-4 space-y-2">
+                    <h3 className="font-semibold text-base mb-2">Quick Info</h3>
+                    {(lab.opening_time || lab.closing_time) && (
+                      <div className="flex items-center gap-2 text-xs sm:text-sm">
+                        <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span>Open {lab.opening_time || "7:00 AM"} - {lab.closing_time || "10:00 PM"}</span>
+                      </div>
+                    )}
+                    {lab.contact_phone && (
+                      <div className="flex items-center gap-2 text-xs sm:text-sm">
+                        <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <a href={`tel:${lab.contact_phone}`} className="hover:text-primary transition-colors">
+                          {lab.contact_phone}
+                        </a>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span>ISO 15189 Certified</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex items-start gap-2 text-xs sm:text-sm">
+                        <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                        <div>
+                          <span className="font-medium text-primary">{discount}% Discount</span>
+                          <div className="text-muted-foreground">
+                            Available anywhere in Pakistan
+                          </div>
                         </div>
                       </div>
-
-                      {totalSavings > 0 && (
-                        <Badge variant="success" className="w-full justify-center py-1.5 text-xs">
-                          You save Rs. {(totalSavings + walletDiscount).toLocaleString()}!
-                        </Badge>
-                      )}
-
-                      {/* Wallet Redemption */}
-                      {user && (
-                        <WalletRedemption
-                          maxDiscount={totalDiscounted}
-                          appliedDiscount={walletDiscount}
-                          onApplyDiscount={(discount, credits) => {
-                            setWalletDiscount(discount);
-                            setWalletCreditsUsed(credits);
-                          }}
-                          onRemoveDiscount={() => {
-                            setWalletDiscount(0);
-                            setWalletCreditsUsed(0);
-                          }}
-                        />
-                      )}
-
-                      <Button
-                        className="w-full"
-                        size="default"
-                        onClick={handleConfirmBooking}
-                      >
-                        Confirm & Get Discount ID
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <ShoppingCart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Select tests or packages to see pricing
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Quick Info - Hidden on mobile when items selected */}
-              <Card className={cn(!hasSelection ? "block" : "hidden lg:block")}>
-                <CardContent className="p-4 space-y-2">
-                  <h3 className="font-semibold text-base mb-2">Quick Info</h3>
-                  {(lab.opening_time || lab.closing_time) && (
-                    <div className="flex items-center gap-2 text-xs sm:text-sm">
-                      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <span>Open {lab.opening_time || "7:00 AM"} - {lab.closing_time || "10:00 PM"}</span>
-                    </div>
-                  )}
-                  {lab.contact_phone && (
-                    <div className="flex items-center gap-2 text-xs sm:text-sm">
-                      <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <a href={`tel:${lab.contact_phone}`} className="hover:text-primary transition-colors">
-                        {lab.contact_phone}
-                      </a>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-xs sm:text-sm">
-                    <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span>ISO 15189 Certified</span>
-                  </div>
-                  {discount > 0 && (
-                    <div className="flex items-start gap-2 text-xs sm:text-sm">
-                      <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <div>
-                        <span className="font-medium text-primary">{discount}% Discount</span>
-                        <div className="text-muted-foreground">
-                          Available anywhere in Pakistan
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Branches Section */}
-              {lab.branches && lab.branches.length > 0 && (
-                <BranchesSection branches={lab.branches} labName={lab.name} />
-              )}
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
+
+          {/* Branches Section - Separate from sidebar to prevent overlap */}
+          {lab.branches && lab.branches.length > 0 && (
+            <div className="mt-8">
+              <BranchesSection branches={lab.branches} labName={lab.name} />
+            </div>
+          )}
         </div>
       </section>
 

@@ -78,6 +78,7 @@ const navItems = [
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { href: "/admin/partners", label: "Partners", icon: Building2 },
   { href: "/admin/wallets", label: "Wallets", icon: Wallet },
+  { href: "/admin/nurse-commissions", label: "Nurse Commissions", icon: Wallet },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

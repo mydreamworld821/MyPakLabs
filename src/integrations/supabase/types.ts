@@ -126,6 +126,36 @@ export type Database = {
           },
         ]
       }
+      commission_settings: {
+        Row: {
+          commission_percentage: number
+          created_at: string
+          grace_period_days: number
+          id: string
+          is_active: boolean
+          payment_cycle_days: number
+          updated_at: string
+        }
+        Insert: {
+          commission_percentage?: number
+          created_at?: string
+          grace_period_days?: number
+          id?: string
+          is_active?: boolean
+          payment_cycle_days?: number
+          updated_at?: string
+        }
+        Update: {
+          commission_percentage?: number
+          created_at?: string
+          grace_period_days?: number
+          id?: string
+          is_active?: boolean
+          payment_cycle_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_specializations: {
         Row: {
           created_at: string
@@ -1446,6 +1476,69 @@ export type Database = {
           },
         ]
       }
+      nurse_commission_payments: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          nurse_id: string
+          payment_method: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          screenshot_url: string | null
+          status: string
+          transaction_reference: string | null
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          nurse_id: string
+          payment_method?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          screenshot_url?: string | null
+          status?: string
+          transaction_reference?: string | null
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          nurse_id?: string
+          payment_method?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          screenshot_url?: string | null
+          status?: string
+          transaction_reference?: string | null
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_commission_payments_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_commission_payments_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "nurse_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nurse_emergency_tracking: {
         Row: {
           arrived_at: string | null
@@ -1607,6 +1700,110 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "emergency_nursing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_wallet_transactions: {
+        Row: {
+          amount: number
+          booking_id: string
+          booking_type: string
+          commission_amount: number
+          created_at: string
+          id: string
+          net_amount: number
+          nurse_id: string
+          status: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          booking_type: string
+          commission_amount: number
+          created_at?: string
+          id?: string
+          net_amount: number
+          nurse_id: string
+          status?: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          booking_type?: string
+          commission_amount?: number
+          created_at?: string
+          id?: string
+          net_amount?: number
+          nurse_id?: string
+          status?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_wallet_transactions_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "nurse_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_wallets: {
+        Row: {
+          created_at: string
+          id: string
+          is_suspended: boolean
+          last_payment_date: string | null
+          nurse_id: string
+          pending_commission: number
+          suspension_reason: string | null
+          total_commission_owed: number
+          total_commission_paid: number
+          total_earnings: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_suspended?: boolean
+          last_payment_date?: string | null
+          nurse_id: string
+          pending_commission?: number
+          suspension_reason?: string | null
+          total_commission_owed?: number
+          total_commission_paid?: number
+          total_earnings?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_suspended?: boolean
+          last_payment_date?: string | null
+          nurse_id?: string
+          pending_commission?: number
+          suspension_reason?: string | null
+          total_commission_owed?: number
+          total_commission_paid?: number
+          total_earnings?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_wallets_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: true
+            referencedRelation: "nurses"
             referencedColumns: ["id"]
           },
         ]
@@ -2540,6 +2737,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_nurse_earnings: {
+        Args: {
+          p_amount: number
+          p_booking_id: string
+          p_booking_type: string
+          p_nurse_id: string
+        }
+        Returns: undefined
+      }
       add_wallet_credits: {
         Args: {
           p_credits: number
@@ -2550,6 +2756,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_nurse_payment_status: { Args: never; Returns: undefined }
       deduct_wallet_credits: {
         Args: {
           p_credits: number

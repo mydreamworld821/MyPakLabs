@@ -86,7 +86,6 @@ export default function NurseActiveJob() {
   useEffect(() => {
     if (!nurseId) return;
     fetchJobDetails();
-    fetchTracking();
 
     // Subscribe to updates
     const channel = supabase
@@ -109,7 +108,7 @@ export default function NurseActiveJob() {
           table: 'nurse_emergency_tracking',
           filter: `request_id=eq.${id}`,
         },
-        () => fetchTracking()
+        () => fetchTrackingData()
       )
       .subscribe();
 
@@ -117,6 +116,27 @@ export default function NurseActiveJob() {
       supabase.removeChannel(channel);
     };
   }, [nurseId, id]);
+
+  // Fetch tracking after job is loaded - this creates tracking record if needed
+  useEffect(() => {
+    if (job && nurseId) {
+      fetchTracking();
+    }
+  }, [job, nurseId]);
+
+  // Simple fetch for realtime updates (doesn't create)
+  const fetchTrackingData = async () => {
+    if (!nurseId) return;
+    
+    const { data } = await supabase
+      .from("nurse_emergency_tracking")
+      .select("status, arrived_at, service_started_at")
+      .eq("request_id", id)
+      .eq("nurse_id", nurseId)
+      .maybeSingle();
+
+    if (data) setTracking(data);
+  };
 
   const fetchNurseId = async () => {
     const { data } = await supabase
@@ -177,6 +197,24 @@ export default function NurseActiveJob() {
       .eq("request_id", id)
       .eq("nurse_id", nurseId)
       .maybeSingle();
+
+    // If no tracking record exists yet, create one with initial status
+    if (!data && job) {
+      const { error } = await supabase
+        .from("nurse_emergency_tracking")
+        .insert({
+          request_id: id,
+          nurse_id: nurseId,
+          current_lat: job.location_lat,
+          current_lng: job.location_lng,
+          status: "on_way",
+        });
+      
+      if (!error) {
+        setTracking({ status: "on_way", arrived_at: null, service_started_at: null });
+        return;
+      }
+    }
 
     setTracking(data);
   };

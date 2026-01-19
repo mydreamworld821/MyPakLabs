@@ -53,6 +53,9 @@ import {
   Package,
   FileText,
   ClipboardList,
+  Siren,
+  Navigation,
+  Star,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { generateDoctorAppointmentPDF } from "@/utils/generateDoctorAppointmentPDF";
@@ -177,6 +180,36 @@ interface MedicineOrder {
   };
 }
 
+interface EmergencyNursingRequest {
+  id: string;
+  patient_name: string;
+  patient_phone: string;
+  location_address: string | null;
+  house_address: string | null;
+  city: string | null;
+  services_needed: string[];
+  urgency: string;
+  status: string;
+  patient_offer_price: number | null;
+  patient_rating: number | null;
+  patient_review: string | null;
+  created_at: string;
+  completed_at: string | null;
+  accepted_nurse_id: string | null;
+  accepted_offer: {
+    offered_price: number;
+    eta_minutes: number;
+    nurse: {
+      id: string;
+      full_name: string;
+      photo_url: string | null;
+      qualification: string;
+      phone: string | null;
+      rating: number | null;
+    };
+  } | null;
+}
+
 interface ApprovedTest {
   test_id: string;
   test_name: string;
@@ -290,6 +323,7 @@ const MyBookings = () => {
   const [nurseBookings, setNurseBookings] = useState<NurseBooking[]>([]);
   const [medicineOrders, setMedicineOrders] = useState<MedicineOrder[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [emergencyRequests, setEmergencyRequests] = useState<EmergencyNursingRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<DoctorAppointment | null>(null);
@@ -307,6 +341,20 @@ const MyBookings = () => {
   const [cancelItemId, setCancelItemId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Emergency services map
+  const SERVICES_MAP: Record<string, string> = {
+    iv_cannula: "IV Cannula",
+    injection: "Injection",
+    wound_dressing: "Wound Dressing",
+    medication_administration: "Medication Administration",
+    vital_signs: "Vital Signs Monitoring",
+    catheterization: "Catheterization",
+    nebulization: "Nebulization",
+    blood_sugar: "Blood Sugar Test",
+    elderly_care: "Elderly Care",
+    post_surgical: "Post-Surgical Care",
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -332,7 +380,7 @@ const MyBookings = () => {
 
   const fetchAllBookings = async () => {
     setIsLoading(true);
-    await Promise.all([fetchOrders(), fetchAppointments(), fetchNurseBookings(), fetchMedicineOrders(), fetchPrescriptions()]);
+    await Promise.all([fetchOrders(), fetchAppointments(), fetchNurseBookings(), fetchMedicineOrders(), fetchPrescriptions(), fetchEmergencyRequests()]);
     setIsLoading(false);
   };
 
@@ -474,6 +522,52 @@ const MyBookings = () => {
       setPrescriptions(parsedData);
     } catch (error) {
       console.error("Error fetching prescriptions:", error);
+    }
+  };
+
+  const fetchEmergencyRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("emergency_nursing_requests")
+        .select("*")
+        .eq("patient_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // For each request with accepted offer, fetch the offer details
+      const requestsWithOffers = await Promise.all(
+        (data || []).map(async (request) => {
+          if (request.accepted_offer_id) {
+            const { data: offerData } = await supabase
+              .from("nurse_offers")
+              .select(`
+                offered_price,
+                eta_minutes,
+                nurse:nurses(
+                  id,
+                  full_name,
+                  photo_url,
+                  qualification,
+                  phone,
+                  rating
+                )
+              `)
+              .eq("id", request.accepted_offer_id)
+              .maybeSingle();
+
+            return {
+              ...request,
+              accepted_offer: offerData as EmergencyNursingRequest['accepted_offer'],
+            };
+          }
+          return { ...request, accepted_offer: null };
+        })
+      );
+
+      setEmergencyRequests(requestsWithOffers);
+    } catch (error) {
+      console.error("Error fetching emergency requests:", error);
     }
   };
 
@@ -722,7 +816,7 @@ const MyBookings = () => {
 
               {/* Tabs for Different Booking Types */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="lab-tests" className="flex items-center gap-1 text-xs sm:text-sm">
                     <TestTube className="w-4 h-4" />
                     <span className="hidden sm:inline">Labs</span>
@@ -730,7 +824,7 @@ const MyBookings = () => {
                   </TabsTrigger>
                   <TabsTrigger value="prescriptions" className="flex items-center gap-1 text-xs sm:text-sm">
                     <ClipboardList className="w-4 h-4" />
-                    <span className="hidden sm:inline">Rx Slips</span>
+                    <span className="hidden sm:inline">Rx</span>
                     <Badge variant="secondary" className="ml-1 text-xs">{approvedPrescriptions.length}</Badge>
                   </TabsTrigger>
                   <TabsTrigger value="doctor" className="flex items-center gap-1 text-xs sm:text-sm">
@@ -742,6 +836,11 @@ const MyBookings = () => {
                     <UserRound className="w-4 h-4" />
                     <span className="hidden sm:inline">Nursing</span>
                     <Badge variant="secondary" className="ml-1 text-xs">{nurseBookings.length}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="emergency" className="flex items-center gap-1 text-xs sm:text-sm">
+                    <Siren className="w-4 h-4" />
+                    <span className="hidden sm:inline">Emergency</span>
+                    <Badge variant="secondary" className="ml-1 text-xs">{emergencyRequests.length}</Badge>
                   </TabsTrigger>
                   <TabsTrigger value="medicine" className="flex items-center gap-1 text-xs sm:text-sm">
                     <Pill className="w-4 h-4" />
@@ -1194,6 +1293,155 @@ const MyBookings = () => {
                                         <Button variant="ghost" size="icon" onClick={() => handleViewNurseBooking(booking)}>
                                           <Eye className="w-4 h-4" />
                                         </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                {/* Emergency Nursing Tab */}
+                <TabsContent value="emergency" className="mt-6">
+                  {emergencyRequests.length === 0 ? (
+                    <Card className="text-center p-8">
+                      <Siren className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No emergency nursing requests yet</p>
+                      <Button className="mt-4" onClick={() => navigate("/emergency-nursing")}>Request Emergency Nurse</Button>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Siren className="w-5 h-5 text-red-500" />
+                          Emergency Nursing Requests
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Nurse</TableHead>
+                                <TableHead>Services</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Rating</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {emergencyRequests.map((request) => {
+                                const config = statusConfig[request.status] || statusConfig.pending;
+                                const StatusIcon = config.icon;
+                                return (
+                                  <TableRow key={request.id}>
+                                    <TableCell>
+                                      <div>
+                                        <p className="font-medium">{format(new Date(request.created_at), "dd MMM yyyy")}</p>
+                                        <p className="text-xs text-muted-foreground">{format(new Date(request.created_at), "h:mm a")}</p>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {request.accepted_offer?.nurse ? (
+                                        <div className="flex items-center gap-2">
+                                          {request.accepted_offer.nurse.photo_url ? (
+                                            <img src={request.accepted_offer.nurse.photo_url} alt={request.accepted_offer.nurse.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                          ) : (
+                                            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                              <UserRound className="w-4 h-4 text-red-600" />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <p className="font-medium">{request.accepted_offer.nurse.full_name}</p>
+                                            <p className="text-xs text-muted-foreground">{request.accepted_offer.nurse.qualification}</p>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted-foreground">Awaiting nurse</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                        {request.services_needed.slice(0, 2).map((s) => (
+                                          <Badge key={s} variant="outline" className="text-xs">
+                                            {SERVICES_MAP[s] || s}
+                                          </Badge>
+                                        ))}
+                                        {request.services_needed.length > 2 && (
+                                          <Badge variant="outline" className="text-xs">
+                                            +{request.services_needed.length - 2}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {request.accepted_offer?.offered_price ? (
+                                        <span className="font-medium text-green-600">
+                                          Rs. {request.accepted_offer.offered_price.toLocaleString()}
+                                        </span>
+                                      ) : request.patient_offer_price ? (
+                                        <span className="text-muted-foreground">
+                                          Offered: Rs. {request.patient_offer_price.toLocaleString()}
+                                        </span>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge className={config.color}>
+                                        <StatusIcon className="w-3 h-3 mr-1" />
+                                        {config.label}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      {request.patient_rating ? (
+                                        <div className="flex items-center gap-1">
+                                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                          <span className="font-medium">{request.patient_rating}</span>
+                                        </div>
+                                      ) : request.status === "completed" ? (
+                                        <span className="text-muted-foreground text-xs">Not rated</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex items-center justify-end gap-1">
+                                        {(request.status === "accepted" || request.status === "in_progress") && (
+                                          <Button
+                                            size="sm"
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                            onClick={() => navigate(`/emergency-request/${request.id}`)}
+                                          >
+                                            <Navigation className="w-3 h-3 mr-1" />
+                                            Track
+                                          </Button>
+                                        )}
+                                        {request.status === "live" && (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => navigate(`/emergency-request/${request.id}`)}
+                                          >
+                                            View Offers
+                                          </Button>
+                                        )}
+                                        {(request.status === "completed" || request.status === "cancelled") && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => navigate(`/emergency-request/${request.id}`)}
+                                          >
+                                            <Eye className="w-4 h-4" />
+                                          </Button>
+                                        )}
                                       </div>
                                     </TableCell>
                                   </TableRow>

@@ -450,6 +450,22 @@ const NurseDashboard = () => {
 
       if (error) throw error;
 
+      // Add earnings to wallet when booking is completed
+      if (status === "completed" && nurse) {
+        const fee = nurse.per_visit_fee || 500;
+        const { error: earningsError } = await supabase.rpc('add_nurse_earnings', {
+          p_nurse_id: nurse.id,
+          p_booking_type: 'advance',
+          p_booking_id: bookingId,
+          p_amount: fee
+        });
+
+        if (earningsError) {
+          console.error('Error adding earnings:', earningsError);
+          toast.error('Booking completed but failed to add earnings to wallet');
+        }
+      }
+
       // Send confirmation emails (nurse-confirm flow)
       if (status === "confirmed") {
         const booking = bookings.find((b) => b.id === bookingId);

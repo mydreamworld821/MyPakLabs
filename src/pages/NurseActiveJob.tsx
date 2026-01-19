@@ -628,7 +628,7 @@ export default function NurseActiveJob() {
 
         {/* Help */}
         <div className="text-center text-sm text-muted-foreground">
-          Need help? Contact support at <span className="font-medium">0300-1234567</span>
+          Need help? Contact support at <a href="tel:+923167523434" className="font-medium text-primary hover:underline">03167523434</a>
         </div>
       </main>
 

@@ -193,43 +193,55 @@ export const useAdminNurseCommissions = () => {
   const { data: nurseWallets = [], isLoading: walletsLoading } = useQuery({
     queryKey: ['admin-nurse-wallets'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get all wallets
+      const { data: wallets, error: walletsError } = await supabase
         .from('nurse_wallets')
-        .select(`
-          *,
-          nurses:nurse_id (
-            id,
-            full_name,
-            photo_url,
-            phone,
-            email,
-            city
-          )
-        `)
+        .select('*')
         .order('pending_commission', { ascending: false });
-      if (error) throw error;
-      return data;
+      if (walletsError) throw walletsError;
+      
+      // Get nurse details for each wallet
+      const nurseIds = wallets?.map(w => w.nurse_id) || [];
+      const { data: nurses, error: nursesError } = await supabase
+        .from('nurses')
+        .select('id, full_name, photo_url, phone, email, city')
+        .in('id', nurseIds);
+      if (nursesError) throw nursesError;
+      
+      // Merge data
+      const nurseMap = new Map(nurses?.map(n => [n.id, n]) || []);
+      return wallets?.map(w => ({
+        ...w,
+        nurses: nurseMap.get(w.nurse_id) || null
+      })) || [];
     },
   });
 
-  // Fetch all pending commission payments
+  // Fetch all commission payments with nurse info
   const { data: pendingPayments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ['admin-pending-payments'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get all payments
+      const { data: payments, error: paymentsError } = await supabase
         .from('nurse_commission_payments')
-        .select(`
-          *,
-          nurses:nurse_id (
-            id,
-            full_name,
-            photo_url,
-            phone
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      if (paymentsError) throw paymentsError;
+      
+      // Get nurse details for each payment
+      const nurseIds = payments?.map(p => p.nurse_id) || [];
+      const { data: nurses, error: nursesError } = await supabase
+        .from('nurses')
+        .select('id, full_name, photo_url, phone')
+        .in('id', nurseIds);
+      if (nursesError) throw nursesError;
+      
+      // Merge data
+      const nurseMap = new Map(nurses?.map(n => [n.id, n]) || []);
+      return payments?.map(p => ({
+        ...p,
+        nurses: nurseMap.get(p.nurse_id) || null
+      })) || [];
     },
   });
 

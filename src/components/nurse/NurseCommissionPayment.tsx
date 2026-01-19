@@ -302,6 +302,11 @@ export const NurseCommissionPaymentSection = ({
                           Note: {payment.admin_notes}
                         </p>
                       )}
+                      {payment.status === "approved" && (
+                        <p className="text-xs text-green-600 mt-1 font-medium">
+                          ✓ Payment verified! Commission cleared.
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>{getStatusBadge(payment.status)}</div>

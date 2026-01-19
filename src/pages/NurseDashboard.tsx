@@ -46,8 +46,13 @@ import {
   MessageSquare,
   AlertTriangle,
   Bell,
-  BellOff
+  BellOff,
+  Wallet
 } from "lucide-react";
+import { useNurseWallet } from "@/hooks/useNurseWallet";
+import { NurseWalletCard } from "@/components/nurse/NurseWalletCard";
+import { NurseWalletTransactions } from "@/components/nurse/NurseWalletTransactions";
+import { NurseCommissionPaymentSection } from "@/components/nurse/NurseCommissionPayment";
 import { format } from "date-fns";
 
 interface Nurse {
@@ -169,6 +174,32 @@ const NotificationToggleButton = () => {
       )}
       Enable Alerts
     </Button>
+  );
+};
+
+// Nurse Wallet Section Component
+const NurseWalletSection = () => {
+  const { wallet, transactions, commissionPayments, commissionSettings, isLoading, submitPayment } = useNurseWallet();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-rose-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <NurseWalletCard wallet={wallet} settings={commissionSettings} />
+      <NurseWalletTransactions transactions={transactions} />
+      <NurseCommissionPaymentSection
+        wallet={wallet}
+        payments={commissionPayments}
+        onSubmitPayment={(data) => submitPayment.mutate(data)}
+        isSubmitting={submitPayment.isPending}
+      />
+    </div>
   );
 };
 
@@ -653,7 +684,7 @@ const NurseDashboard = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex-wrap">
               <TabsTrigger value="profile" className="text-xs">Profile</TabsTrigger>
               <TabsTrigger value="services" className="text-xs">Services</TabsTrigger>
               <TabsTrigger value="availability" className="text-xs">Availability</TabsTrigger>
@@ -664,6 +695,10 @@ const NurseDashboard = () => {
                     {pendingBookings}
                   </Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="wallet" className="text-xs">
+                <Wallet className="w-3 h-3 mr-1" />
+                Wallet
               </TabsTrigger>
             </TabsList>
 
@@ -900,6 +935,11 @@ const NurseDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Wallet Tab - Using a wrapper component */}
+            <TabsContent value="wallet">
+              <NurseWalletSection />
             </TabsContent>
           </Tabs>
         </div>

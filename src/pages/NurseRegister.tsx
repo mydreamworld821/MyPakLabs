@@ -520,7 +520,7 @@ const NurseRegister = () => {
                         <Input
                           value={formData.phone}
                           onChange={(e) => handleInputChange("phone", e.target.value)}
-                          placeholder="0300-1234567"
+                          placeholder="03XX-XXXXXXX"
                           className="text-xs h-8"
                         />
                       </div>
@@ -529,7 +529,7 @@ const NurseRegister = () => {
                         <Input
                           value={formData.whatsapp_number}
                           onChange={(e) => handleInputChange("whatsapp_number", e.target.value)}
-                          placeholder="0300-1234567"
+                          placeholder="03XX-XXXXXXX"
                           className="text-xs h-8"
                         />
                       </div>

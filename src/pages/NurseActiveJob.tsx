@@ -346,28 +346,53 @@ export default function NurseActiveJob() {
   };
 
   const handleComplete = async () => {
+    if (!nurseId || !job) return;
     setUpdating(true);
 
-    await supabase
-      .from("emergency_nursing_requests")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+    try {
+      // Update emergency request status
+      await supabase
+        .from("emergency_nursing_requests")
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", id);
 
-    await supabase
-      .from("nurse_emergency_tracking")
-      .update({ status: "completed" })
-      .eq("request_id", id)
-      .eq("nurse_id", nurseId);
+      // Update tracking status
+      await supabase
+        .from("nurse_emergency_tracking")
+        .update({ status: "completed" })
+        .eq("request_id", id)
+        .eq("nurse_id", nurseId);
 
-    setUpdating(false);
-    toast({
-      title: "Job Completed! 🎉",
-      description: "Great work! The patient will be notified.",
-    });
-    navigate("/nurse-dashboard");
+      // Add earnings to nurse wallet (10% commission calculated automatically)
+      const { error: earningsError } = await supabase.rpc('add_nurse_earnings', {
+        p_nurse_id: nurseId,
+        p_booking_type: 'emergency',
+        p_booking_id: id,
+        p_amount: job.offer.offered_price
+      });
+
+      if (earningsError) {
+        console.error('Error adding earnings:', earningsError);
+      }
+
+      setUpdating(false);
+      toast({
+        title: "Job Completed! 🎉",
+        description: "Great work! Earnings added to your wallet.",
+      });
+      navigate("/nurse-dashboard");
+    } catch (error) {
+      console.error('Error completing job:', error);
+      setUpdating(false);
+      toast({
+        title: "Error",
+        description: "Failed to complete job. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const openInMaps = () => {

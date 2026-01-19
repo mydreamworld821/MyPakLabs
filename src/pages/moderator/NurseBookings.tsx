@@ -68,6 +68,7 @@ interface NurseBooking {
     qualification: string;
     phone: string | null;
     city: string | null;
+    per_visit_fee: number | null;
   };
 }
 
@@ -108,7 +109,8 @@ const ModeratorNurseBookings = () => {
             photo_url,
             qualification,
             phone,
-            city
+            city,
+            per_visit_fee
           )
         `)
         .order("created_at", { ascending: false });
@@ -163,6 +165,22 @@ const ModeratorNurseBookings = () => {
         .eq("id", id);
 
       if (error) throw error;
+
+      // Add earnings to nurse wallet when booking is completed
+      if (newStatus === 'completed' && selectedBooking) {
+        const fee = selectedBooking.nurses?.per_visit_fee || 500; // Default to 500 if not set
+        const { error: earningsError } = await supabase.rpc('add_nurse_earnings', {
+          p_nurse_id: selectedBooking.nurse_id,
+          p_booking_type: 'advance',
+          p_booking_id: id,
+          p_amount: fee
+        });
+
+        if (earningsError) {
+          console.error('Error adding earnings:', earningsError);
+          toast.error('Booking completed but failed to add earnings to wallet');
+        }
+      }
 
       // Send confirmation notification with PDF when status changes to confirmed
       if (newStatus === 'confirmed' && selectedBooking) {

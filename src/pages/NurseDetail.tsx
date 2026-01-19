@@ -689,7 +689,7 @@ const NurseDetail = () => {
                           <Input
                             value={bookingForm.patient_phone}
                             onChange={(e) => setBookingForm(prev => ({ ...prev, patient_phone: e.target.value }))}
-                            placeholder="0300-1234567"
+                            placeholder="03XX-XXXXXXX"
                             className="text-xs h-8"
                           />
                         </div>

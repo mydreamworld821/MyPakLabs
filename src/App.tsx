@@ -93,6 +93,8 @@ import AdminWallets from "./pages/admin/Wallets";
 import AdminHealthPackages from "./pages/admin/HealthPackages";
 import HealthPackages from "./pages/HealthPackages";
 import AdminNurseCommissions from "./pages/admin/NurseCommissions";
+import AdminLegalPages from "./pages/admin/LegalPages";
+import LegalPage from "./pages/LegalPage";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 
@@ -127,10 +129,11 @@ const App = () => (
               <Route path="/my-prescriptions" element={<MyPrescriptions />} />
               <Route path="/my-bookings" element={<MyBookings />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/terms" element={<Terms />} />
+              <Route path="/terms" element={<LegalPage />} />
               <Route path="/help" element={<HelpCenter />} />
-              <Route path="/partner-terms" element={<PartnerTerms />} />
-              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/partner-terms" element={<LegalPage />} />
+              <Route path="/privacy" element={<LegalPage />} />
+              <Route path="/legal/:slug" element={<LegalPage />} />
               <Route path="/find-doctors" element={<FindDoctors />} />
               <Route path="/hospitals" element={<Hospitals />} />
               <Route path="/hospital/:slug" element={<HospitalDetail />} />
@@ -208,6 +211,7 @@ const App = () => (
               <Route path="/admin/wallets" element={<ProtectedRoute requireAdmin><AdminWallets /></ProtectedRoute>} />
               <Route path="/admin/health-packages" element={<ProtectedRoute requireAdmin><AdminHealthPackages /></ProtectedRoute>} />
               <Route path="/admin/nurse-commissions" element={<ProtectedRoute requireAdmin><AdminNurseCommissions /></ProtectedRoute>} />
+              <Route path="/admin/legal-pages" element={<ProtectedRoute requireAdmin><AdminLegalPages /></ProtectedRoute>} />
               
               {/* Moderator Routes */}
               <Route path="/moderator" element={<ProtectedRoute requireModerator><ModeratorDashboard /></ProtectedRoute>} />

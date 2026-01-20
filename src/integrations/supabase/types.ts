@@ -1217,6 +1217,63 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_pages: {
+        Row: {
+          badge_text: string | null
+          created_at: string
+          display_order: number | null
+          footer_label: string | null
+          footer_section: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          last_updated: string | null
+          page_type: string
+          route_path: string
+          sections: Json
+          show_in_footer: boolean | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          badge_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          footer_label?: string | null
+          footer_section?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_updated?: string | null
+          page_type: string
+          route_path: string
+          sections?: Json
+          show_in_footer?: boolean | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          badge_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          footer_label?: string | null
+          footer_section?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_updated?: string | null
+          page_type?: string
+          route_path?: string
+          sections?: Json
+          show_in_footer?: boolean | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medical_stores: {
         Row: {
           admin_notes: string | null

@@ -65,20 +65,21 @@ export const NurseCommissionPaymentSection = ({
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `commission-payments/${fileName}`;
 
+      // Upload to nurse-photos bucket which is public
       const { error: uploadError } = await supabase.storage
-        .from("nurse-documents")
+        .from("nurse-photos")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from("nurse-documents")
+        .from("nurse-photos")
         .getPublicUrl(filePath);
 
       setScreenshotUrl(urlData.publicUrl);
       toast.success("Screenshot uploaded successfully");
     } catch (error: any) {
-      toast.error("Failed to upload screenshot");
+      toast.error("Failed to upload screenshot: " + (error.message || "Unknown error"));
       console.error(error);
     } finally {
       setUploading(false);

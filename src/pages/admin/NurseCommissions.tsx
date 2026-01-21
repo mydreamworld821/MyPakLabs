@@ -347,53 +347,18 @@ const NurseCommissions = () => {
                         <TableCell>
                           {payment.status === "pending" && (
                             <div className="flex gap-2">
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-green-600"
-                                    onClick={() => setSelectedPayment(payment)}
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Approve Payment</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4 pt-4">
-                                    <p>
-                                      Approve payment of{" "}
-                                      <strong>Rs. {payment.amount?.toLocaleString()}</strong> from{" "}
-                                      {payment.nurses?.full_name}?
-                                    </p>
-                                    <div className="space-y-2">
-                                      <Label>Admin Notes (Optional)</Label>
-                                      <Textarea
-                                        value={adminNotes}
-                                        onChange={(e) => setAdminNotes(e.target.value)}
-                                        placeholder="Add any notes..."
-                                      />
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        className="flex-1"
-                                        onClick={() => handleReviewPayment("approved")}
-                                      >
-                                        Approve
-                                      </Button>
-                                      <Button
-                                        variant="destructive"
-                                        className="flex-1"
-                                        onClick={() => handleReviewPayment("rejected")}
-                                      >
-                                        Reject
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600"
+                                onClick={() => {
+                                  setSelectedPayment(payment);
+                                  setAdminNotes("");
+                                }}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Review
+                              </Button>
                             </div>
                           )}
                         </TableCell>
@@ -511,6 +476,80 @@ const NurseCommissions = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Payment Review Dialog */}
+        <Dialog open={!!selectedPayment} onOpenChange={(open) => !open && setSelectedPayment(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Review Payment</DialogTitle>
+            </DialogHeader>
+            {selectedPayment && (
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={selectedPayment.nurses?.photo_url} />
+                    <AvatarFallback>
+                      {selectedPayment.nurses?.full_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{selectedPayment.nurses?.full_name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedPayment.nurses?.phone}</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-primary/5 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Payment Amount</p>
+                  <p className="text-2xl font-bold">Rs. {selectedPayment.amount?.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Method: {selectedPayment.payment_method?.replace("_", " ")}
+                    {selectedPayment.transaction_reference && ` | Ref: ${selectedPayment.transaction_reference}`}
+                  </p>
+                </div>
+
+                {selectedPayment.screenshot_url && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Payment Screenshot</p>
+                    <img
+                      src={selectedPayment.screenshot_url}
+                      alt="Payment Screenshot"
+                      className="w-full rounded-lg border max-h-64 object-contain"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Admin Notes (Optional)</Label>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add any notes..."
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    onClick={() => handleReviewPayment("approved")}
+                    disabled={reviewPayment.isPending}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => handleReviewPayment("rejected")}
+                    disabled={reviewPayment.isPending}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

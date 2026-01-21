@@ -24,7 +24,7 @@ interface ModeratorLayoutProps {
 
 const navItems = [
   { href: "/moderator", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/moderator/prescriptions", label: "Prescriptions", icon: FileText },
+  { href: "/moderator/prescriptions", label: "Lab Prescriptions", icon: FileText },
   { href: "/moderator/doctor-appointments", label: "Doctor Appointments", icon: Calendar },
   { href: "/moderator/nurse-bookings", label: "Nurse Bookings", icon: UserRound },
 ];

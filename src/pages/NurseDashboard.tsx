@@ -196,7 +196,7 @@ const NurseWalletSection = () => {
       <NurseCommissionPaymentSection
         wallet={wallet}
         payments={commissionPayments}
-        onSubmitPayment={(data) => submitPayment.mutate(data)}
+        onSubmitPayment={(data) => submitPayment.mutateAsync(data)}
         isSubmitting={submitPayment.isPending}
       />
     </div>

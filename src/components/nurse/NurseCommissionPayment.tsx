@@ -33,7 +33,7 @@ interface NurseCommissionPaymentProps {
     paymentMethod: string;
     screenshotUrl: string;
     transactionReference?: string;
-  }) => void;
+  }) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -86,24 +86,30 @@ export const NurseCommissionPaymentSection = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!amount || !paymentMethod || !screenshotUrl) {
       toast.error("Please fill all required fields and upload screenshot");
       return;
     }
 
-    onSubmitPayment({
-      amount: parseFloat(amount),
-      paymentMethod,
-      screenshotUrl,
-      transactionReference: transactionRef || undefined,
-    });
-
-    setIsOpen(false);
-    setAmount("");
-    setPaymentMethod("");
-    setTransactionRef("");
-    setScreenshotUrl("");
+    try {
+      await onSubmitPayment({
+        amount: parseFloat(amount),
+        paymentMethod,
+        screenshotUrl,
+        transactionReference: transactionRef || undefined,
+      });
+      
+      // Only close and reset on success
+      setIsOpen(false);
+      setAmount("");
+      setPaymentMethod("");
+      setTransactionRef("");
+      setScreenshotUrl("");
+    } catch (error) {
+      // Error is handled by the mutation's onError callback
+      console.error("Payment submission failed:", error);
+    }
   };
 
   const getStatusBadge = (status: string) => {

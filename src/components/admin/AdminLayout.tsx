@@ -79,6 +79,7 @@ const navItems = [
   { href: "/admin/partners", label: "Partners", icon: Building2 },
   { href: "/admin/wallets", label: "Wallets", icon: Wallet },
   { href: "/admin/nurse-commissions", label: "Nurse Commissions", icon: Wallet },
+  { href: "/admin/legal-pages", label: "Legal Pages", icon: FileText },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

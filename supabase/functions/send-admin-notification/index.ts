@@ -29,7 +29,7 @@ interface TestDetail {
 }
 
 interface NotificationRequest {
-  type: "prescription" | "order" | "doctor_appointment" | "nurse_booking" | "emergency_request" | "medicine_order";
+  type: "prescription" | "order" | "doctor_appointment" | "nurse_booking" | "emergency_request" | "medicine_order" | "commission_payment";
   status?: "pending" | "confirmed" | "completed" | "cancelled";
   patientName: string;
   patientPhone?: string;
@@ -86,6 +86,8 @@ interface NotificationRequest {
   discountPercentage?: number;
   validityDays?: number;
   bookingDate?: string;
+  // Commission payment specific
+  amount?: number;
 }
 
 // Helper to format Pakistan timezone (PKT = UTC+5) with 12-hour format
@@ -2152,6 +2154,45 @@ const handler = async (req: Request): Promise<Response> => {
               <a href="${baseUrl}/admin/medicine-orders" 
                  style="display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                 View Medicine Orders
+              </a>
+            </div>
+          </div>
+        `;
+        break;
+
+      case "commission_payment":
+        subject = `💰 New Commission Payment Submitted - ${data.nurseName || data.patientName}`;
+        html = `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); padding: 30px; border-radius: 16px 16px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">💰 New Commission Payment</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px;">
+                <strong>${data.nurseName || data.patientName}</strong> has submitted a commission payment for review.
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">Nurse Name</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 18px; font-weight: 600;">${data.nurseName || data.patientName}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">Payment Amount</p>
+                  <p style="margin: 5px 0 0; color: #10b981; font-size: 20px; font-weight: 700;">Rs. ${data.amount?.toLocaleString() || '0'}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">Submitted At</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${getPakistanDateTime()}</p>
+                </div>
+              </div>
+              <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                  ⚠️ <strong>Action Required:</strong> Please review the payment screenshot and verify the transaction before approving.
+                </p>
+              </div>
+              <a href="${baseUrl}/admin/nurse-commissions" 
+                 style="display: inline-block; background: #8b5cf6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Review Payment
               </a>
             </div>
           </div>

@@ -92,6 +92,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const [pendingPartnersCount, setPendingPartnersCount] = useState(0);
+  const [pendingCommissionsCount, setPendingCommissionsCount] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -103,10 +104,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   // Helper function to send email notification
   const sendEmailNotification = async (
-    type: "prescription" | "order",
+    type: "prescription" | "order" | "commission_payment",
     patientName: string,
     labName?: string,
-    orderId?: string
+    orderId?: string,
+    extraData?: { nurseName?: string; amount?: number }
   ) => {
     try {
       await supabase.functions.invoke('send-admin-notification', {
@@ -116,6 +118,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           labName,
           orderId,
           adminEmail: ADMIN_EMAIL,
+          ...extraData,
         },
       });
     } catch (error) {
@@ -223,10 +226,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     };
   }, [navigate]);
 
-  // Fetch pending reviews and partners count on mount
+  // Fetch pending reviews, partners, and commissions count on mount
   useEffect(() => {
     const fetchPendingCounts = async () => {
-      const [reviewsResult, partnersResult] = await Promise.all([
+      const [reviewsResult, partnersResult, commissionsResult] = await Promise.all([
         supabase
           .from('reviews')
           .select('*', { count: 'exact', head: true })
@@ -234,11 +237,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         supabase
           .from('partners')
           .select('*', { count: 'exact', head: true })
-          .eq('is_approved', false)
+          .eq('is_approved', false),
+        supabase
+          .from('nurse_commission_payments')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
       ]);
       
       setPendingReviewsCount(reviewsResult.count || 0);
       setPendingPartnersCount(partnersResult.count || 0);
+      setPendingCommissionsCount(commissionsResult.count || 0);
     };
 
     fetchPendingCounts();
@@ -263,11 +271,70 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       )
       .subscribe();
 
+    // Subscribe to realtime changes for commission payments
+    const commissionsChannel = supabase
+      .channel('admin-commissions-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'nurse_commission_payments' },
+        () => fetchPendingCounts()
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(reviewsChannel);
       supabase.removeChannel(partnersChannel);
+      supabase.removeChannel(commissionsChannel);
     };
   }, []);
+
+  // Real-time subscription for new commission payments
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-commission-payments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'nurse_commission_payments',
+        },
+        async (payload) => {
+          // Fetch nurse info for the notification
+          const { data: nurse } = await supabase
+            .from('nurses')
+            .select('full_name')
+            .eq('id', payload.new.nurse_id)
+            .maybeSingle();
+
+          const nurseName = nurse?.full_name || 'A nurse';
+          const amount = payload.new.amount || 0;
+          
+          // Play notification sound
+          playNotificationSound();
+          
+          // Send email notification
+          sendEmailNotification('commission_payment', nurseName, undefined, undefined, {
+            nurseName,
+            amount,
+          });
+          
+          toast.info(`New Commission Payment Submitted`, {
+            description: `${nurseName} submitted a payment of Rs. ${amount.toLocaleString()} for review.`,
+            action: {
+              label: 'Review',
+              onClick: () => navigate('/admin/nurse-commissions'),
+            },
+            duration: 10000,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate]);
 
   // Reset notification counts when visiting respective pages
   useEffect(() => {
@@ -330,12 +397,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               const isOrders = item.href === '/admin/orders';
               const isReviews = item.href === '/admin/reviews';
               const isPartners = item.href === '/admin/partners';
+              const isCommissions = item.href === '/admin/nurse-commissions';
               
               let badgeCount = 0;
               if (isPrescriptions) badgeCount = newPrescriptionCount;
               else if (isOrders) badgeCount = newOrderCount;
               else if (isReviews) badgeCount = pendingReviewsCount;
               else if (isPartners) badgeCount = pendingPartnersCount;
+              else if (isCommissions) badgeCount = pendingCommissionsCount;
               
               const showBadge = badgeCount > 0;
               

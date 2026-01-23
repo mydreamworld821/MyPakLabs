@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/core';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.7ecb3c1ced7d4953aa8ce78ec1e56213',
-  appName: 'mypaklab',
+  appId: 'com.mypaklabs.app',
+  appName: 'MyPakLabs',
   webDir: 'dist',
   server: {
     // For development: enables hot-reload from Lovable sandbox

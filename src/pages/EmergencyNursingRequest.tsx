@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -55,8 +56,8 @@ const URGENCY_OPTIONS = [
 export default function EmergencyNursingRequest() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { getCurrentPosition, loading: locationLoading } = useGeolocation();
   const [loading, setLoading] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
   const [step, setStep] = useState(1);
   
   const [formData, setFormData] = useState({
@@ -97,62 +98,40 @@ export default function EmergencyNursingRequest() {
     fetchProfile();
   }, [user]);
 
-  const getCurrentLocation = useCallback(() => {
-    setLocationLoading(true);
+  const handleGetLocation = async () => {
+    const position = await getCurrentPosition();
     
-    if (!navigator.geolocation) {
-      toast({
-        title: "Error",
-        description: "Geolocation is not supported by your browser",
-        variant: "destructive",
-      });
-      setLocationLoading(false);
-      return;
-    }
-    
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setFormData(prev => ({
-          ...prev,
-          locationLat: latitude,
-          locationLng: longitude,
-        }));
-        
-        // Try to get address from coordinates using reverse geocoding
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
-          const data = await response.json();
-          if (data.display_name) {
-            setFormData(prev => ({
-              ...prev,
-              locationAddress: data.display_name,
-              city: data.address?.city || data.address?.town || data.address?.village || prev.city,
-            }));
-          }
-        } catch (error) {
-          console.log("Could not fetch address");
+    if (position) {
+      const { latitude, longitude } = position;
+      setFormData(prev => ({
+        ...prev,
+        locationLat: latitude,
+        locationLng: longitude,
+      }));
+      
+      // Try to get address from coordinates using reverse geocoding
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+        );
+        const data = await response.json();
+        if (data.display_name) {
+          setFormData(prev => ({
+            ...prev,
+            locationAddress: data.display_name,
+            city: data.address?.city || data.address?.town || data.address?.village || prev.city,
+          }));
         }
-        
-        setLocationLoading(false);
-        toast({
-          title: "Location Captured",
-          description: "Your GPS location has been recorded",
-        });
-      },
-      (error) => {
-        setLocationLoading(false);
-        toast({
-          title: "Location Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, []);
+      } catch (error) {
+        console.log("Could not fetch address");
+      }
+      
+      toast({
+        title: "Location Captured",
+        description: "Your GPS location has been recorded",
+      });
+    }
+  };
 
   const handleServiceToggle = (serviceId: string) => {
     setFormData(prev => ({
@@ -366,7 +345,7 @@ export default function EmergencyNursingRequest() {
                     type="button"
                     variant={formData.locationLat ? "outline" : "default"}
                     className={formData.locationLat ? "border-green-500 text-green-600" : ""}
-                    onClick={getCurrentLocation}
+                    onClick={handleGetLocation}
                     disabled={locationLoading}
                   >
                     {locationLoading ? (

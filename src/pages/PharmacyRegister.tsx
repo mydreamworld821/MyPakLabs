@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 import { CitySelect } from "@/components/ui/city-select";
 import { 
@@ -32,10 +33,10 @@ import {
 const PharmacyRegister = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getCurrentPosition, loading: gettingLocation } = useGeolocation();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
-  const [gettingLocation, setGettingLocation] = useState(false);
   
   const [formData, setFormData] = useState({
     // Store Info
@@ -110,43 +111,13 @@ const PharmacyRegister = () => {
     }
   };
 
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
+  const handleGetLocation = async () => {
+    const position = await getCurrentPosition();
+    if (position) {
+      handleInputChange("location_lat", position.latitude.toString());
+      handleInputChange("location_lng", position.longitude.toString());
+      toast.success("Location captured successfully!");
     }
-
-    setGettingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        handleInputChange("location_lat", latitude.toString());
-        handleInputChange("location_lng", longitude.toString());
-        toast.success("Location captured successfully!");
-        setGettingLocation(false);
-      },
-      (error) => {
-        setGettingLocation(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            toast.error("Please allow location access to auto-fill coordinates");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast.error("Location information is unavailable");
-            break;
-          case error.TIMEOUT:
-            toast.error("Location request timed out");
-            break;
-          default:
-            toast.error("An error occurred getting your location");
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
   };
 
   const validateStep = (step: number): boolean => {

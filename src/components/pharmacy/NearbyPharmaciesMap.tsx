@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 import { 
   MapPin, 
@@ -39,6 +40,7 @@ interface NearbyStore {
 
 const NearbyPharmaciesMap = () => {
   const navigate = useNavigate();
+  const { getCurrentPosition } = useGeolocation();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyStores, setNearbyStores] = useState<NearbyStore[]>([]);
   const [loading, setLoading] = useState(false);
@@ -114,45 +116,19 @@ const NearbyPharmaciesMap = () => {
     }
   }, []);
 
-  const getUserLocation = useCallback(() => {
+  const getUserLocation = useCallback(async () => {
     setLoading(true);
     setLocationError(null);
 
-    if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser");
+    const position = await getCurrentPosition();
+    if (position) {
+      setUserLocation({ lat: position.latitude, lng: position.longitude });
+      fetchNearbyStores(position.latitude, position.longitude, radius);
+    } else {
       setLoading(false);
-      return;
+      setLocationError("Could not get your location. Please allow location access.");
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        fetchNearbyStores(latitude, longitude, radius);
-      },
-      (error) => {
-        setLoading(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError("Please allow location access to find nearby pharmacies");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationError("Location information is unavailable");
-            break;
-          case error.TIMEOUT:
-            setLocationError("Location request timed out");
-            break;
-          default:
-            setLocationError("An unknown error occurred");
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  }, [fetchNearbyStores, radius]);
+  }, [fetchNearbyStores, radius, getCurrentPosition]);
 
   useEffect(() => {
     if (userLocation) {

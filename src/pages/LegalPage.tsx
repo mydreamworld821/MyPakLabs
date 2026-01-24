@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const LegalPage = () => {
   const { slug } = useParams();
-  const routePath = `/${slug}`;
+  const location = useLocation();
+  // Use pathname directly for routes like /terms, /privacy, /partner-terms
+  // For /legal/:slug routes, construct from slug
+  const routePath = slug ? `/legal/${slug}` : location.pathname;
   const { data: page, isLoading, error } = useLegalPage(routePath);
 
   const IconComponent = page?.icon_name ? iconMap[page.icon_name] || FileText : FileText;

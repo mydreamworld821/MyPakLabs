@@ -17,10 +17,14 @@ const config: CapacitorConfig = {
       keystorePassword: undefined,
       keystoreAliasPassword: undefined,
       signingType: 'apksigner'
-    }
+    },
+    // Allow mixed content and cleartext traffic
+    allowMixedContent: true
   },
   ios: {
-    scheme: 'mypaklab'
+    scheme: 'mypaklab',
+    // Allow arbitrary loads for development
+    contentInset: 'automatic'
   },
   plugins: {
     SplashScreen: {
@@ -31,6 +35,28 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'light',
       backgroundColor: '#ffffff'
+    },
+    // Camera permissions
+    Camera: {
+      permissions: ['camera', 'photos']
+    },
+    // Geolocation for finding nearby services
+    Geolocation: {
+      permissions: ['location', 'coarseLocation']
+    },
+    // Push notifications
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert']
+    },
+    // Local notifications
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon',
+      iconColor: '#488AFF'
+    },
+    // Keyboard behavior
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true
     }
   }
 };

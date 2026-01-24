@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.mypaklabs.app",
+    "sha256_cert_fingerprints":
+    ["82:39:80:CE:9C:9F:B5:E4:48:A1:00:7F:15:5E:64:47:11:5C:EB:95:D8:08:EA:58:73:90:E0:33:BB:61:93:73"]
+  }
+}]

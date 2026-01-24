@@ -4,6 +4,7 @@ import { X, MapPin, Clock, Star, User, Navigation, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from '@/hooks/use-toast';
 
 // Error Boundary to prevent white screen crashes
@@ -87,6 +88,7 @@ const EmergencyFlashNotificationContent = ({
     console.error('useNavigate failed:', e);
   }
 
+  const { getCurrentPosition } = useGeolocation();
   const [isVisible, setIsVisible] = useState(false);
   const [countdown, setCountdown] = useState(autoHideSeconds);
   const [showOfferInput, setShowOfferInput] = useState(false);
@@ -182,19 +184,10 @@ const EmergencyFlashNotificationContent = ({
       let currentLat: number | null = null;
       let currentLng: number | null = null;
       
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 5000,
-            });
-          });
-          currentLat = position.coords.latitude;
-          currentLng = position.coords.longitude;
-        } catch (e) {
-          console.log('Could not get location for offer');
-        }
+      const position = await getCurrentPosition();
+      if (position) {
+        currentLat = position.latitude;
+        currentLng = position.longitude;
       }
 
       // Submit the offer

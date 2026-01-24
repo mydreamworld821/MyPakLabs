@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -72,7 +73,8 @@ export default function NurseActiveJob() {
   const [nurseId, setNurseId] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
-  const [watchId, setWatchId] = useState<number | null>(null);
+  const [watchId, setWatchId] = useState<string | number | null>(null);
+  const { getCurrentPosition, watchPosition, clearWatch } = useGeolocation();
 
   useEffect(() => {
     if (!user) {
@@ -220,86 +222,82 @@ export default function NurseActiveJob() {
   };
 
   // Start continuous location tracking
-  const startLocationTracking = () => {
-    if (!nurseId || !navigator.geolocation) {
-      toast({ title: "Error", description: "Location not available", variant: "destructive" });
+  const startLocationTracking = async () => {
+    if (!nurseId) {
+      toast({ title: "Error", description: "Nurse ID not found", variant: "destructive" });
       return;
     }
 
     setIsTrackingLocation(true);
 
     // Initial position update
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        await supabase
-          .from("nurse_emergency_tracking")
-          .upsert({
-            request_id: id,
-            nurse_id: nurseId,
-            current_lat: position.coords.latitude,
-            current_lng: position.coords.longitude,
-            status: "on_way",
-          }, { onConflict: "request_id,nurse_id" });
-      },
-      (error) => console.error("Location error:", error)
-    );
+    const position = await getCurrentPosition();
+    if (position) {
+      await supabase
+        .from("nurse_emergency_tracking")
+        .upsert({
+          request_id: id,
+          nurse_id: nurseId,
+          current_lat: position.latitude,
+          current_lng: position.longitude,
+          status: "on_way",
+        }, { onConflict: "request_id,nurse_id" });
+    }
 
     // Continuous tracking
-    const wId = navigator.geolocation.watchPosition(
-      async (position) => {
-        console.log("Location update:", position.coords.latitude, position.coords.longitude);
+    const wId = await watchPosition(
+      async (pos) => {
+        console.log("Location update:", pos.latitude, pos.longitude);
         await supabase
           .from("nurse_emergency_tracking")
           .upsert({
             request_id: id,
             nurse_id: nurseId,
-            current_lat: position.coords.latitude,
-            current_lng: position.coords.longitude,
+            current_lat: pos.latitude,
+            current_lng: pos.longitude,
             status: tracking?.status || "on_way",
           }, { onConflict: "request_id,nurse_id" });
       },
-      (error) => console.error("Watch error:", error),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      (error) => console.error("Watch error:", error)
     );
 
-    setWatchId(wId);
-    toast({ title: "Live Tracking Started", description: "Patient can now see your location" });
+    if (wId !== null) {
+      setWatchId(wId);
+      toast({ title: "Live Tracking Started", description: "Patient can now see your location" });
+    }
   };
 
   // Stop location tracking
   const stopLocationTracking = () => {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
-    }
+    clearWatch(watchId);
+    setWatchId(null);
     setIsTrackingLocation(false);
   };
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
+      clearWatch(watchId);
     };
-  }, [watchId]);
+  }, [watchId, clearWatch]);
 
   const updateLocation = async () => {
-    if (!nurseId || !navigator.geolocation) return;
+    if (!nurseId) return;
 
-    navigator.geolocation.getCurrentPosition(async (position) => {
+    const position = await getCurrentPosition();
+    if (position) {
       await supabase
         .from("nurse_emergency_tracking")
         .upsert({
           request_id: id,
           nurse_id: nurseId,
-          current_lat: position.coords.latitude,
-          current_lng: position.coords.longitude,
+          current_lat: position.latitude,
+          current_lng: position.longitude,
           status: tracking?.status || "on_way",
         }, {
           onConflict: "request_id,nurse_id"
         });
-    });
+    }
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -319,26 +317,25 @@ export default function NurseActiveJob() {
     }
 
     // Get current location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        updateData.current_lat = position.coords.latitude;
-        updateData.current_lng = position.coords.longitude;
+    const position = await getCurrentPosition();
+    if (position) {
+      updateData.current_lat = position.latitude;
+      updateData.current_lng = position.longitude;
 
+      await supabase
+        .from("nurse_emergency_tracking")
+        .upsert(updateData, { onConflict: "request_id,nurse_id" });
+
+      if (newStatus === "in_service") {
         await supabase
-          .from("nurse_emergency_tracking")
-          .upsert(updateData, { onConflict: "request_id,nurse_id" });
+          .from("emergency_nursing_requests")
+          .update({ status: "in_progress" })
+          .eq("id", id);
+      }
 
-        if (newStatus === "in_service") {
-          await supabase
-            .from("emergency_nursing_requests")
-            .update({ status: "in_progress" })
-            .eq("id", id);
-        }
-
-        setUpdating(false);
-        fetchTracking();
-        toast({ title: `Status updated: ${newStatus.replace("_", " ").toUpperCase()}` });
-      });
+      setUpdating(false);
+      fetchTracking();
+      toast({ title: `Status updated: ${newStatus.replace("_", " ").toUpperCase()}` });
     } else {
       setUpdating(false);
       toast({ title: "Error", description: "Could not get location", variant: "destructive" });

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -88,12 +89,12 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
 export default function NurseEmergencyFeed() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { getCurrentPosition, loading: locationLoading } = useGeolocation();
   const [loading, setLoading] = useState(true);
   const [nurseProfile, setNurseProfile] = useState<NurseProfile | null>(null);
   const [requests, setRequests] = useState<EmergencyRequest[]>([]);
   const [myOffers, setMyOffers] = useState<Record<string, boolean>>({});
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationLoading, setLocationLoading] = useState(false);
   
   // Offer dialog state
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
@@ -110,7 +111,7 @@ export default function NurseEmergencyFeed() {
     }
     
     fetchNurseProfile();
-    getCurrentLocation();
+    handleGetLocation();
   }, [user]);
 
   useEffect(() => {
@@ -184,32 +185,14 @@ export default function NurseEmergencyFeed() {
     }
   };
 
-  const getCurrentLocation = () => {
-    setLocationLoading(true);
-    
-    if (!navigator.geolocation) {
-      setLocationLoading(false);
-      return;
+  const handleGetLocation = async () => {
+    const position = await getCurrentPosition();
+    if (position) {
+      setCurrentLocation({
+        lat: position.latitude,
+        lng: position.longitude,
+      });
     }
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCurrentLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setLocationLoading(false);
-      },
-      () => {
-        setLocationLoading(false);
-        toast({
-          title: "Location Required",
-          description: "Enable location to see nearby requests",
-          variant: "destructive",
-        });
-      },
-      { enableHighAccuracy: true }
-    );
   };
 
   const fetchRequests = async () => {
@@ -349,7 +332,7 @@ export default function NurseEmergencyFeed() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={getCurrentLocation} disabled={locationLoading}>
+            <Button variant="outline" size="sm" onClick={handleGetLocation} disabled={locationLoading}>
               <Navigation className="w-4 h-4 mr-1" />
               {currentLocation ? "📍" : "GPS"}
             </Button>

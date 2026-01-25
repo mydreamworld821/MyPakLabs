@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Check, X, Loader2, UserRound, Star, ExternalLink, FileText } from "lucide-react";
+import { Eye, Check, X, Loader2, UserRound, Star, ExternalLink, FileText, Ban, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 
 interface Doctor {
@@ -201,6 +201,8 @@ const AdminDoctors = () => {
         return <Badge className="bg-green-100 text-green-700 text-xs">Approved</Badge>;
       case "rejected":
         return <Badge className="bg-red-100 text-red-700 text-xs">Rejected</Badge>;
+      case "suspended":
+        return <Badge className="bg-orange-100 text-orange-700 text-xs">Suspended</Badge>;
       default:
         return <Badge className="bg-yellow-100 text-yellow-700 text-xs">Pending</Badge>;
     }
@@ -255,6 +257,7 @@ const AdminDoctors = () => {
               <SelectItem value="all" className="text-xs">All Status</SelectItem>
               <SelectItem value="pending" className="text-xs">Pending</SelectItem>
               <SelectItem value="approved" className="text-xs">Approved</SelectItem>
+              <SelectItem value="suspended" className="text-xs">Suspended</SelectItem>
               <SelectItem value="rejected" className="text-xs">Rejected</SelectItem>
             </SelectContent>
           </Select>
@@ -458,18 +461,20 @@ const AdminDoctors = () => {
                   </TabsContent>
                 </Tabs>
 
-                {/* Approval Actions */}
-                {selectedDoctor.status === "pending" && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <div>
-                      <Label className="text-xs">Admin Notes (optional)</Label>
-                      <Textarea
-                        value={adminNotes}
-                        onChange={(e) => setAdminNotes(e.target.value)}
-                        placeholder="Add notes about approval/rejection..."
-                        className="text-xs min-h-[60px]"
-                      />
-                    </div>
+                {/* Admin Actions */}
+                <div className="space-y-2 pt-2 border-t">
+                  <div>
+                    <Label className="text-xs">Admin Notes (optional)</Label>
+                    <Textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      placeholder="Add notes about approval/rejection/suspension..."
+                      className="text-xs min-h-[60px]"
+                    />
+                  </div>
+                  
+                  {/* Pending Doctor Actions */}
+                  {selectedDoctor.status === "pending" && (
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -489,8 +494,51 @@ const AdminDoctors = () => {
                         Reject
                       </Button>
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {/* Approved Doctor Actions - Can Suspend */}
+                  {selectedDoctor.status === "approved" && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs flex-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                        onClick={() => handleStatusUpdate(selectedDoctor.id, "suspended")}
+                      >
+                        <Ban className="w-3 h-3 mr-1" />
+                        Suspend Doctor
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Suspended Doctor Actions - Can Reactivate */}
+                  {selectedDoctor.status === "suspended" && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="text-xs flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={() => handleStatusUpdate(selectedDoctor.id, "approved")}
+                      >
+                        <UserCheck className="w-3 h-3 mr-1" />
+                        Reactivate Doctor
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Rejected Doctor Actions - Can Approve */}
+                  {selectedDoctor.status === "rejected" && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="text-xs flex-1"
+                        onClick={() => handleStatusUpdate(selectedDoctor.id, "approved")}
+                      >
+                        <Check className="w-3 h-3 mr-1" />
+                        Approve
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </DialogContent>

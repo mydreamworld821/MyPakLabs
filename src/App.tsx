@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineScreen from "@/components/OfflineScreen";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -108,124 +110,138 @@ import MedicalTestsInCity from "./pages/seo/MedicalTestsInCity";
 import SpecialistInCity from "./pages/seo/SpecialistInCity";
 const queryClient = new QueryClient();
 
+// Wrapper component to handle offline state
+const AppContent = () => {
+  const { isOnline, isChecking, retryConnection } = useNetworkStatus();
+
+  // Show offline screen when not connected (after initial check)
+  if (!isChecking && !isOnline) {
+    return <OfflineScreen onRetry={retryConnection} isChecking={isChecking} />;
+  }
+
+  return (
+    <BrowserRouter>
+      {/* NotificationProvider must be INSIDE BrowserRouter because EmergencyFlashNotification uses useNavigate */}
+      <NotificationProvider>
+        <ScrollToTop />
+        <NotificationPermissionBanner />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/labs" element={<Labs />} />
+          <Route path="/lab/:slug" element={<LabDetail />} />
+          <Route path="/labs/:id" element={<LabDetail />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/terms" element={<LegalPage />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/partner-terms" element={<LegalPage />} />
+          <Route path="/privacy" element={<LegalPage />} />
+          <Route path="/legal/:slug" element={<LegalPage />} />
+          <Route path="/find-doctors" element={<FindDoctors />} />
+          <Route path="/hospitals" element={<Hospitals />} />
+          <Route path="/hospital/:slug" element={<HospitalDetail />} />
+          <Route path="/surgeries" element={<Surgeries />} />
+          <Route path="/surgery/:slug" element={<SurgeryDetail />} />
+          <Route path="/health-hub" element={<HealthHub />} />
+          <Route path="/health-hub/:postId" element={<HealthPostDetail />} />
+          <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
+          <Route path="/join-as-nurse" element={<JoinAsNurse />} />
+          <Route path="/nurse-register" element={<NurseRegister />} />
+          <Route path="/find-nurses" element={<FindNurses />} />
+          <Route path="/nurse/:id" element={<NurseDetail />} />
+          <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+          <Route path="/emergency-nursing-request" element={<EmergencyNursingRequest />} />
+          <Route path="/emergency-request/:id" element={<EmergencyRequestStatus />} />
+          <Route path="/nurse-emergency-feed" element={<NurseEmergencyFeed />} />
+          <Route path="/nurse-active-job/:id" element={<NurseActiveJob />} />
+          <Route path="/doctor-register" element={<DoctorRegister />} />
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/doctor/:id" element={<DoctorDetail />} />
+          <Route path="/video-consultation" element={<VideoConsultation />} />
+          <Route path="/in-clinic-visit" element={<InClinicVisit />} />
+          <Route path="/instant-doctor" element={<InstantDoctor />} />
+          <Route path="/join-as-pharmacy" element={<JoinAsPharmacy />} />
+          <Route path="/pharmacy-register" element={<PharmacyRegister />} />
+          <Route path="/pharmacies" element={<FindPharmacies />} />
+          <Route path="/pharmacy/:id" element={<PharmacyDetail />} />
+          <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
+          <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
+          <Route path="/ai-tools" element={<AITools />} />
+          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/health-packages" element={<HealthPackages />} />
+          <Route path="/partner-registration" element={<PartnerRegistration />} />
+          {/* SEO City Pages */}
+          <Route path="/doctors-in-:city" element={<DoctorsInCity />} />
+          <Route path="/labs-in-:city" element={<LabsInCity />} />
+          <Route path="/hospitals-in-:city" element={<HospitalsInCity />} />
+          <Route path="/home-nursing-:city" element={<HomeNursingInCity />} />
+          <Route path="/pharmacies-in-:city" element={<PharmaciesInCity />} />
+          <Route path="/medical-tests-in-:city" element={<MedicalTestsInCity />} />
+          <Route path="/:city/:specialist" element={<SpecialistInCity />} />
+          {/* Admin Routes */}
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/labs" element={<ProtectedRoute requireAdmin><AdminLabs /></ProtectedRoute>} />
+          <Route path="/admin/tests" element={<ProtectedRoute requireAdmin><AdminTests /></ProtectedRoute>} />
+          <Route path="/admin/lab-tests" element={<ProtectedRoute requireAdmin><AdminLabTests /></ProtectedRoute>} />
+          <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrders /></ProtectedRoute>} />
+          <Route path="/admin/prescriptions" element={<ProtectedRoute requireAdmin><AdminPrescriptions /></ProtectedRoute>} />
+          <Route path="/admin/specializations" element={<ProtectedRoute requireAdmin><AdminSpecializations /></ProtectedRoute>} />
+          <Route path="/admin/doctors" element={<ProtectedRoute requireAdmin><AdminDoctors /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/service-cards" element={<ProtectedRoute requireAdmin><AdminServiceCards /></ProtectedRoute>} />
+          <Route path="/admin/quick-access-services" element={<ProtectedRoute requireAdmin><AdminQuickAccessServices /></ProtectedRoute>} />
+          <Route path="/admin/quick-access-layout" element={<ProtectedRoute requireAdmin><AdminQuickAccessLayout /></ProtectedRoute>} />
+          <Route path="/admin/featured-labs" element={<ProtectedRoute requireAdmin><AdminFeaturedLabs /></ProtectedRoute>} />
+          <Route path="/admin/featured-doctors" element={<ProtectedRoute requireAdmin><AdminFeaturedDoctors /></ProtectedRoute>} />
+          <Route path="/admin/surgeries" element={<ProtectedRoute requireAdmin><AdminSurgeries /></ProtectedRoute>} />
+          <Route path="/admin/surgery-inquiries" element={<ProtectedRoute requireAdmin><AdminSurgeryInquiries /></ProtectedRoute>} />
+          <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><AdminHospitals /></ProtectedRoute>} />
+          <Route path="/admin/locations" element={<ProtectedRoute requireAdmin><AdminLocations /></ProtectedRoute>} />
+          <Route path="/admin/nurses" element={<ProtectedRoute requireAdmin><AdminNurses /></ProtectedRoute>} />
+          <Route path="/admin/featured-nurses" element={<ProtectedRoute requireAdmin><AdminFeaturedNurses /></ProtectedRoute>} />
+          <Route path="/admin/emergency-requests" element={<ProtectedRoute requireAdmin><AdminEmergencyRequests /></ProtectedRoute>} />
+          <Route path="/admin/doctor-appointments" element={<ProtectedRoute requireAdmin><AdminDoctorAppointments /></ProtectedRoute>} />
+          <Route path="/admin/nurse-bookings" element={<ProtectedRoute requireAdmin><AdminNurseBookings /></ProtectedRoute>} />
+          <Route path="/admin/medical-stores" element={<ProtectedRoute requireAdmin><AdminMedicalStores /></ProtectedRoute>} />
+          <Route path="/admin/medicine-orders" element={<ProtectedRoute requireAdmin><AdminMedicineOrders /></ProtectedRoute>} />
+          <Route path="/admin/hero-settings" element={<ProtectedRoute requireAdmin><AdminHeroSettings /></ProtectedRoute>} />
+          <Route path="/admin/homepage-layout" element={<ProtectedRoute requireAdmin><AdminHomepageLayout /></ProtectedRoute>} />
+          <Route path="/admin/homepage-builder" element={<ProtectedRoute requireAdmin><AdminHomepageBuilder /></ProtectedRoute>} />
+          <Route path="/admin/page-layouts" element={<ProtectedRoute requireAdmin><AdminPageLayouts /></ProtectedRoute>} />
+          <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
+          <Route path="/admin/health-posts" element={<ProtectedRoute requireAdmin><AdminHealthPosts /></ProtectedRoute>} />
+          <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
+          <Route path="/admin/wallets" element={<ProtectedRoute requireAdmin><AdminWallets /></ProtectedRoute>} />
+          <Route path="/admin/health-packages" element={<ProtectedRoute requireAdmin><AdminHealthPackages /></ProtectedRoute>} />
+          <Route path="/admin/nurse-commissions" element={<ProtectedRoute requireAdmin><AdminNurseCommissions /></ProtectedRoute>} />
+          <Route path="/admin/legal-pages" element={<ProtectedRoute requireAdmin><AdminLegalPages /></ProtectedRoute>} />
+          
+          {/* Moderator Routes */}
+          <Route path="/moderator" element={<ProtectedRoute requireModerator><ModeratorDashboard /></ProtectedRoute>} />
+          <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />
+          <Route path="/moderator/doctor-appointments" element={<ProtectedRoute requireModerator><ModeratorDoctorAppointments /></ProtectedRoute>} />
+          <Route path="/moderator/nurse-bookings" element={<ProtectedRoute requireModerator><ModeratorNurseBookings /></ProtectedRoute>} />
+          
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <HealthChatbot />
+        <NativeMobileWrapper />
+      </NotificationProvider>
+    </BrowserRouter>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          {/* NotificationProvider must be INSIDE BrowserRouter because EmergencyFlashNotification uses useNavigate */}
-          <NotificationProvider>
-            <ScrollToTop />
-            <NotificationPermissionBanner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/labs" element={<Labs />} />
-              <Route path="/lab/:slug" element={<LabDetail />} />
-              <Route path="/labs/:id" element={<LabDetail />} />
-              <Route path="/compare" element={<Compare />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/my-prescriptions" element={<MyPrescriptions />} />
-              <Route path="/my-bookings" element={<MyBookings />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/terms" element={<LegalPage />} />
-              <Route path="/help" element={<HelpCenter />} />
-              <Route path="/partner-terms" element={<LegalPage />} />
-              <Route path="/privacy" element={<LegalPage />} />
-              <Route path="/legal/:slug" element={<LegalPage />} />
-              <Route path="/find-doctors" element={<FindDoctors />} />
-              <Route path="/hospitals" element={<Hospitals />} />
-              <Route path="/hospital/:slug" element={<HospitalDetail />} />
-              <Route path="/surgeries" element={<Surgeries />} />
-              <Route path="/surgery/:slug" element={<SurgeryDetail />} />
-              <Route path="/health-hub" element={<HealthHub />} />
-              <Route path="/health-hub/:postId" element={<HealthPostDetail />} />
-              <Route path="/join-as-doctor" element={<JoinAsDoctor />} />
-              <Route path="/join-as-nurse" element={<JoinAsNurse />} />
-              <Route path="/nurse-register" element={<NurseRegister />} />
-              <Route path="/find-nurses" element={<FindNurses />} />
-              <Route path="/nurse/:id" element={<NurseDetail />} />
-              <Route path="/nurse-dashboard" element={<NurseDashboard />} />
-              <Route path="/emergency-nursing-request" element={<EmergencyNursingRequest />} />
-              <Route path="/emergency-request/:id" element={<EmergencyRequestStatus />} />
-              <Route path="/nurse-emergency-feed" element={<NurseEmergencyFeed />} />
-              <Route path="/nurse-active-job/:id" element={<NurseActiveJob />} />
-              <Route path="/doctor-register" element={<DoctorRegister />} />
-              <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/:id" element={<DoctorDetail />} />
-              <Route path="/video-consultation" element={<VideoConsultation />} />
-              <Route path="/in-clinic-visit" element={<InClinicVisit />} />
-              <Route path="/instant-doctor" element={<InstantDoctor />} />
-              <Route path="/join-as-pharmacy" element={<JoinAsPharmacy />} />
-              <Route path="/pharmacy-register" element={<PharmacyRegister />} />
-              <Route path="/pharmacies" element={<FindPharmacies />} />
-              <Route path="/pharmacy/:id" element={<PharmacyDetail />} />
-              <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
-              <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
-              <Route path="/ai-tools" element={<AITools />} />
-              <Route path="/reviews" element={<Reviews />} />
-              <Route path="/health-packages" element={<HealthPackages />} />
-              <Route path="/partner-registration" element={<PartnerRegistration />} />
-              {/* SEO City Pages */}
-              <Route path="/doctors-in-:city" element={<DoctorsInCity />} />
-              <Route path="/labs-in-:city" element={<LabsInCity />} />
-              <Route path="/hospitals-in-:city" element={<HospitalsInCity />} />
-              <Route path="/home-nursing-:city" element={<HomeNursingInCity />} />
-              <Route path="/pharmacies-in-:city" element={<PharmaciesInCity />} />
-              <Route path="/medical-tests-in-:city" element={<MedicalTestsInCity />} />
-              <Route path="/:city/:specialist" element={<SpecialistInCity />} />
-              {/* Admin Routes */}
-              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/admin/labs" element={<ProtectedRoute requireAdmin><AdminLabs /></ProtectedRoute>} />
-              <Route path="/admin/tests" element={<ProtectedRoute requireAdmin><AdminTests /></ProtectedRoute>} />
-              <Route path="/admin/lab-tests" element={<ProtectedRoute requireAdmin><AdminLabTests /></ProtectedRoute>} />
-              <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrders /></ProtectedRoute>} />
-              <Route path="/admin/prescriptions" element={<ProtectedRoute requireAdmin><AdminPrescriptions /></ProtectedRoute>} />
-              <Route path="/admin/specializations" element={<ProtectedRoute requireAdmin><AdminSpecializations /></ProtectedRoute>} />
-              <Route path="/admin/doctors" element={<ProtectedRoute requireAdmin><AdminDoctors /></ProtectedRoute>} />
-              <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
-              <Route path="/admin/service-cards" element={<ProtectedRoute requireAdmin><AdminServiceCards /></ProtectedRoute>} />
-              <Route path="/admin/quick-access-services" element={<ProtectedRoute requireAdmin><AdminQuickAccessServices /></ProtectedRoute>} />
-              <Route path="/admin/quick-access-layout" element={<ProtectedRoute requireAdmin><AdminQuickAccessLayout /></ProtectedRoute>} />
-              <Route path="/admin/featured-labs" element={<ProtectedRoute requireAdmin><AdminFeaturedLabs /></ProtectedRoute>} />
-              <Route path="/admin/featured-doctors" element={<ProtectedRoute requireAdmin><AdminFeaturedDoctors /></ProtectedRoute>} />
-              <Route path="/admin/surgeries" element={<ProtectedRoute requireAdmin><AdminSurgeries /></ProtectedRoute>} />
-              <Route path="/admin/surgery-inquiries" element={<ProtectedRoute requireAdmin><AdminSurgeryInquiries /></ProtectedRoute>} />
-              <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><AdminHospitals /></ProtectedRoute>} />
-              <Route path="/admin/locations" element={<ProtectedRoute requireAdmin><AdminLocations /></ProtectedRoute>} />
-              <Route path="/admin/nurses" element={<ProtectedRoute requireAdmin><AdminNurses /></ProtectedRoute>} />
-              <Route path="/admin/featured-nurses" element={<ProtectedRoute requireAdmin><AdminFeaturedNurses /></ProtectedRoute>} />
-              <Route path="/admin/emergency-requests" element={<ProtectedRoute requireAdmin><AdminEmergencyRequests /></ProtectedRoute>} />
-              <Route path="/admin/doctor-appointments" element={<ProtectedRoute requireAdmin><AdminDoctorAppointments /></ProtectedRoute>} />
-              <Route path="/admin/nurse-bookings" element={<ProtectedRoute requireAdmin><AdminNurseBookings /></ProtectedRoute>} />
-              <Route path="/admin/medical-stores" element={<ProtectedRoute requireAdmin><AdminMedicalStores /></ProtectedRoute>} />
-              <Route path="/admin/medicine-orders" element={<ProtectedRoute requireAdmin><AdminMedicineOrders /></ProtectedRoute>} />
-              <Route path="/admin/hero-settings" element={<ProtectedRoute requireAdmin><AdminHeroSettings /></ProtectedRoute>} />
-              <Route path="/admin/homepage-layout" element={<ProtectedRoute requireAdmin><AdminHomepageLayout /></ProtectedRoute>} />
-              <Route path="/admin/homepage-builder" element={<ProtectedRoute requireAdmin><AdminHomepageBuilder /></ProtectedRoute>} />
-              <Route path="/admin/page-layouts" element={<ProtectedRoute requireAdmin><AdminPageLayouts /></ProtectedRoute>} />
-              <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
-              <Route path="/admin/health-posts" element={<ProtectedRoute requireAdmin><AdminHealthPosts /></ProtectedRoute>} />
-              <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
-              <Route path="/admin/wallets" element={<ProtectedRoute requireAdmin><AdminWallets /></ProtectedRoute>} />
-              <Route path="/admin/health-packages" element={<ProtectedRoute requireAdmin><AdminHealthPackages /></ProtectedRoute>} />
-              <Route path="/admin/nurse-commissions" element={<ProtectedRoute requireAdmin><AdminNurseCommissions /></ProtectedRoute>} />
-              <Route path="/admin/legal-pages" element={<ProtectedRoute requireAdmin><AdminLegalPages /></ProtectedRoute>} />
-              
-              {/* Moderator Routes */}
-              <Route path="/moderator" element={<ProtectedRoute requireModerator><ModeratorDashboard /></ProtectedRoute>} />
-              <Route path="/moderator/prescriptions" element={<ProtectedRoute requireModerator><ModeratorPrescriptions /></ProtectedRoute>} />
-              <Route path="/moderator/doctor-appointments" element={<ProtectedRoute requireModerator><ModeratorDoctorAppointments /></ProtectedRoute>} />
-              <Route path="/moderator/nurse-bookings" element={<ProtectedRoute requireModerator><ModeratorNurseBookings /></ProtectedRoute>} />
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <HealthChatbot />
-            <NativeMobileWrapper />
-          </NotificationProvider>
-        </BrowserRouter>
+        <AppContent />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

@@ -88,6 +88,157 @@ export type Database = {
           },
         ]
       }
+      chat_calls: {
+        Row: {
+          call_type: Database["public"]["Enums"]["call_type"]
+          caller_id: string
+          caller_type: string
+          created_at: string
+          daily_room_url: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          room_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+        }
+        Insert: {
+          call_type: Database["public"]["Enums"]["call_type"]
+          caller_id: string
+          caller_type: string
+          created_at?: string
+          daily_room_url?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          room_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["call_status"]
+        }
+        Update: {
+          call_type?: Database["public"]["Enums"]["call_type"]
+          caller_id?: string
+          caller_type?: string
+          created_at?: string
+          daily_room_url?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          room_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["call_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_calls_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          media_duration: number | null
+          media_url: string | null
+          message_type: Database["public"]["Enums"]["chat_message_type"]
+          read_at: string | null
+          room_id: string
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          media_duration?: number | null
+          media_url?: string | null
+          message_type?: Database["public"]["Enums"]["chat_message_type"]
+          read_at?: string | null
+          room_id: string
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          media_duration?: number | null
+          media_url?: string | null
+          message_type?: Database["public"]["Enums"]["chat_message_type"]
+          read_at?: string | null
+          room_id?: string
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          activated_at: string | null
+          appointment_id: string
+          created_at: string
+          deactivated_at: string | null
+          doctor_id: string
+          id: string
+          is_active: boolean
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          appointment_id: string
+          created_at?: string
+          deactivated_at?: string | null
+          doctor_id: string
+          id?: string
+          is_active?: boolean
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          appointment_id?: string
+          created_at?: string
+          deactivated_at?: string | null
+          doctor_id?: string
+          id?: string
+          is_active?: boolean
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           created_at: string
@@ -2667,6 +2818,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_presence: {
+        Row: {
+          id: string
+          is_online: boolean
+          last_seen: string
+          typing_in_room: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          typing_in_room?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          typing_in_room?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_typing_in_room_fkey"
+            columns: ["typing_in_room"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2840,6 +3026,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_chat_room_activation: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
@@ -2855,6 +3042,20 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "no_show"
+      call_status:
+        | "initiated"
+        | "ringing"
+        | "connected"
+        | "ended"
+        | "missed"
+        | "rejected"
+      call_type: "video" | "audio"
+      chat_message_type:
+        | "text"
+        | "image"
+        | "voice"
+        | "call_started"
+        | "call_ended"
       consultation_type: "physical" | "online"
       emergency_request_status:
         | "live"
@@ -3016,6 +3217,22 @@ export const Constants = {
         "cancelled",
         "completed",
         "no_show",
+      ],
+      call_status: [
+        "initiated",
+        "ringing",
+        "connected",
+        "ended",
+        "missed",
+        "rejected",
+      ],
+      call_type: ["video", "audio"],
+      chat_message_type: [
+        "text",
+        "image",
+        "voice",
+        "call_started",
+        "call_ended",
       ],
       consultation_type: ["physical", "online"],
       emergency_request_status: [

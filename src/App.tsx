@@ -99,6 +99,8 @@ import AdminLegalPages from "./pages/admin/LegalPages";
 import LegalPage from "./pages/LegalPage";
 import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
+import ChatList from "./pages/ChatList";
+import ChatRoom from "./pages/ChatRoom";
 
 // SEO Pages
 import DoctorsInCity from "./pages/seo/DoctorsInCity";
@@ -173,6 +175,9 @@ const AppContent = () => {
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/health-packages" element={<HealthPackages />} />
           <Route path="/partner-registration" element={<PartnerRegistration />} />
+          {/* Chat Routes */}
+          <Route path="/chats" element={<ChatList />} />
+          <Route path="/chat/:roomId" element={<ChatRoom />} />
           {/* SEO City Pages */}
           <Route path="/doctors-in-:city" element={<DoctorsInCity />} />
           <Route path="/labs-in-:city" element={<LabsInCity />} />

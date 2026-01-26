@@ -56,6 +56,7 @@ import {
   Siren,
   Navigation,
   Star,
+  MessageCircle,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { generateDoctorAppointmentPDF } from "@/utils/generateDoctorAppointmentPDF";
@@ -1135,6 +1136,18 @@ const MyBookings = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <div className="flex items-center justify-end gap-1">
+                                        {/* Chat button for video consultations */}
+                                        {appointment.consultation_type === 'online' && ['pending', 'confirmed'].includes(appointment.status) && (
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="text-primary hover:text-primary/80"
+                                            onClick={() => navigate('/chats')}
+                                            title="Open Chat"
+                                          >
+                                            <MessageCircle className="w-4 h-4" />
+                                          </Button>
+                                        )}
                                         {appointment.status === 'confirmed' && appointment.unique_id && (
                                           <Button 
                                             variant="ghost" 
@@ -1166,7 +1179,7 @@ const MyBookings = () => {
                                           <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                            className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                                             onClick={() => openCancelDialog('appointment', appointment.id)}
                                           >
                                             <Ban className="w-4 h-4" />

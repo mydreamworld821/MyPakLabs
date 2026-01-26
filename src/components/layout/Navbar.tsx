@@ -25,7 +25,8 @@ import {
   MapPin,
   ChevronDown,
   AlertTriangle,
-  Store
+  Store,
+  MessageCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -483,6 +484,12 @@ const Navbar = () => {
                     <Link to="/my-prescriptions" className="flex items-center gap-2 cursor-pointer text-xs">
                       <FileText className="w-3.5 h-3.5" />
                       My Prescriptions
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/chats" className="flex items-center gap-2 cursor-pointer text-xs">
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Chat Messages
                     </Link>
                   </DropdownMenuItem>
                   {isApprovedDoctor && (

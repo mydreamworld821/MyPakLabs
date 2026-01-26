@@ -40,7 +40,9 @@ import {
   MapPin,
   Upload,
   FileText,
+  MessageCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Appointment {
   id: string;
@@ -74,6 +76,7 @@ const statusConfig = {
 };
 
 const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabProps) => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -390,7 +393,7 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
                 </Badge>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   <span>
@@ -403,7 +406,18 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
                 </div>
                 <div className="flex items-center gap-1">
                   {appointment.consultation_type === "online" ? (
-                    <Video className="w-3 h-3" />
+                    <>
+                      <Video className="w-3 h-3" />
+                      <button
+                        onClick={() => {
+                          // Navigate to chat for this appointment
+                          navigate(`/chats`);
+                        }}
+                        className="ml-1 text-primary hover:underline"
+                      >
+                        Open Chat
+                      </button>
+                    </>
                   ) : (
                     <MapPin className="w-3 h-3" />
                   )}

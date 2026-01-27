@@ -1868,6 +1868,174 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
     }
+
+    // Handle appointment reminder action
+    if (body.action === 'send_appointment_reminder') {
+      console.log("Sending appointment reminder...", body);
+      const { 
+        patientEmail, 
+        patientName, 
+        doctorEmail, 
+        doctorName, 
+        appointmentDate, 
+        appointmentTime, 
+        consultationType,
+        appointmentId,
+        minutesUntil 
+      } = body;
+      
+      const baseUrl = "https://mypaklab.lovable.app";
+      const chatUrl = `${baseUrl}/chats`;
+      const isOnline = consultationType === 'online';
+      
+      // Send to patient
+      if (patientEmail) {
+        const patientSubject = `⏰ Appointment Reminder - ${minutesUntil || 5} minutes to go!`;
+        const patientHtml = `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #8b5cf6, #6366f1); padding: 30px; border-radius: 16px 16px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">⏰ Appointment Starting Soon!</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px;">
+                Hello <strong>${patientName}</strong>,
+              </p>
+              <p style="color: #334155; font-size: 16px;">
+                Your appointment with <strong>Dr. ${doctorName}</strong> is starting in <strong>${minutesUntil || 5} minutes</strong>!
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">📅 Date</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${appointmentDate}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">🕐 Time</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${appointmentTime}</p>
+                </div>
+                <div>
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">📍 Type</p>
+                  <p style="margin: 5px 0 0; color: #8b5cf6; font-size: 16px; font-weight: 600;">${isOnline ? '🎥 Video Consultation' : '🏥 In-Clinic Visit'}</p>
+                </div>
+              </div>
+              ${isOnline ? `
+              <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #166534; font-size: 14px;">
+                  💬 <strong>Chat is now active!</strong> You can start messaging your doctor.
+                </p>
+              </div>
+              <a href="${chatUrl}" 
+                 style="display: inline-block; background: #8b5cf6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Open Chat Now
+              </a>
+              ` : `
+              <p style="color: #64748b; font-size: 14px;">
+                Please arrive at the clinic on time for your appointment.
+              </p>
+              `}
+            </div>
+          </div>
+        `;
+        
+        try {
+          await resend.emails.send({
+            from: OFFICIAL_EMAIL,
+            to: [patientEmail],
+            subject: patientSubject,
+            html: patientHtml,
+          });
+          console.log("Patient reminder sent to:", patientEmail);
+        } catch (err) {
+          console.error("Failed to send patient reminder:", err);
+          // Try fallback
+          try {
+            await resend.emails.send({
+              from: FALLBACK_EMAIL,
+              to: [patientEmail],
+              subject: patientSubject,
+              html: patientHtml,
+            });
+          } catch (fallbackErr) {
+            console.error("Fallback also failed:", fallbackErr);
+          }
+        }
+      }
+      
+      // Send to doctor
+      if (doctorEmail) {
+        const doctorSubject = `⏰ Appointment Reminder - ${patientName} in ${minutesUntil || 5} minutes`;
+        const doctorHtml = `
+          <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); padding: 30px; border-radius: 16px 16px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">⏰ Upcoming Appointment</h1>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px;">
+              <p style="color: #334155; font-size: 16px;">
+                Hello <strong>Dr. ${doctorName}</strong>,
+              </p>
+              <p style="color: #334155; font-size: 16px;">
+                Your appointment with <strong>${patientName}</strong> is starting in <strong>${minutesUntil || 5} minutes</strong>!
+              </p>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">📅 Date</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${appointmentDate}</p>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">🕐 Time</p>
+                  <p style="margin: 5px 0 0; color: #1e293b; font-size: 16px;">${appointmentTime}</p>
+                </div>
+                <div>
+                  <p style="margin: 0; color: #64748b; font-size: 14px;">📍 Type</p>
+                  <p style="margin: 5px 0 0; color: #14b8a6; font-size: 16px; font-weight: 600;">${isOnline ? '🎥 Video Consultation' : '🏥 In-Clinic Visit'}</p>
+                </div>
+              </div>
+              ${isOnline ? `
+              <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #166534; font-size: 14px;">
+                  💬 <strong>Chat is now active!</strong> You can start messaging your patient.
+                </p>
+              </div>
+              <a href="${baseUrl}/doctor-dashboard" 
+                 style="display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Open Dashboard
+              </a>
+              ` : `
+              <p style="color: #64748b; font-size: 14px;">
+                Please be ready to receive your patient at the clinic.
+              </p>
+              `}
+            </div>
+          </div>
+        `;
+        
+        try {
+          await resend.emails.send({
+            from: OFFICIAL_EMAIL,
+            to: [doctorEmail],
+            subject: doctorSubject,
+            html: doctorHtml,
+          });
+          console.log("Doctor reminder sent to:", doctorEmail);
+        } catch (err) {
+          console.error("Failed to send doctor reminder:", err);
+          try {
+            await resend.emails.send({
+              from: FALLBACK_EMAIL,
+              to: [doctorEmail],
+              subject: doctorSubject,
+              html: doctorHtml,
+            });
+          } catch (fallbackErr) {
+            console.error("Fallback also failed:", fallbackErr);
+          }
+        }
+      }
+      
+      return new Response(
+        JSON.stringify({ success: true, message: "Reminders sent" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
     
     const data: NotificationRequest = body;
     console.log("Notification request:", data);

@@ -101,6 +101,7 @@ import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 import ChatList from "./pages/ChatList";
 import ChatRoom from "./pages/ChatRoom";
+import { AppointmentReminderManager } from "./components/AppointmentReminderManager";
 
 // SEO Pages
 import DoctorsInCity from "./pages/seo/DoctorsInCity";
@@ -127,6 +128,7 @@ const AppContent = () => {
       <NotificationProvider>
         <ScrollToTop />
         <NotificationPermissionBanner />
+        <AppointmentReminderManager />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/labs" element={<Labs />} />

@@ -1,14 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, isToday, isYesterday } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
+import { useChatStatus } from '@/hooks/useChatStatus';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Video, Lock, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, Video, Lock, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ChatRoom = () => {
@@ -29,7 +30,16 @@ const ChatRoom = () => {
     isChatActive,
   } = useChat({ roomId });
 
-  const isActive = isChatActive(currentRoom);
+  // Use the proper chat status hook for accurate time-based status
+  const chatStatus = useChatStatus({
+    appointmentId: currentRoom?.appointment_id,
+    appointmentDate: currentRoom?.appointment?.appointment_date,
+    appointmentTime: currentRoom?.appointment?.appointment_time,
+    consultationType: currentRoom?.appointment?.consultation_type,
+    appointmentStatus: currentRoom?.appointment?.status,
+  });
+
+  const isActive = chatStatus.isActive;
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -122,11 +132,19 @@ const ChatRoom = () => {
           </div>
 
           {isActive ? (
-            <Badge className="bg-green-100 text-green-700 text-[10px]">Active</Badge>
+            <Badge className="bg-green-100 text-green-700 text-[10px] flex items-center gap-1">
+              <CheckCircle className="w-2.5 h-2.5" />
+              Active
+            </Badge>
+          ) : chatStatus.status === 'not_started' ? (
+            <Badge variant="outline" className="text-[10px] text-yellow-600 border-yellow-300">
+              <Clock className="w-2.5 h-2.5 mr-1" />
+              {chatStatus.message}
+            </Badge>
           ) : (
             <Badge variant="secondary" className="text-[10px]">
               <Lock className="w-2.5 h-2.5 mr-1" />
-              Inactive
+              Read Only
             </Badge>
           )}
         </div>
@@ -134,11 +152,23 @@ const ChatRoom = () => {
 
       {/* Chat Info Banner */}
       {!isActive && currentRoom.appointment && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
-          <div className="flex items-center gap-2 text-amber-800">
-            <Lock className="w-4 h-4 shrink-0" />
+        <div className={cn(
+          "border-b px-4 py-2",
+          chatStatus.status === 'not_started' 
+            ? "bg-yellow-50 border-yellow-200" 
+            : "bg-muted/50 border-border"
+        )}>
+          <div className={cn(
+            "flex items-center gap-2",
+            chatStatus.status === 'not_started' ? "text-yellow-800" : "text-muted-foreground"
+          )}>
+            {chatStatus.status === 'not_started' ? (
+              <Clock className="w-4 h-4 shrink-0" />
+            ) : (
+              <Lock className="w-4 h-4 shrink-0" />
+            )}
             <p className="text-xs">
-              Chat is available from 15 minutes before to 24 hours after your appointment.
+              {chatStatus.message}
               {currentRoom.appointment.status === 'cancelled' && ' (Appointment cancelled)'}
             </p>
           </div>

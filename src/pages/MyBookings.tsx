@@ -56,10 +56,10 @@ import {
   Siren,
   Navigation,
   Star,
-  MessageCircle,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 import { generateDoctorAppointmentPDF } from "@/utils/generateDoctorAppointmentPDF";
+import { ChatButton } from "@/components/chat/ChatButton";
 import { generateNurseBookingPDF } from "@/utils/generateNurseBookingPDF";
 import {
   AlertDialog,
@@ -1137,17 +1137,14 @@ const MyBookings = () => {
                                     <TableCell className="text-right">
                                       <div className="flex items-center justify-end gap-1">
                                         {/* Chat button for video consultations */}
-                                        {appointment.consultation_type === 'online' && ['pending', 'confirmed'].includes(appointment.status) && (
-                                          <Button 
-                                            variant="ghost" 
-                                            size="icon"
-                                            className="text-primary hover:text-primary/80"
-                                            onClick={() => navigate('/chats')}
-                                            title="Open Chat"
-                                          >
-                                            <MessageCircle className="w-4 h-4" />
-                                          </Button>
-                                        )}
+                                        <ChatButton
+                                          appointmentId={appointment.id}
+                                          appointmentDate={appointment.appointment_date}
+                                          appointmentTime={appointment.appointment_time}
+                                          consultationType={appointment.consultation_type}
+                                          appointmentStatus={appointment.status}
+                                          variant="icon"
+                                        />
                                         {appointment.status === 'confirmed' && appointment.unique_id && (
                                           <Button 
                                             variant="ghost" 

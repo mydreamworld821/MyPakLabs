@@ -40,9 +40,9 @@ import {
   MapPin,
   Upload,
   FileText,
-  MessageCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ChatButton } from "@/components/chat/ChatButton";
 
 interface Appointment {
   id: string;
@@ -406,22 +406,23 @@ const DoctorAppointmentsTab = ({ doctorId, isApproved }: DoctorAppointmentsTabPr
                 </div>
                 <div className="flex items-center gap-1">
                   {appointment.consultation_type === "online" ? (
-                    <>
-                      <Video className="w-3 h-3" />
-                      <button
-                        onClick={() => {
-                          // Navigate to chat for this appointment
-                          navigate(`/chats`);
-                        }}
-                        className="ml-1 text-primary hover:underline"
-                      >
-                        Open Chat
-                      </button>
-                    </>
+                    <Video className="w-3 h-3" />
                   ) : (
                     <MapPin className="w-3 h-3" />
                   )}
                   <span className="capitalize">{appointment.consultation_type}</span>
+                  {/* Chat button for online consultations */}
+                  {appointment.consultation_type === "online" && (
+                    <ChatButton
+                      appointmentId={appointment.id}
+                      appointmentDate={appointment.appointment_date}
+                      appointmentTime={appointment.appointment_time}
+                      consultationType={appointment.consultation_type}
+                      appointmentStatus={appointment.status}
+                      variant="badge"
+                      className="ml-2"
+                    />
+                  )}
                 </div>
                 {appointment.patient?.phone && (
                   <div className="flex items-center gap-1">

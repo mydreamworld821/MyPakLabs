@@ -1,9 +1,10 @@
 import { format, isToday, isYesterday } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Image, Mic, Video } from 'lucide-react';
+import { Image, Mic, Video, Lock, Clock, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatRoom } from '@/hooks/useChat';
+import { isChatActiveForAppointment } from '@/hooks/useChatStatus';
 
 interface ChatRoomCardProps {
   room: ChatRoom;
@@ -55,13 +56,14 @@ export const ChatRoomCard = ({ room, userType, onClick, isActive }: ChatRoomCard
   const isChatActive = () => {
     if (!room.appointment) return false;
     
-    const now = new Date();
-    const appointmentDateTime = new Date(`${room.appointment.appointment_date}T${room.appointment.appointment_time}`);
-    const activeStart = new Date(appointmentDateTime.getTime() - 15 * 60 * 1000);
-    const activeEnd = new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000);
-    
-    return now >= activeStart && now <= activeEnd && room.appointment.status !== 'cancelled';
+    return isChatActiveForAppointment(
+      room.appointment.appointment_date,
+      room.appointment.appointment_time,
+      room.appointment.status
+    );
   };
+
+  const chatActive = isChatActive();
 
   return (
     <div
@@ -78,8 +80,10 @@ export const ChatRoomCard = ({ room, userType, onClick, isActive }: ChatRoomCard
             {displayName?.charAt(0)?.toUpperCase() || '?'}
           </AvatarFallback>
         </Avatar>
-        {isChatActive() && (
+        {chatActive ? (
           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+        ) : (
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-muted-foreground rounded-full border-2 border-background" />
         )}
       </div>
 

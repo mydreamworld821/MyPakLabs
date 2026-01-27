@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendFCMNotification } from '@/utils/fcmNotifications';
+import { isChatActiveForAppointment } from '@/hooks/useChatStatus';
 
 export interface ChatMessage {
   id: string;
@@ -241,19 +242,16 @@ export const useChat = (options: UseChatOptions = {}) => {
     }
   }, [user]);
 
-  // Check if chat is currently active
+  // Check if chat is currently active using the unified helper
   const isChatActive = useCallback((room: ChatRoom | null): boolean => {
     if (!room) return false;
     if (!room.appointment) return false;
     
-    const now = new Date();
-    const appointmentDateTime = new Date(`${room.appointment.appointment_date}T${room.appointment.appointment_time}`);
-    
-    // Active window: 15 minutes before to 24 hours after
-    const activeStart = new Date(appointmentDateTime.getTime() - 15 * 60 * 1000);
-    const activeEnd = new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000);
-    
-    return now >= activeStart && now <= activeEnd && room.appointment.status !== 'cancelled';
+    return isChatActiveForAppointment(
+      room.appointment.appointment_date,
+      room.appointment.appointment_time,
+      room.appointment.status
+    );
   }, []);
 
   // Send a text message

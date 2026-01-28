@@ -32,6 +32,7 @@ import {
   Phone,
   Mail,
   Video,
+  MessageCircle,
   CheckCircle,
   AlertCircle,
   Upload,
@@ -438,7 +439,7 @@ const DoctorDashboard = () => {
             )}
 
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid grid-cols-3 h-9">
+              <TabsList className="grid grid-cols-4 h-9">
                 <TabsTrigger value="profile" className="text-xs">
                   <User className="w-3 h-3 mr-1" /> Profile
                 </TabsTrigger>
@@ -447,6 +448,13 @@ const DoctorDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="appointments" className="text-xs">
                   <Clock className="w-3 h-3 mr-1" /> Appointments
+                </TabsTrigger>
+                <TabsTrigger
+                  value="chats"
+                  className="text-xs"
+                  onClick={() => navigate("/chats")}
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" /> Chats
                 </TabsTrigger>
               </TabsList>
 

@@ -87,7 +87,6 @@ import PharmacyDetail from "./pages/PharmacyDetail";
 import PharmacyDashboard from "./pages/PharmacyDashboard";
 import OrderMedicine from "./pages/OrderMedicine";
 import NurseActiveJob from "./pages/NurseActiveJob";
-import AITools from "./pages/AITools";
 import Reviews from "./pages/Reviews";
 import PartnerRegistration from "./pages/PartnerRegistration";
 import AdminPartners from "./pages/admin/Partners";
@@ -97,7 +96,6 @@ import HealthPackages from "./pages/HealthPackages";
 import AdminNurseCommissions from "./pages/admin/NurseCommissions";
 import AdminLegalPages from "./pages/admin/LegalPages";
 import LegalPage from "./pages/LegalPage";
-import { HealthChatbot } from "./components/ai/HealthChatbot";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 import ChatList from "./pages/ChatList";
 import ChatRoom from "./pages/ChatRoom";
@@ -173,7 +171,6 @@ const AppContent = () => {
           <Route path="/pharmacy/:id" element={<PharmacyDetail />} />
           <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
           <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
-          <Route path="/ai-tools" element={<AITools />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/health-packages" element={<HealthPackages />} />
           <Route path="/partner-registration" element={<PartnerRegistration />} />
@@ -235,7 +232,6 @@ const AppContent = () => {
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <HealthChatbot />
         <NativeMobileWrapper />
       </NotificationProvider>
     </BrowserRouter>

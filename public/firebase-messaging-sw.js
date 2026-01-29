@@ -20,29 +20,54 @@ messaging.onBackgroundMessage((payload) => {
   
   const data = payload.data || {};
   const isEmergency = data.type === 'emergency_request';
+  const isChatMessage = data.type === 'chat_message';
   
   const notificationTitle = payload.notification?.title || 'New Notification';
-  const notificationOptions = {
+  
+  // Determine notification options based on type
+  let notificationOptions = {
     body: payload.notification?.body || 'You have a new message',
     icon: '/images/mypaklabs-logo.png',
     badge: '/images/mypaklabs-logo.png',
-    tag: data.tag || data.requestId || 'default',
-    requireInteraction: isEmergency, // Keep emergency notifications visible
-    vibrate: isEmergency ? [500, 200, 500, 200, 500] : [200, 100, 200],
+    tag: data.tag || data.requestId || data.roomId || 'default',
     data: {
       ...data,
       url: data.url || (isEmergency ? '/nurse-emergency-feed' : '/'),
     },
-    actions: isEmergency 
-      ? [
-          { action: 'accept', title: '✓ Accept' },
-          { action: 'view', title: 'View Details' }
-        ]
-      : [
-          { action: 'view', title: 'View' },
-          { action: 'dismiss', title: 'Dismiss' }
-        ]
   };
+
+  if (isEmergency) {
+    notificationOptions = {
+      ...notificationOptions,
+      requireInteraction: true,
+      vibrate: [500, 200, 500, 200, 500],
+      actions: [
+        { action: 'accept', title: '✓ Accept' },
+        { action: 'view', title: 'View Details' }
+      ]
+    };
+  } else if (isChatMessage) {
+    notificationOptions = {
+      ...notificationOptions,
+      requireInteraction: false,
+      vibrate: [100, 50, 100], // Short double vibration like WhatsApp
+      silent: false,
+      actions: [
+        { action: 'reply', title: '💬 Reply' },
+        { action: 'mark_read', title: '✓ Mark Read' }
+      ]
+    };
+  } else {
+    notificationOptions = {
+      ...notificationOptions,
+      requireInteraction: false,
+      vibrate: [200, 100, 200],
+      actions: [
+        { action: 'view', title: 'View' },
+        { action: 'dismiss', title: 'Dismiss' }
+      ]
+    };
+  }
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
@@ -61,6 +86,12 @@ self.addEventListener('notificationclick', (event) => {
   if (action === 'accept' && data.requestId) {
     // For emergency accept, go to emergency feed with request ID
     urlToOpen = `/nurse-emergency-feed?requestId=${data.requestId}`;
+  } else if (action === 'reply') {
+    // For chat reply, go to chat room
+    urlToOpen = data.url || '/chats';
+  } else if (action === 'mark_read') {
+    // Just close notification without opening
+    return;
   } else if (action === 'view') {
     urlToOpen = data.url || '/';
   } else if (action === 'dismiss') {

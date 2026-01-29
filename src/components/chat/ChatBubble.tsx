@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { format } from 'date-fns';
-import { Check, CheckCheck, Play, Pause, Image as ImageIcon } from 'lucide-react';
+import { Play, Pause, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { MessageStatusIndicator, MessageStatus } from './MessageStatusIndicator';
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -39,6 +40,15 @@ export const ChatBubble = ({ message, isOwn }: ChatBubbleProps) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Get message status - use new status field if available, fallback to is_read
+  const getMessageStatus = (): MessageStatus => {
+    if (message.status) {
+      return message.status as MessageStatus;
+    }
+    // Fallback for old messages without status field
+    return message.is_read ? 'read' : 'sent';
   };
 
   const renderContent = () => {
@@ -143,11 +153,7 @@ export const ChatBubble = ({ message, isOwn }: ChatBubbleProps) => {
             {format(new Date(message.created_at), 'h:mm a')}
           </span>
           {isOwn && (
-            message.is_read ? (
-              <CheckCheck className="w-3 h-3" />
-            ) : (
-              <Check className="w-3 h-3" />
-            )
+            <MessageStatusIndicator status={getMessageStatus()} />
           )}
         </div>
       </div>

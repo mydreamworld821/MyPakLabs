@@ -151,6 +151,7 @@ export type Database = {
           room_id: string
           sender_id: string
           sender_type: string
+          status: Database["public"]["Enums"]["message_delivery_status"]
         }
         Insert: {
           content?: string | null
@@ -164,6 +165,7 @@ export type Database = {
           room_id: string
           sender_id: string
           sender_type: string
+          status?: Database["public"]["Enums"]["message_delivery_status"]
         }
         Update: {
           content?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           room_id?: string
           sender_id?: string
           sender_type?: string
+          status?: Database["public"]["Enums"]["message_delivery_status"]
         }
         Relationships: [
           {
@@ -3026,6 +3029,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_messages_delivered: {
+        Args: { p_room_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      mark_messages_read: {
+        Args: { p_room_id: string; p_user_id: string }
+        Returns: undefined
+      }
       update_chat_room_activation: { Args: never; Returns: undefined }
     }
     Enums: {
@@ -3064,6 +3075,7 @@ export type Database = {
         | "completed"
         | "cancelled"
       emergency_urgency: "critical" | "within_1_hour" | "scheduled"
+      message_delivery_status: "sent" | "delivered" | "read"
       nurse_offer_status: "pending" | "accepted" | "rejected" | "expired"
       order_status: "pending" | "confirmed" | "completed" | "cancelled"
       prescription_status: "pending_review" | "approved" | "rejected"
@@ -3243,6 +3255,7 @@ export const Constants = {
         "cancelled",
       ],
       emergency_urgency: ["critical", "within_1_hour", "scheduled"],
+      message_delivery_status: ["sent", "delivered", "read"],
       nurse_offer_status: ["pending", "accepted", "rejected", "expired"],
       order_status: ["pending", "confirmed", "completed", "cancelled"],
       prescription_status: ["pending_review", "approved", "rejected"],

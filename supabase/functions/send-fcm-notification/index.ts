@@ -75,6 +75,8 @@ Deno.serve(async (req) => {
     // Send notifications to each token
     const results = await Promise.allSettled(
       tokens.map(async (token) => {
+        const isChatMessage = payload.data?.type === 'chat_message';
+        
         const fcmPayload = {
           to: token,
           notification: {
@@ -82,9 +84,32 @@ Deno.serve(async (req) => {
             body: payload.body,
             icon: "/images/mypaklabs-logo.png",
             click_action: payload.data?.url || "/",
+            sound: isChatMessage ? "default" : undefined,
+            badge: "1",
           },
-          data: payload.data || {},
+          data: {
+            ...payload.data,
+            click_action: payload.data?.url || "/",
+          },
           priority: "high",
+          // For Android - high priority ensures notification is shown immediately
+          android: {
+            priority: "high",
+            notification: {
+              sound: "default",
+              default_vibrate_timings: true,
+              default_sound: true,
+            },
+          },
+          // For iOS
+          apns: {
+            payload: {
+              aps: {
+                sound: "default",
+                badge: 1,
+              },
+            },
+          },
         };
 
         const response = await fetch("https://fcm.googleapis.com/fcm/send", {

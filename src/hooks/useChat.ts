@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { sendFCMNotification } from '@/utils/fcmNotifications';
 import { isChatActiveForAppointment } from '@/hooks/useChatStatus';
 
+export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
+
 export interface ChatMessage {
   id: string;
   room_id: string;
@@ -17,6 +19,7 @@ export interface ChatMessage {
   is_read: boolean;
   read_at: string | null;
   created_at: string;
+  status: MessageDeliveryStatus;
 }
 
 export interface ChatRoom {
@@ -227,18 +230,38 @@ export const useChat = (options: UseChatOptions = {}) => {
       if (messagesError) throw messagesError;
       setMessages((messagesData || []) as ChatMessage[]);
 
-      // Mark messages as read
+      // Mark messages as read (use new status field)
       await supabase
         .from('chat_messages')
-        .update({ is_read: true, read_at: new Date().toISOString() })
+        .update({ 
+          is_read: true, 
+          read_at: new Date().toISOString(),
+          status: 'read' as MessageDeliveryStatus
+        })
         .eq('room_id', roomIdToFetch)
         .neq('sender_id', user.id)
-        .eq('is_read', false);
+        .neq('status', 'read');
 
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
       setIsLoading(false);
+    }
+  }, [user]);
+
+  // Mark messages as delivered when user enters the chat room
+  const markMessagesDelivered = useCallback(async (roomIdToMark: string) => {
+    if (!user) return;
+    
+    try {
+      await supabase
+        .from('chat_messages')
+        .update({ status: 'delivered' as MessageDeliveryStatus })
+        .eq('room_id', roomIdToMark)
+        .neq('sender_id', user.id)
+        .eq('status', 'sent');
+    } catch (error) {
+      console.error('Error marking messages as delivered:', error);
     }
   }, [user]);
 
@@ -490,13 +513,32 @@ export const useChat = (options: UseChatOptions = {}) => {
             return [...prev, newMessage];
           });
           
-          // Mark as read if from other user
+          // Mark as read if from other user (we're viewing the chat)
           if (user && newMessage.sender_id !== user.id) {
             supabase
               .from('chat_messages')
-              .update({ is_read: true, read_at: new Date().toISOString() })
+              .update({ 
+                is_read: true, 
+                read_at: new Date().toISOString(),
+                status: 'read' as MessageDeliveryStatus
+              })
               .eq('id', newMessage.id);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload) => {
+          const updatedMessage = payload.new as ChatMessage;
+          setMessages((prev) => 
+            prev.map((m) => m.id === updatedMessage.id ? updatedMessage : m)
+          );
         }
       )
       .subscribe();
@@ -517,6 +559,13 @@ export const useChat = (options: UseChatOptions = {}) => {
     }
   }, [roomId, fetchMessages, fetchRooms, userType, doctorId]);
 
+  // Also mark as delivered when entering the room
+  useEffect(() => {
+    if (roomId && user) {
+      markMessagesDelivered(roomId);
+    }
+  }, [roomId, user, markMessagesDelivered]);
+
   return {
     rooms,
     messages,
@@ -531,5 +580,6 @@ export const useChat = (options: UseChatOptions = {}) => {
     fetchRooms,
     fetchMessages,
     isChatActive,
+    markMessagesDelivered,
   };
 };

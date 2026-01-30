@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendFCMNotification } from '@/utils/fcmNotifications';
 import { isChatActiveForAppointment } from '@/hooks/useChatStatus';
+import { chatNotificationManager } from '@/utils/chatNotifications';
 
 export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
 
@@ -505,7 +506,7 @@ export const useChat = (options: UseChatOptions = {}) => {
           table: 'chat_messages',
           filter: `room_id=eq.${roomId}`,
         },
-        (payload) => {
+        async (payload) => {
           const newMessage = payload.new as ChatMessage;
           setMessages((prev) => {
             // Avoid duplicates
@@ -513,16 +514,48 @@ export const useChat = (options: UseChatOptions = {}) => {
             return [...prev, newMessage];
           });
           
-          // Mark as read if from other user (we're viewing the chat)
+          // If message is from someone else
           if (user && newMessage.sender_id !== user.id) {
-            supabase
+            // Mark as delivered immediately
+            await supabase
               .from('chat_messages')
-              .update({ 
-                is_read: true, 
-                read_at: new Date().toISOString(),
-                status: 'read' as MessageDeliveryStatus
-              })
-              .eq('id', newMessage.id);
+              .update({ status: 'delivered' as MessageDeliveryStatus })
+              .eq('id', newMessage.id)
+              .eq('status', 'sent');
+
+            // If document is focused, mark as read
+            if (document.hasFocus()) {
+              await supabase
+                .from('chat_messages')
+                .update({ 
+                  is_read: true, 
+                  read_at: new Date().toISOString(),
+                  status: 'read' as MessageDeliveryStatus
+                })
+                .eq('id', newMessage.id);
+            } else {
+              // Show local notification
+              const senderName = userType === 'patient' 
+                ? currentRoom?.doctor?.full_name 
+                : currentRoom?.patient?.full_name;
+              
+              let notificationBody = newMessage.content || '';
+              if (newMessage.message_type === 'voice') {
+                notificationBody = '🎤 Voice message';
+              } else if (newMessage.message_type === 'image') {
+                notificationBody = '📷 Photo';
+              }
+
+              chatNotificationManager.showNotification({
+                title: senderName || 'New Message',
+                body: notificationBody,
+                data: {
+                  roomId: roomId,
+                  messageId: newMessage.id,
+                  url: `/chat/${roomId}`,
+                },
+              });
+            }
           }
         }
       )
@@ -543,12 +576,15 @@ export const useChat = (options: UseChatOptions = {}) => {
       )
       .subscribe();
 
+    // Request notification permission on room load
+    chatNotificationManager.requestPermission();
+
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
     };
-  }, [roomId, user]);
+  }, [roomId, user, userType, currentRoom]);
 
   // Initial fetch
   useEffect(() => {
@@ -559,12 +595,42 @@ export const useChat = (options: UseChatOptions = {}) => {
     }
   }, [roomId, fetchMessages, fetchRooms, userType, doctorId]);
 
-  // Also mark as delivered when entering the room
+  // Mark as delivered when entering the room
   useEffect(() => {
     if (roomId && user) {
       markMessagesDelivered(roomId);
     }
   }, [roomId, user, markMessagesDelivered]);
+
+  // Mark messages as read when window gains focus
+  useEffect(() => {
+    if (!roomId || !user) return;
+
+    const handleFocus = async () => {
+      // Mark all unread messages as read when user focuses the window
+      await supabase
+        .from('chat_messages')
+        .update({ 
+          is_read: true, 
+          read_at: new Date().toISOString(),
+          status: 'read' as MessageDeliveryStatus
+        })
+        .eq('room_id', roomId)
+        .neq('sender_id', user.id)
+        .neq('status', 'read');
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    // Also mark as read on initial load if document is focused
+    if (document.hasFocus()) {
+      handleFocus();
+    }
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [roomId, user]);
 
   return {
     rooms,

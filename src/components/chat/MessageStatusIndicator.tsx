@@ -10,8 +10,8 @@ interface MessageStatusIndicatorProps {
 
 /**
  * WhatsApp-like message status indicator
- * - Single gray tick: Sent (message saved to server)
- * - Double gray tick: Delivered (recipient received message)
+ * - Single dark tick: Sent (message saved to server)
+ * - Double dark tick: Delivered (recipient received message)
  * - Double blue tick: Read (recipient viewed message)
  */
 export const MessageStatusIndicator = ({ status, className }: MessageStatusIndicatorProps) => {
@@ -19,14 +19,18 @@ export const MessageStatusIndicator = ({ status, className }: MessageStatusIndic
     case 'read':
       return (
         <CheckCheck 
-          className={cn("w-3.5 h-3.5 text-sky-500", className)} 
+          className={cn("w-4 h-4", className)} 
+          style={{ color: '#34B7F1' }} // WhatsApp blue
+          strokeWidth={2.5}
           aria-label="Message read"
         />
       );
     case 'delivered':
       return (
         <CheckCheck 
-          className={cn("w-3.5 h-3.5 text-muted-foreground", className)} 
+          className={cn("w-4 h-4", className)} 
+          style={{ color: '#667781' }} // Dark gray for visibility
+          strokeWidth={2.5}
           aria-label="Message delivered"
         />
       );
@@ -34,7 +38,9 @@ export const MessageStatusIndicator = ({ status, className }: MessageStatusIndic
     default:
       return (
         <Check 
-          className={cn("w-3.5 h-3.5 text-muted-foreground", className)} 
+          className={cn("w-4 h-4", className)} 
+          style={{ color: '#667781' }} // Dark gray for visibility
+          strokeWidth={2.5}
           aria-label="Message sent"
         />
       );

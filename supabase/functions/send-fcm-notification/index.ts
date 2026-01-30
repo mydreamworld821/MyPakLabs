@@ -9,9 +9,9 @@ interface FCMNotificationPayload {
   title: string;
   body: string;
   data?: Record<string, string>;
-  userIds?: string[]; // Send to specific users
-  topic?: string; // Or send to a topic
-  tokens?: string[]; // Or send to specific tokens
+  userIds?: string[];
+  topic?: string;
+  tokens?: string[];
 }
 
 Deno.serve(async (req) => {
@@ -72,45 +72,80 @@ Deno.serve(async (req) => {
 
     console.log(`Sending FCM notification to ${tokens.length} devices`);
 
-    // Send notifications to each token
+    // Determine notification priority and settings based on type
+    const notifType = payload.data?.type || 'system';
+    const isEmergency = notifType === 'emergency';
+    const isChat = notifType === 'chat';
+    
+    // Use DATA-ONLY payload for client-side notification creation
+    // This gives us full control over notification display
     const results = await Promise.allSettled(
       tokens.map(async (token) => {
-        const isChatMessage = payload.data?.type === 'chat_message';
-        
-        const fcmPayload = {
+        const fcmPayload: Record<string, any> = {
           to: token,
-          notification: {
+          // DATA-ONLY: Let client create notification locally
+          data: {
+            type: notifType,
             title: payload.title,
             body: payload.body,
-            icon: "/images/mypaklabs-logo.png",
-            click_action: payload.data?.url || "/",
-            sound: isChatMessage ? "default" : undefined,
-            badge: "1",
-          },
-          data: {
+            timestamp: Date.now().toString(),
             ...payload.data,
-            click_action: payload.data?.url || "/",
           },
-          priority: "high",
-          // For Android - high priority ensures notification is shown immediately
+          // High priority for immediate delivery
+          priority: isEmergency ? "high" : "high",
+          // Time to live - 0 for immediate, higher for less urgent
+          time_to_live: isEmergency ? 0 : (isChat ? 300 : 3600),
+          // Android specific
           android: {
-            priority: "high",
-            notification: {
-              sound: "default",
-              default_vibrate_timings: true,
-              default_sound: true,
-            },
+            priority: isEmergency ? "high" : "high",
+            ttl: isEmergency ? "0s" : (isChat ? "300s" : "3600s"),
+            // For data-only messages, we don't include notification key
+            // This forces the client to handle display
           },
-          // For iOS
+          // iOS/APNs specific
           apns: {
+            headers: {
+              "apns-priority": isEmergency ? "10" : "10",
+              "apns-push-type": "background",
+            },
             payload: {
               aps: {
-                sound: "default",
-                badge: 1,
+                "content-available": 1,
+                // For data-only, we use content-available for background delivery
+                // Client creates notification locally
               },
             },
           },
         };
+
+        // For emergency, add notification payload for backup
+        // In case client app is killed/not running
+        if (isEmergency) {
+          fcmPayload.notification = {
+            title: payload.title,
+            body: payload.body,
+            icon: "/images/mypaklabs-logo.png",
+            sound: "default",
+            badge: "1",
+          };
+          fcmPayload.android.notification = {
+            sound: "default",
+            priority: "max",
+            visibility: "public",
+            channel_id: "emergency_nursing",
+            default_vibrate_timings: true,
+            default_sound: true,
+          };
+          fcmPayload.apns.payload.aps = {
+            alert: {
+              title: payload.title,
+              body: payload.body,
+            },
+            sound: "default",
+            badge: 1,
+            "interruption-level": "critical",
+          };
+        }
 
         const response = await fetch("https://fcm.googleapis.com/fcm/send", {
           method: "POST",
@@ -127,7 +162,6 @@ Deno.serve(async (req) => {
         if (result.failure && result.results) {
           for (const res of result.results) {
             if (res.error === "NotRegistered" || res.error === "InvalidRegistration") {
-              // Mark token as inactive
               await supabase
                 .from("fcm_tokens")
                 .update({ is_active: false })

@@ -1,4 +1,5 @@
 // Firebase Messaging Service Worker
+// Handles background notifications with WhatsApp-like behavior
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
@@ -14,63 +15,92 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
+// Notification channel configurations
+const CHANNELS = {
+  chat: {
+    tag: 'chat-message',
+    vibrate: [100, 50, 100],
+    requireInteraction: false,
+    actions: [
+      { action: 'reply', title: '💬 Reply' },
+      { action: 'mark_read', title: '✓ Read' }
+    ]
+  },
+  appointment: {
+    tag: 'appointment',
+    vibrate: [200, 100, 200],
+    requireInteraction: false,
+    actions: [
+      { action: 'view', title: 'View' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ]
+  },
+  emergency: {
+    tag: 'emergency',
+    vibrate: [500, 200, 500, 200, 500],
+    requireInteraction: true,
+    actions: [
+      { action: 'accept', title: '✓ Accept' },
+      { action: 'view', title: 'View Details' }
+    ]
+  },
+  system: {
+    tag: 'system',
+    vibrate: [200],
+    requireInteraction: false,
+    actions: [
+      { action: 'view', title: 'View' }
+    ]
+  }
+};
+
+// Handle background messages (data-only payloads)
 messaging.onBackgroundMessage((payload) => {
   console.log('Background message received:', payload);
   
+  // Extract data from data-only payload
   const data = payload.data || {};
-  const isEmergency = data.type === 'emergency_request';
-  const isChatMessage = data.type === 'chat_message';
+  const type = data.type || 'system';
+  const title = data.title || payload.notification?.title || 'New Notification';
+  const body = data.body || payload.notification?.body || 'You have a new message';
   
-  const notificationTitle = payload.notification?.title || 'New Notification';
+  // Get channel config
+  const channel = CHANNELS[type] || CHANNELS.system;
   
-  // Determine notification options based on type
-  let notificationOptions = {
-    body: payload.notification?.body || 'You have a new message',
+  // Build notification options
+  const notificationOptions = {
+    body: body,
     icon: '/images/mypaklabs-logo.png',
     badge: '/images/mypaklabs-logo.png',
-    tag: data.tag || data.requestId || data.roomId || 'default',
+    tag: `${channel.tag}-${data.entityId || Date.now()}`,
     data: {
       ...data,
-      url: data.url || (isEmergency ? '/nurse-emergency-feed' : '/'),
+      url: data.url || getDefaultUrl(type, data),
     },
+    requireInteraction: channel.requireInteraction,
+    vibrate: channel.vibrate,
+    actions: channel.actions,
+    silent: false,
+    renotify: true,
   };
 
-  if (isEmergency) {
-    notificationOptions = {
-      ...notificationOptions,
-      requireInteraction: true,
-      vibrate: [500, 200, 500, 200, 500],
-      actions: [
-        { action: 'accept', title: '✓ Accept' },
-        { action: 'view', title: 'View Details' }
-      ]
-    };
-  } else if (isChatMessage) {
-    notificationOptions = {
-      ...notificationOptions,
-      requireInteraction: false,
-      vibrate: [100, 50, 100], // Short double vibration like WhatsApp
-      silent: false,
-      actions: [
-        { action: 'reply', title: '💬 Reply' },
-        { action: 'mark_read', title: '✓ Mark Read' }
-      ]
-    };
-  } else {
-    notificationOptions = {
-      ...notificationOptions,
-      requireInteraction: false,
-      vibrate: [200, 100, 200],
-      actions: [
-        { action: 'view', title: 'View' },
-        { action: 'dismiss', title: 'Dismiss' }
-      ]
-    };
-  }
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  // Show the notification
+  self.registration.showNotification(title, notificationOptions);
 });
+
+// Get default URL based on notification type
+function getDefaultUrl(type, data) {
+  switch (type) {
+    case 'chat':
+      return data.roomId ? `/chat/${data.roomId}` : '/chats';
+    case 'appointment':
+      return '/my-bookings';
+    case 'emergency':
+      return data.requestId ? `/nurse-emergency-feed?requestId=${data.requestId}` : '/nurse-emergency-feed';
+    default:
+      return '/';
+  }
+}
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
@@ -79,43 +109,50 @@ self.addEventListener('notificationclick', (event) => {
   
   const action = event.action;
   const data = event.notification.data || {};
+  const type = data.type || 'system';
   
-  // Determine URL based on action and notification type
+  // Handle dismiss action
+  if (action === 'dismiss') {
+    return;
+  }
+  
+  // Handle mark_read action (just close, don't open)
+  if (action === 'mark_read') {
+    // Send message to app to mark as read
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        client.postMessage({
+          type: 'MARK_AS_READ',
+          data: { roomId: data.roomId, entityId: data.entityId }
+        });
+      }
+    });
+    return;
+  }
+  
+  // Determine URL to open
   let urlToOpen = data.url || '/';
   
   if (action === 'accept' && data.requestId) {
-    // For emergency accept, go to emergency feed with request ID
-    urlToOpen = `/nurse-emergency-feed?requestId=${data.requestId}`;
-  } else if (action === 'reply') {
-    // For chat reply, go to chat room
-    urlToOpen = data.url || '/chats';
-  } else if (action === 'mark_read') {
-    // Just close notification without opening
-    return;
+    urlToOpen = `/nurse-emergency-feed?requestId=${data.requestId}&action=accept`;
+  } else if (action === 'reply' && data.roomId) {
+    urlToOpen = `/chat/${data.roomId}`;
   } else if (action === 'view') {
-    urlToOpen = data.url || '/';
-  } else if (action === 'dismiss') {
-    // Just close notification, don't open app
-    return;
-  }
-  
-  // Add emergency data to URL so the app can show the booking card
-  if (data.type === 'emergency_request' && data.requestId) {
-    const separator = urlToOpen.includes('?') ? '&' : '?';
-    urlToOpen = `${urlToOpen}${separator}showRequest=${data.requestId}`;
+    urlToOpen = data.url || getDefaultUrl(type, data);
   }
   
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Check if there's already a window open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          // Send message to the existing window
+          // Send message to existing window
           client.postMessage({
             type: 'NOTIFICATION_CLICKED',
             data: {
               ...data,
               action: action,
+              url: urlToOpen
             }
           });
           client.navigate(urlToOpen);
@@ -123,11 +160,16 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       // Open new window if none exists
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
       }
     })
   );
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', (event) => {
+  console.log('Notification closed:', event.notification.tag);
 });
 
 // Handle messages from the main app
@@ -136,5 +178,11 @@ self.addEventListener('message', (event) => {
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Handle active room tracking
+  if (event.data && event.data.type === 'SET_ACTIVE_ROOM') {
+    // Store active room ID (for future use with notification filtering)
+    self.activeRoomId = event.data.roomId;
   }
 });

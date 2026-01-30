@@ -2,9 +2,15 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { sendFCMNotification } from '@/utils/fcmNotifications';
 import { isChatActiveForAppointment } from '@/hooks/useChatStatus';
-import { chatNotificationManager } from '@/utils/chatNotifications';
+import { 
+  sendChatNotification, 
+  showLocalNotification, 
+  setActiveRoom,
+  playNotificationSound,
+  triggerVibration,
+  type UnifiedNotificationPayload
+} from '@/utils/notificationManager';
 
 export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
 
@@ -321,15 +327,13 @@ export const useChat = (options: UseChatOptions = {}) => {
           : currentRoom.patient?.full_name;
         
         if (receiverId) {
-          sendFCMNotification({
-            title: `New message from ${senderName || 'User'}`,
-            body: content.trim().substring(0, 100),
-            userIds: [receiverId],
-            data: {
-              url: `/chat/${roomId}`,
-              type: 'chat_message',
-            },
-          });
+          sendChatNotification(
+            receiverId,
+            senderName || 'User',
+            roomId,
+            content.trim(),
+            'text'
+          );
         }
       }
 
@@ -397,15 +401,13 @@ export const useChat = (options: UseChatOptions = {}) => {
           : currentRoom.patient?.full_name;
         
         if (receiverId) {
-          sendFCMNotification({
-            title: `📷 Image from ${senderName || 'User'}`,
-            body: 'Sent you an image',
-            userIds: [receiverId],
-            data: {
-              url: `/chat/${roomId}`,
-              type: 'chat_message',
-            },
-          });
+          sendChatNotification(
+            receiverId,
+            senderName || 'User',
+            roomId,
+            'Sent you an image',
+            'image'
+          );
         }
       }
 
@@ -471,15 +473,13 @@ export const useChat = (options: UseChatOptions = {}) => {
           : currentRoom.patient?.full_name;
         
         if (receiverId) {
-          sendFCMNotification({
-            title: `🎤 Voice message from ${senderName || 'User'}`,
-            body: `${Math.round(duration)}s voice message`,
-            userIds: [receiverId],
-            data: {
-              url: `/chat/${roomId}`,
-              type: 'chat_message',
-            },
-          });
+          sendChatNotification(
+            receiverId,
+            senderName || 'User',
+            roomId,
+            `${Math.round(duration)}s voice message`,
+            'voice'
+          );
         }
       }
 
@@ -495,6 +495,17 @@ export const useChat = (options: UseChatOptions = {}) => {
   // Real-time subscription for messages
   useEffect(() => {
     if (!roomId) return;
+
+    // Set active room to prevent showing notifications for current chat
+    setActiveRoom(roomId);
+    
+    // Notify service worker about active room
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SET_ACTIVE_ROOM',
+        roomId: roomId
+      });
+    }
 
     channelRef.current = supabase
       .channel(`chat-${roomId}`)
@@ -534,27 +545,40 @@ export const useChat = (options: UseChatOptions = {}) => {
                 })
                 .eq('id', newMessage.id);
             } else {
-              // Show local notification
+              // Show local notification when not focused
               const senderName = userType === 'patient' 
                 ? currentRoom?.doctor?.full_name 
                 : currentRoom?.patient?.full_name;
               
               let notificationBody = newMessage.content || '';
+              let messageType: 'text' | 'image' | 'voice' = 'text';
+              
               if (newMessage.message_type === 'voice') {
                 notificationBody = '🎤 Voice message';
+                messageType = 'voice';
               } else if (newMessage.message_type === 'image') {
                 notificationBody = '📷 Photo';
+                messageType = 'image';
               }
 
-              chatNotificationManager.showNotification({
+              // Build notification payload
+              const notifPayload: UnifiedNotificationPayload = {
+                type: 'chat',
                 title: senderName || 'New Message',
                 body: notificationBody,
+                entityId: roomId,
+                priority: 'high',
+                senderRole: userType === 'patient' ? 'doctor' : 'patient',
+                timestamp: Date.now(),
                 data: {
                   roomId: roomId,
                   messageId: newMessage.id,
                   url: `/chat/${roomId}`,
+                  messageType,
                 },
-              });
+              };
+
+              showLocalNotification(notifPayload);
             }
           }
         }
@@ -576,10 +600,17 @@ export const useChat = (options: UseChatOptions = {}) => {
       )
       .subscribe();
 
-    // Request notification permission on room load
-    chatNotificationManager.requestPermission();
-
     return () => {
+      // Clear active room when leaving
+      setActiveRoom(null);
+      
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SET_ACTIVE_ROOM',
+          roomId: null
+        });
+      }
+      
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }

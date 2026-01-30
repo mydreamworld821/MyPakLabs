@@ -7,6 +7,16 @@ import {
   isMessagingSupported 
 } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  showLocalNotification, 
+  playNotificationSound, 
+  triggerVibration,
+  setActiveRoom,
+  getActiveRoom,
+  type UnifiedNotificationPayload,
+  type NotificationType,
+  type NotificationPriority
+} from '@/utils/notificationManager';
 
 interface UseFCMOptions {
   onMessage?: (payload: any) => void;
@@ -34,7 +44,6 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
       if (!isMessagingSupported()) return;
 
       try {
-        // Register the Firebase messaging service worker
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
           scope: '/'
         });
@@ -47,24 +56,33 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
     registerFirebaseSW();
   }, []);
 
-  // Listen for foreground messages
+  // Listen for foreground messages (data-only payloads)
   useEffect(() => {
     if (!isSupported) return;
 
     const unsubscribe = onForegroundMessage((payload) => {
       console.log('FCM Foreground message:', payload);
       
-      // Show toast notification for foreground messages
-      const title = payload.notification?.title || 'New Notification';
-      const body = payload.notification?.body || '';
+      // Extract data from data-only payload
+      const data = payload.data || {};
+      const type = (data.type as NotificationType) || 'system';
+      const title = data.title || payload.notification?.title || 'New Notification';
+      const body = data.body || payload.notification?.body || '';
       
-      toast(title, {
-        description: body,
-        duration: 5000,
-      });
+      // Build unified payload
+      const unifiedPayload: UnifiedNotificationPayload = {
+        type,
+        title,
+        body,
+        entityId: data.entityId || data.roomId || data.requestId || '',
+        priority: (data.priority as NotificationPriority) || 'normal',
+        senderRole: data.senderRole,
+        timestamp: parseInt(data.timestamp) || Date.now(),
+        data,
+      };
 
-      // Play notification sound
-      playNotificationSound();
+      // Show local notification (handles active room check internally)
+      showLocalNotification(unifiedPayload);
 
       // Call custom handler if provided
       options.onMessage?.(payload);
@@ -76,6 +94,47 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
       }
     };
   }, [isSupported, options.onMessage]);
+
+  // Listen for service worker messages
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      console.log('App received SW message:', event.data);
+      
+      if (event.data?.type === 'NOTIFICATION_CLICKED') {
+        const { url, data } = event.data;
+        if (url) {
+          window.location.href = url;
+        }
+      }
+      
+      if (event.data?.type === 'MARK_AS_READ') {
+        // Handle mark as read from notification action
+        const { roomId } = event.data.data || {};
+        if (roomId && user) {
+          supabase
+            .from('chat_messages')
+            .update({ 
+              is_read: true, 
+              read_at: new Date().toISOString(),
+              status: 'read'
+            })
+            .eq('room_id', roomId)
+            .neq('sender_id', user.id)
+            .neq('status', 'read');
+        }
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
+    };
+  }, [user]);
 
   // Save FCM token to database
   const saveTokenToDatabase = useCallback(async (token: string) => {
@@ -141,36 +200,6 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
     }
   }, [isSupported, saveTokenToDatabase]);
 
-  // Play notification sound
-  const playNotificationSound = () => {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      const playNote = (freq: number, startTime: number, duration: number) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.frequency.value = freq;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-        oscillator.start(startTime);
-        oscillator.stop(startTime + duration);
-      };
-
-      const now = audioContext.currentTime;
-      playNote(523.25, now, 0.15);
-      playNote(659.25, now + 0.12, 0.15);
-      playNote(783.99, now + 0.24, 0.2);
-      
-      setTimeout(() => audioContext.close(), 600);
-    } catch (e) {
-      console.log('Could not play notification sound');
-    }
-  };
-
   return {
     fcmToken,
     permission,
@@ -178,6 +207,8 @@ export const useFirebasePushNotifications = (options: UseFCMOptions = {}) => {
     isSupported,
     requestPermissionAndGetToken,
     playNotificationSound,
+    setActiveRoom,
+    getActiveRoom,
   };
 };
 

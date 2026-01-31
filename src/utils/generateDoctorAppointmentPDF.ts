@@ -16,6 +16,10 @@ interface DoctorAppointmentPDFDetails {
   appointmentTime: string;
   consultationType: string;
   fee: number;
+  locationName?: string;
+  locationAddress?: string;
+  locationCity?: string;
+  locationPhone?: string;
 }
 
 export const generateDoctorAppointmentPDF = async (details: DoctorAppointmentPDFDetails) => {
@@ -181,13 +185,17 @@ export const generateDoctorAppointmentPDF = async (details: DoctorAppointmentPDF
   doc.setFont('helvetica', 'normal');
   doc.text(details.consultationType.charAt(0).toUpperCase() + details.consultationType.slice(1) + ' Consultation', col1 + 15, y + 28);
   
-  if (details.clinicName) {
+  // Location/Clinic info - prefer locationName if provided
+  const locationDisplayName = details.locationName || details.clinicName;
+  const locationDisplayAddress = details.locationAddress || details.clinicAddress;
+  
+  if (locationDisplayName) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Clinic:', col1, y + 38);
+    doc.text('Location:', col1, y + 38);
     doc.setFont('helvetica', 'normal');
-    const clinicText = details.clinicName + (details.clinicAddress ? ', ' + details.clinicAddress : '');
-    const truncatedClinic = clinicText.length > 60 ? clinicText.substring(0, 60) + '...' : clinicText;
-    doc.text(truncatedClinic, col1 + 18, y + 38);
+    const locationText = locationDisplayName + (locationDisplayAddress ? ', ' + locationDisplayAddress : '') + (details.locationCity ? ', ' + details.locationCity : '');
+    const truncatedLocation = locationText.length > 60 ? locationText.substring(0, 60) + '...' : locationText;
+    doc.text(truncatedLocation, col1 + 22, y + 38);
   }
   
   y += 56;

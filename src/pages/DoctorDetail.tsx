@@ -14,6 +14,8 @@ import { toast } from "@/hooks/use-toast";
 import { format, startOfDay } from "date-fns";
 import { sendAdminEmailNotification } from "@/utils/adminNotifications";
 import { generateBookingUniqueId } from "@/utils/generateBookingId";
+import { useDoctorLocations, type DoctorPracticeLocation } from "@/hooks/useDoctorLocations";
+import LocationSelector from "@/components/doctor/LocationSelector";
 import {
   ArrowLeft,
   Star,
@@ -87,6 +89,7 @@ const DoctorDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [consultationType, setConsultationType] = useState<"physical" | "online">("physical");
   const [isBooking, setIsBooking] = useState(false);
   const [userProfile, setUserProfile] = useState<{
@@ -96,6 +99,28 @@ const DoctorDetail = () => {
     age: number | null;
     gender: string | null;
   } | null>(null);
+
+  // Fetch doctor locations with scheduling
+  const { locations: practiceLocations, isLoading: locationsLoading } = useDoctorLocations(id);
+
+  // Get the selected location details
+  const selectedLocation = useMemo(() => {
+    if (!selectedLocationId) return null;
+    return practiceLocations.find(l => l.id === selectedLocationId) || null;
+  }, [selectedLocationId, practiceLocations]);
+
+  // Auto-select first location if only one exists
+  useEffect(() => {
+    if (practiceLocations.length === 1 && !selectedLocationId) {
+      setSelectedLocationId(practiceLocations[0].id);
+    } else if (practiceLocations.length > 0 && !selectedLocationId) {
+      // Select primary location by default
+      const primary = practiceLocations.find(l => l.is_primary);
+      if (primary) {
+        setSelectedLocationId(primary.id);
+      }
+    }
+  }, [practiceLocations, selectedLocationId]);
 
   // Fetch user profile
   useEffect(() => {
@@ -126,10 +151,10 @@ const DoctorDetail = () => {
     }
   }, [id]);
 
-  // Reset time when date changes
+  // Reset time when date or location changes
   useEffect(() => {
     setSelectedTime(null);
-  }, [selectedDate]);
+  }, [selectedDate, selectedLocationId]);
 
   const fetchDoctor = async () => {
     try {
@@ -183,7 +208,6 @@ const DoctorDetail = () => {
   };
 
   const parseHmToMinutes = (value: string) => {
-    // Supports HH:mm or HH:mm:ss
     const [h, m] = value.split(":");
     const hh = Number.parseInt(h || "0", 10);
     const mm = Number.parseInt(m || "0", 10);
@@ -198,30 +222,35 @@ const DoctorDetail = () => {
     return `${hh12.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")} ${period}`;
   };
 
-  // Allow all days for booking (as per user request - any day within 30 days)
-  const isDateAvailable = (_date: Date) => {
-    return true;
-  };
-
+  // Generate time slots based on selected location or doctor default
   const timeSlots = useMemo(() => {
-    if (!doctor?.available_time_start || !doctor?.available_time_end) {
+    // Use location-specific times if available
+    const timeStart = selectedLocation?.available_time_start || doctor?.available_time_start;
+    const timeEnd = selectedLocation?.available_time_end || doctor?.available_time_end;
+    const duration = selectedLocation?.appointment_duration || doctor?.appointment_duration || 15;
+
+    if (!timeStart || !timeEnd) {
       return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
     }
 
-    const duration = doctor.appointment_duration || 15;
-    const startMins = parseHmToMinutes(doctor.available_time_start);
-    const endMins = parseHmToMinutes(doctor.available_time_end);
+    const startMins = parseHmToMinutes(timeStart);
+    const endMins = parseHmToMinutes(timeEnd);
 
     const slots: string[] = [];
     for (let mins = startMins; mins + duration <= endMins; mins += duration) {
       slots.push(minutesToDisplay(mins));
     }
     return slots;
-  }, [doctor]);
+  }, [doctor, selectedLocation]);
 
+  // Get fee based on consultation type and selected location
   const getFee = () => {
     if (consultationType === "online") {
       return doctor?.online_consultation_fee || doctor?.consultation_fee || 0;
+    }
+    // For physical, use location-specific fee if available
+    if (selectedLocation) {
+      return selectedLocation.consultation_fee;
     }
     return doctor?.consultation_fee || 0;
   };
@@ -239,7 +268,6 @@ const DoctorDetail = () => {
 
   const getDateKey = (date: Date) => format(date, "yyyy-MM-dd");
 
-  // Get current time in Pakistan timezone (PKT = UTC+5)
   const getPakistanTime = () => {
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -254,7 +282,6 @@ const DoctorDetail = () => {
     const checkDate = forDate || selectedDate;
     if (!checkDate) return false;
 
-    // Only disable past slots when booking for "today" in PKT
     const todayKey = getPakistanTodayKey();
     const checkKey = getDateKey(checkDate);
     if (checkKey !== todayKey) return false;
@@ -265,18 +292,19 @@ const DoctorDetail = () => {
     const slotMins = parseTimeLabel(timeLabel);
     if (slotMins === null) return false;
 
-    // 15 min buffer
     return slotMins <= nowMins + 15;
   };
 
-  // Check if today has any available slots remaining (in PKT)
   const hasTodayAvailableSlots = useMemo(() => {
     const pktTodayStart = getPakistanTodayStart();
     return timeSlots.some((slot) => !isTimeSlotDisabled(slot, pktTodayStart));
   }, [timeSlots]);
 
+  // Check if locations are available for physical consultations
+  const hasMultipleLocations = practiceLocations.length > 1;
+  const hasLocations = practiceLocations.length > 0;
+
   const handleBookAppointment = async () => {
-    // Ensure we have a fresh authenticated user (AuthContext can be briefly null on refresh)
     const authUser = user ?? (await supabase.auth.getUser()).data.user;
 
     if (!authUser) {
@@ -293,6 +321,16 @@ const DoctorDetail = () => {
       toast({
         title: "Select Date & Time",
         description: "Please select a date and time slot",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For physical consultations with multiple locations, require location selection
+    if (consultationType === "physical" && hasMultipleLocations && !selectedLocationId) {
+      toast({
+        title: "Select Location",
+        description: "Please select a clinic/hospital location",
         variant: "destructive",
       });
       return;
@@ -315,7 +353,7 @@ const DoctorDetail = () => {
       const fee = getFee();
       const appointmentDate = format(selectedDate, "yyyy-MM-dd");
 
-      // Prevent double booking for the same doctor/date/time (client-side check)
+      // Prevent double booking
       const { data: existing, error: existingError } = await supabase
         .from("appointments")
         .select("id")
@@ -335,8 +373,23 @@ const DoctorDetail = () => {
         return;
       }
 
-      // Generate unique booking ID
       const uniqueId = await generateBookingUniqueId('doctor');
+
+      // Determine location reference
+      const locationData: {
+        hospital_doctor_id?: string;
+        practice_location_id?: string;
+        location_name?: string;
+      } = {};
+
+      if (consultationType === "physical" && selectedLocation) {
+        locationData.location_name = selectedLocation.location_name;
+        if (selectedLocation.type === 'hospital_doctor') {
+          locationData.hospital_doctor_id = selectedLocation.id;
+        } else if (selectedLocation.type === 'practice_location') {
+          locationData.practice_location_id = selectedLocation.id;
+        }
+      }
 
       const { error } = await supabase
         .from("appointments")
@@ -349,13 +402,14 @@ const DoctorDetail = () => {
           fee,
           status: "pending",
           unique_id: uniqueId,
+          ...locationData,
         })
         .select("id")
         .single();
 
       if (error) throw error;
 
-      // Send email notification to admin and customer
+      // Send email notification
       sendAdminEmailNotification({
         type: 'doctor_appointment',
         bookingId: uniqueId,
@@ -370,9 +424,11 @@ const DoctorDetail = () => {
         appointmentTime: selectedTime,
         consultationType,
         appointmentFee: fee,
+        locationName: selectedLocation?.location_name,
+        locationAddress: selectedLocation?.address || undefined,
       }).catch(console.error);
 
-      // Award wallet credits for booking
+      // Award wallet credits
       if (walletEnabled) {
         try {
           await addCredits.mutateAsync({
@@ -390,9 +446,10 @@ const DoctorDetail = () => {
         }
       }
 
+      const locationText = selectedLocation ? ` at ${selectedLocation.location_name}` : '';
       toast({
         title: "Appointment Booked!",
-        description: `Your ${consultationType} appointment with Dr. ${doctor.full_name} on ${format(selectedDate, "dd MMM yyyy")} at ${selectedTime} has been booked successfully.`,
+        description: `Your ${consultationType} appointment with Dr. ${doctor.full_name}${locationText} on ${format(selectedDate, "dd MMM yyyy")} at ${selectedTime} has been booked successfully.`,
       });
 
       setSelectedDate(undefined);
@@ -522,29 +579,58 @@ const DoctorDetail = () => {
                     </div>
                   </div>
 
-                  {/* Quick Info */}
+                  {/* Quick Info - Show all locations fees if multiple */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t">
-                    <div className="text-center p-3 bg-muted/50 rounded-lg">
-                      <p className="text-lg font-bold text-primary">Rs. {doctor.consultation_fee || "N/A"}</p>
-                      <p className="text-xs text-muted-foreground">Consultation Fee</p>
-                    </div>
+                    {hasLocations ? (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-lg font-bold text-primary">
+                          {practiceLocations.length > 1 
+                            ? `Rs. ${Math.min(...practiceLocations.map(l => l.consultation_fee))}+`
+                            : `Rs. ${practiceLocations[0].consultation_fee}`
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {practiceLocations.length > 1 ? 'Starting Fee' : 'Consultation Fee'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-lg font-bold text-primary">Rs. {doctor.consultation_fee || "N/A"}</p>
+                        <p className="text-xs text-muted-foreground">Consultation Fee</p>
+                      </div>
+                    )}
                     {doctor.online_consultation_fee && (
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
                         <p className="text-lg font-bold text-primary">Rs. {doctor.online_consultation_fee}</p>
                         <p className="text-xs text-muted-foreground">Online Fee</p>
                       </div>
                     )}
-                    {doctor.followup_fee && (
+                    {(selectedLocation?.followup_fee || doctor.followup_fee) && (
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
-                        <p className="text-lg font-bold text-primary">Rs. {doctor.followup_fee}</p>
+                        <p className="text-lg font-bold text-primary">Rs. {selectedLocation?.followup_fee || doctor.followup_fee}</p>
                         <p className="text-xs text-muted-foreground">Follow-up Fee</p>
                       </div>
                     )}
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
-                      <p className="text-lg font-bold text-primary">{doctor.appointment_duration || 15} min</p>
+                      <p className="text-lg font-bold text-primary">
+                        {selectedLocation?.appointment_duration || doctor.appointment_duration || 15} min
+                      </p>
                       <p className="text-xs text-muted-foreground">Appointment</p>
                     </div>
                   </div>
+
+                  {/* Show available locations summary */}
+                  {hasLocations && practiceLocations.length > 1 && (
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                      <p className="text-xs font-medium text-blue-800 dark:text-blue-200 flex items-center gap-1">
+                        <Building2 className="w-4 h-4" />
+                        Available at {practiceLocations.length} locations
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                        Choose your preferred location when booking
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -650,6 +736,47 @@ const DoctorDetail = () => {
                 <TabsContent value="location" className="mt-4">
                   <Card>
                     <CardContent className="p-4 space-y-4">
+                      {/* Practice Locations with Schedules */}
+                      {hasLocations && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3 flex items-center gap-1">
+                            <Building2 className="w-4 h-4" /> Practice Locations
+                          </h3>
+                          <div className="space-y-3">
+                            {practiceLocations.map((location) => (
+                              <div key={location.id} className="p-3 bg-muted/30 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="font-medium text-sm">{location.location_name}</span>
+                                  {location.is_primary && (
+                                    <Badge variant="secondary" className="text-[10px]">Primary</Badge>
+                                  )}
+                                </div>
+                                {location.address && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" />
+                                    {location.address}{location.city && `, ${location.city}`}
+                                  </p>
+                                )}
+                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                                  <span className="font-medium text-primary">Rs. {location.consultation_fee}</span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {location.available_time_start} - {location.available_time_end}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {location.available_days.map(day => (
+                                    <Badge key={day} variant="outline" className="text-[10px] px-1.5">
+                                      {day.substring(0, 3)}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Hospital Affiliations */}
                       {hospitals.length > 0 && (
                         <div>
@@ -660,7 +787,7 @@ const DoctorDetail = () => {
                         </div>
                       )}
 
-                      {doctor.clinic_name && (
+                      {doctor.clinic_name && !hasLocations && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
                             <Building2 className="w-4 h-4" /> Clinic
@@ -674,7 +801,7 @@ const DoctorDetail = () => {
                           <p className="text-xs text-muted-foreground">{doctor.hospital_name}</p>
                         </div>
                       )}
-                      {doctor.clinic_address && (
+                      {doctor.clinic_address && !hasLocations && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
                             <MapPin className="w-4 h-4" /> Address
@@ -683,7 +810,7 @@ const DoctorDetail = () => {
                           {doctor.city && <p className="text-xs text-muted-foreground">{doctor.city}</p>}
                         </div>
                       )}
-                      {doctor.available_days && doctor.available_days.length > 0 && (
+                      {doctor.available_days && doctor.available_days.length > 0 && !hasLocations && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
                             <Clock className="w-4 h-4" /> Availability
@@ -751,6 +878,15 @@ const DoctorDetail = () => {
                     </div>
                   </div>
 
+                  {/* Location Selector - Only for physical consultations */}
+                  {consultationType === "physical" && hasLocations && (
+                    <LocationSelector
+                      locations={practiceLocations}
+                      selectedLocationId={selectedLocationId}
+                      onSelect={setSelectedLocationId}
+                    />
+                  )}
+
                   {/* Calendar */}
                   <div>
                     <p className="text-xs font-medium mb-2">Select Date</p>
@@ -763,14 +899,11 @@ const DoctorDetail = () => {
                         const pktTodayStart = startOfDay(pktNow);
                         const dateStart = startOfDay(date);
 
-                        // Past dates (before today in PKT)
                         if (dateStart.getTime() < pktTodayStart.getTime()) return true;
 
-                        // Max 30 days from today
                         const maxDate = new Date(pktTodayStart.getTime() + 30 * 24 * 60 * 60 * 1000);
                         if (dateStart.getTime() > maxDate.getTime()) return true;
 
-                        // Today: only disable if no slots left
                         if (dateStart.getTime() === pktTodayStart.getTime()) {
                           return !hasTodayAvailableSlots;
                         }
@@ -804,14 +937,20 @@ const DoctorDetail = () => {
 
                   {/* Fee & Book */}
                   <div className="pt-4 border-t">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-muted-foreground">Consultation Fee</span>
                       <span className="text-lg font-bold text-primary">Rs. {getFee()}</span>
                     </div>
+                    {selectedLocation && consultationType === "physical" && (
+                      <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {selectedLocation.location_name}
+                      </p>
+                    )}
                     <Button 
                       className="w-full text-sm"
                       onClick={handleBookAppointment}
-                      disabled={!selectedDate || !selectedTime || isBooking}
+                      disabled={!selectedDate || !selectedTime || isBooking || (consultationType === "physical" && hasMultipleLocations && !selectedLocationId)}
                     >
                       {isBooking ? (
                         <>
@@ -825,14 +964,14 @@ const DoctorDetail = () => {
                   </div>
 
                   {/* Contact */}
-                  {doctor.phone && (
+                  {(selectedLocation?.contact_phone || doctor.phone) && (
                     <div className="pt-4 border-t">
                       <a 
-                        href={`tel:${doctor.phone}`}
+                        href={`tel:${selectedLocation?.contact_phone || doctor.phone}`}
                         className="flex items-center justify-center gap-2 text-xs text-primary hover:underline"
                       >
                         <Phone className="w-3 h-3" />
-                        Call: {doctor.phone}
+                        Call: {selectedLocation?.contact_phone || doctor.phone}
                       </a>
                     </div>
                   )}

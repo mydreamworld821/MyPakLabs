@@ -114,6 +114,9 @@ interface DoctorAppointment {
   prescription_url: string | null;
   prescription_uploaded_at: string | null;
   created_at: string;
+  location_name: string | null;
+  hospital_doctor_id: string | null;
+  practice_location_id: string | null;
   doctors: {
     id: string;
     full_name: string;
@@ -435,7 +438,14 @@ const MyBookings = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAppointments(data || []);
+      // Map the data to include location_name, hospital_doctor_id, practice_location_id
+      const mappedData = (data || []).map((apt: any) => ({
+        ...apt,
+        location_name: apt.location_name || null,
+        hospital_doctor_id: apt.hospital_doctor_id || null,
+        practice_location_id: apt.practice_location_id || null,
+      }));
+      setAppointments(mappedData);
     } catch (error) {
       console.error("Error fetching appointments:", error);
     }
@@ -1110,6 +1120,12 @@ const MyBookings = () => {
                                       <Badge variant="outline" className="capitalize">
                                         {appointment.consultation_type}
                                       </Badge>
+                                      {appointment.location_name && (
+                                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                          <MapPin className="w-3 h-3" />
+                                          {appointment.location_name}
+                                        </p>
+                                      )}
                                     </TableCell>
                                     <TableCell>
                                       <div>
@@ -1166,6 +1182,7 @@ const MyBookings = () => {
                                               appointmentTime: appointment.appointment_time,
                                               consultationType: appointment.consultation_type,
                                               fee: appointment.fee,
+                                              locationName: appointment.location_name || undefined,
                                             })}
                                             title="Download Slip"
                                           >
@@ -2053,6 +2070,7 @@ const MyBookings = () => {
                       appointmentTime: selectedAppointment.appointment_time,
                       consultationType: selectedAppointment.consultation_type,
                       fee: selectedAppointment.fee,
+                      locationName: selectedAppointment.location_name || undefined,
                     })}
                   >
                     <Download className="w-4 h-4 mr-2" />

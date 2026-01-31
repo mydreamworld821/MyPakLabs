@@ -61,6 +61,8 @@ interface DoctorAppointmentNotification extends BaseNotificationData {
   appointmentTime: string;
   consultationType?: string;
   appointmentFee?: number;
+  locationName?: string;
+  locationAddress?: string;
 }
 
 interface NurseBookingNotification extends BaseNotificationData {

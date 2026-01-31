@@ -27,9 +27,12 @@ export type Database = {
           created_at: string
           doctor_id: string
           fee: number
+          hospital_doctor_id: string | null
           id: string
+          location_name: string | null
           notes: string | null
           patient_id: string
+          practice_location_id: string | null
           prescription_uploaded_at: string | null
           prescription_url: string | null
           status: Database["public"]["Enums"]["appointment_status"]
@@ -48,9 +51,12 @@ export type Database = {
           created_at?: string
           doctor_id: string
           fee: number
+          hospital_doctor_id?: string | null
           id?: string
+          location_name?: string | null
           notes?: string | null
           patient_id: string
+          practice_location_id?: string | null
           prescription_uploaded_at?: string | null
           prescription_url?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -69,9 +75,12 @@ export type Database = {
           created_at?: string
           doctor_id?: string
           fee?: number
+          hospital_doctor_id?: string | null
           id?: string
+          location_name?: string | null
           notes?: string | null
           patient_id?: string
+          practice_location_id?: string | null
           prescription_uploaded_at?: string | null
           prescription_url?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -84,6 +93,20 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_hospital_doctor_id_fkey"
+            columns: ["hospital_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_practice_location_id_fkey"
+            columns: ["practice_location_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_practice_locations"
             referencedColumns: ["id"]
           },
         ]
@@ -309,6 +332,71 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      doctor_practice_locations: {
+        Row: {
+          address: string | null
+          appointment_duration: number | null
+          available_days: string[] | null
+          available_time_end: string | null
+          available_time_start: string | null
+          city: string | null
+          consultation_fee: number
+          contact_phone: string | null
+          created_at: string
+          doctor_id: string
+          followup_fee: number | null
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          location_name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          appointment_duration?: number | null
+          available_days?: string[] | null
+          available_time_end?: string | null
+          available_time_start?: string | null
+          city?: string | null
+          consultation_fee: number
+          contact_phone?: string | null
+          created_at?: string
+          doctor_id: string
+          followup_fee?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          location_name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          appointment_duration?: number | null
+          available_days?: string[] | null
+          available_time_end?: string | null
+          available_time_start?: string | null
+          city?: string | null
+          consultation_fee?: number
+          contact_phone?: string | null
+          created_at?: string
+          doctor_id?: string
+          followup_fee?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          location_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_practice_locations_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_specializations: {
         Row: {
@@ -1109,12 +1197,22 @@ export type Database = {
       }
       hospital_doctors: {
         Row: {
+          address: string | null
+          appointment_duration: number | null
+          available_days: string[] | null
+          available_time_end: string | null
+          available_time_start: string | null
+          city: string | null
+          consultation_fee: number | null
+          contact_phone: string | null
           created_at: string
           department: string | null
           doctor_id: string
           end_year: number | null
+          followup_fee: number | null
           hospital_id: string
           id: string
+          is_active: boolean | null
           is_current: boolean | null
           is_primary: boolean | null
           schedule: string | null
@@ -1122,12 +1220,22 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          appointment_duration?: number | null
+          available_days?: string[] | null
+          available_time_end?: string | null
+          available_time_start?: string | null
+          city?: string | null
+          consultation_fee?: number | null
+          contact_phone?: string | null
           created_at?: string
           department?: string | null
           doctor_id: string
           end_year?: number | null
+          followup_fee?: number | null
           hospital_id: string
           id?: string
+          is_active?: boolean | null
           is_current?: boolean | null
           is_primary?: boolean | null
           schedule?: string | null
@@ -1135,12 +1243,22 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          appointment_duration?: number | null
+          available_days?: string[] | null
+          available_time_end?: string | null
+          available_time_start?: string | null
+          city?: string | null
+          consultation_fee?: number | null
+          contact_phone?: string | null
           created_at?: string
           department?: string | null
           doctor_id?: string
           end_year?: number | null
+          followup_fee?: number | null
           hospital_id?: string
           id?: string
+          is_active?: boolean | null
           is_current?: boolean | null
           is_primary?: boolean | null
           schedule?: string | null

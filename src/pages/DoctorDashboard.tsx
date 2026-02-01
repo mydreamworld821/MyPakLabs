@@ -37,8 +37,10 @@ import {
   AlertCircle,
   Upload,
   X,
+  MapPinned,
 } from "lucide-react";
 import DoctorAppointmentsTab from "@/components/doctor/DoctorAppointmentsTab";
+import { DoctorLocationManager, type DoctorLocation } from "@/components/doctor/DoctorLocationManager";
 
 interface Specialization {
   id: string;
@@ -97,6 +99,11 @@ const DoctorDashboard = () => {
   const [profile, setProfile] = useState<DoctorProfile | null>(null);
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  
+  // Practice locations state
+  const [practiceLocations, setPracticeLocations] = useState<DoctorLocation[]>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
+  const [isSavingLocations, setIsSavingLocations] = useState(false);
 
   // Form state for editing
   const [formData, setFormData] = useState({
@@ -129,6 +136,97 @@ const DoctorDashboard = () => {
     }
     fetchData();
   }, [user, navigate]);
+
+  // Fetch practice locations when profile loads
+  useEffect(() => {
+    if (profile?.id) {
+      fetchPracticeLocations();
+    }
+  }, [profile?.id]);
+
+  const fetchPracticeLocations = async () => {
+    if (!profile?.id) return;
+    
+    setIsLoadingLocations(true);
+    try {
+      const { data, error } = await supabase
+        .from("doctor_practice_locations")
+        .select("*")
+        .eq("doctor_id", profile.id)
+        .order("is_primary", { ascending: false });
+
+      if (error) throw error;
+
+      const mappedLocations: DoctorLocation[] = (data || []).map(loc => ({
+        id: loc.id,
+        type: 'custom' as const,
+        location_name: loc.location_name,
+        address: loc.address || "",
+        city: loc.city || "",
+        contact_phone: loc.contact_phone || "",
+        consultation_fee: loc.consultation_fee,
+        followup_fee: loc.followup_fee,
+        available_days: loc.available_days || [],
+        available_time_start: loc.available_time_start || "09:00",
+        available_time_end: loc.available_time_end || "17:00",
+        appointment_duration: loc.appointment_duration || 15,
+        is_primary: loc.is_primary || false,
+        is_active: loc.is_active !== false,
+      }));
+
+      setPracticeLocations(mappedLocations);
+    } catch (error) {
+      console.error("Error fetching practice locations:", error);
+    } finally {
+      setIsLoadingLocations(false);
+    }
+  };
+
+  const handleSavePracticeLocations = async () => {
+    if (!profile?.id) return;
+
+    setIsSavingLocations(true);
+    try {
+      // Delete existing locations
+      await supabase
+        .from("doctor_practice_locations")
+        .delete()
+        .eq("doctor_id", profile.id);
+
+      // Insert new locations
+      if (practiceLocations.length > 0) {
+        const locationsToInsert = practiceLocations.map(loc => ({
+          doctor_id: profile.id,
+          location_name: loc.location_name,
+          address: loc.address || null,
+          city: loc.city || null,
+          contact_phone: loc.contact_phone || null,
+          consultation_fee: loc.consultation_fee,
+          followup_fee: loc.followup_fee || null,
+          available_days: loc.available_days,
+          available_time_start: loc.available_time_start,
+          available_time_end: loc.available_time_end,
+          appointment_duration: loc.appointment_duration,
+          is_primary: loc.is_primary,
+          is_active: loc.is_active,
+        }));
+
+        const { error } = await supabase
+          .from("doctor_practice_locations")
+          .insert(locationsToInsert);
+
+        if (error) throw error;
+      }
+
+      await fetchPracticeLocations();
+      toast.success("Practice locations saved successfully!");
+    } catch (error) {
+      console.error("Error saving practice locations:", error);
+      toast.error("Failed to save practice locations");
+    } finally {
+      setIsSavingLocations(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -438,16 +536,19 @@ const DoctorDashboard = () => {
               </Card>
             )}
 
-            <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid grid-cols-4 h-9">
+            <Tabs defaultValue="locations" className="w-full">
+              <TabsList className="grid grid-cols-5 h-9">
+                <TabsTrigger value="locations" className="text-xs">
+                  <MapPinned className="w-3 h-3 mr-1" /> Locations
+                </TabsTrigger>
                 <TabsTrigger value="profile" className="text-xs">
                   <User className="w-3 h-3 mr-1" /> Profile
                 </TabsTrigger>
                 <TabsTrigger value="availability" className="text-xs">
-                  <Calendar className="w-3 h-3 mr-1" /> Availability
+                  <Calendar className="w-3 h-3 mr-1" /> Schedule
                 </TabsTrigger>
                 <TabsTrigger value="appointments" className="text-xs">
-                  <Clock className="w-3 h-3 mr-1" /> Appointments
+                  <Clock className="w-3 h-3 mr-1" /> Bookings
                 </TabsTrigger>
                 <TabsTrigger
                   value="chats"
@@ -457,6 +558,49 @@ const DoctorDashboard = () => {
                   <MessageCircle className="w-3 h-3 mr-1" /> Chats
                 </TabsTrigger>
               </TabsList>
+
+              {/* Locations Tab - NEW */}
+              <TabsContent value="locations" className="mt-4">
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <MapPinned className="w-4 h-4 text-primary" />
+                      Practice Locations & Fees
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Add multiple hospitals/clinics with individual schedules and consultation fees
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {isLoadingLocations ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        <DoctorLocationManager
+                          locations={practiceLocations}
+                          onChange={setPracticeLocations}
+                          maxLocations={10}
+                        />
+
+                        <Button
+                          onClick={handleSavePracticeLocations}
+                          disabled={isSavingLocations}
+                          className="w-full"
+                        >
+                          {isSavingLocations ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                          )}
+                          Save Practice Locations
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* Profile Tab */}
               <TabsContent value="profile" className="mt-4 space-y-4">

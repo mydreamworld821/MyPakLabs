@@ -29,6 +29,8 @@ import WalletHistory from "@/components/wallet/WalletHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
+import { useDoctorProfile } from "@/hooks/useDoctorProfile";
+import { DoctorLocationManager, type DoctorLocation } from "@/components/doctor/DoctorLocationManager";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -55,6 +57,7 @@ import {
   Download,
   Printer,
   Wallet,
+  MapPinned,
 } from "lucide-react";
 import { generateBookingPDF } from "@/utils/generateBookingPDF";
 
@@ -147,6 +150,7 @@ const WalletSection = () => {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
+  const { doctorProfile, isDoctor, isApprovedDoctor, isLoading: doctorLoading } = useDoctorProfile();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -157,6 +161,11 @@ const Profile = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditingMedical, setIsEditingMedical] = useState(false);
   const [isSavingMedical, setIsSavingMedical] = useState(false);
+  
+  // Doctor practice locations state
+  const [practiceLocations, setPracticeLocations] = useState<DoctorLocation[]>([]);
+  const [isSavingLocations, setIsSavingLocations] = useState(false);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -185,6 +194,99 @@ const Profile = () => {
       fetchProfileAndOrders();
     }
   }, [user, authLoading, navigate]);
+
+  // Fetch doctor practice locations when doctor profile is loaded
+  useEffect(() => {
+    if (doctorProfile?.id) {
+      fetchDoctorLocations();
+    }
+  }, [doctorProfile?.id]);
+
+  const fetchDoctorLocations = async () => {
+    if (!doctorProfile?.id) return;
+    
+    setIsLoadingLocations(true);
+    try {
+      // Fetch from doctor_practice_locations table
+      const { data: locationsData, error } = await supabase
+        .from("doctor_practice_locations")
+        .select("*")
+        .eq("doctor_id", doctorProfile.id)
+        .order("is_primary", { ascending: false });
+
+      if (error) throw error;
+
+      const mappedLocations: DoctorLocation[] = (locationsData || []).map(loc => ({
+        id: loc.id,
+        type: 'custom' as const,
+        location_name: loc.location_name,
+        address: loc.address || "",
+        city: loc.city || "",
+        contact_phone: loc.contact_phone || "",
+        consultation_fee: loc.consultation_fee,
+        followup_fee: loc.followup_fee,
+        available_days: loc.available_days || [],
+        available_time_start: loc.available_time_start || "09:00",
+        available_time_end: loc.available_time_end || "17:00",
+        appointment_duration: loc.appointment_duration || 15,
+        is_primary: loc.is_primary || false,
+        is_active: loc.is_active !== false,
+      }));
+
+      setPracticeLocations(mappedLocations);
+    } catch (error) {
+      console.error("Error fetching doctor locations:", error);
+    } finally {
+      setIsLoadingLocations(false);
+    }
+  };
+
+  const handleSavePracticeLocations = async () => {
+    if (!doctorProfile?.id) return;
+
+    setIsSavingLocations(true);
+    try {
+      // Delete existing locations
+      await supabase
+        .from("doctor_practice_locations")
+        .delete()
+        .eq("doctor_id", doctorProfile.id);
+
+      // Insert new locations
+      if (practiceLocations.length > 0) {
+        const locationsToInsert = practiceLocations.map(loc => ({
+          doctor_id: doctorProfile.id,
+          location_name: loc.location_name,
+          address: loc.address || null,
+          city: loc.city || null,
+          contact_phone: loc.contact_phone || null,
+          consultation_fee: loc.consultation_fee,
+          followup_fee: loc.followup_fee || null,
+          available_days: loc.available_days,
+          available_time_start: loc.available_time_start,
+          available_time_end: loc.available_time_end,
+          appointment_duration: loc.appointment_duration,
+          is_primary: loc.is_primary,
+          is_active: loc.is_active,
+        }));
+
+        const { error } = await supabase
+          .from("doctor_practice_locations")
+          .insert(locationsToInsert);
+
+        if (error) throw error;
+      }
+
+      // Refetch to get new IDs
+      await fetchDoctorLocations();
+      toast.success("Practice locations saved successfully!");
+    } catch (error) {
+      console.error("Error saving practice locations:", error);
+      toast.error("Failed to save practice locations");
+    } finally {
+      setIsSavingLocations(false);
+    }
+  };
 
   const fetchProfileAndOrders = async () => {
     try {
@@ -405,13 +507,45 @@ const Profile = () => {
             <div className="lg:col-span-1">
               <Card>
                 <CardHeader className="text-center pb-4">
-                  <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <User className="w-12 h-12 text-primary" />
-                  </div>
+                  {doctorProfile?.photo_url ? (
+                    <img 
+                      src={doctorProfile.photo_url} 
+                      alt={doctorProfile.full_name}
+                      className="w-24 h-24 mx-auto rounded-full object-cover mb-4 border-4 border-primary/20"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      {isDoctor ? (
+                        <Stethoscope className="w-12 h-12 text-primary" />
+                      ) : (
+                        <User className="w-12 h-12 text-primary" />
+                      )}
+                    </div>
+                  )}
                   <CardTitle className="text-xl">
-                    {profile?.full_name || "User"}
+                    {isDoctor ? `Dr. ${profile?.full_name || doctorProfile?.full_name || "Doctor"}` : (profile?.full_name || "User")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  {isDoctor && doctorProfile?.specialization && (
+                    <Badge className="mt-2 bg-primary/10 text-primary hover:bg-primary/20">
+                      {doctorProfile.specialization.name}
+                    </Badge>
+                  )}
+                  {isDoctor && (
+                    <Badge 
+                      variant="outline" 
+                      className={`mt-2 ${
+                        doctorProfile?.status === 'approved' 
+                          ? 'text-green-600 border-green-500' 
+                          : doctorProfile?.status === 'suspended'
+                          ? 'text-red-600 border-red-500'
+                          : 'text-yellow-600 border-yellow-500'
+                      }`}
+                    >
+                      {doctorProfile?.status === 'approved' ? 'Verified Doctor' : 
+                       doctorProfile?.status === 'suspended' ? 'Account Suspended' : 'Pending Verification'}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Stats */}
@@ -574,8 +708,14 @@ const Profile = () => {
 
             {/* Orders & History */}
             <div className="lg:col-span-2">
-              <Tabs defaultValue="wallet" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-4">
+              <Tabs defaultValue={isDoctor ? "practice" : "wallet"} className="space-y-4">
+                <TabsList className={`grid w-full ${isDoctor ? 'grid-cols-5' : 'grid-cols-4'}`}>
+                  {isDoctor && (
+                    <TabsTrigger value="practice" className="gap-2">
+                      <MapPinned className="w-4 h-4" />
+                      <span className="hidden sm:inline">Practice</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger value="wallet" className="gap-2">
                     <Wallet className="w-4 h-4" />
                     <span className="hidden sm:inline">Wallet</span>
@@ -593,6 +733,70 @@ const Profile = () => {
                     <span className="hidden sm:inline">Activity</span>
                   </TabsTrigger>
                 </TabsList>
+
+                {/* Doctor Practice Locations Tab */}
+                {isDoctor && (
+                  <TabsContent value="practice">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <MapPinned className="w-5 h-5 text-primary" />
+                            Practice Locations
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Manage your clinics, hospitals, timings and fees
+                          </p>
+                        </div>
+                        {!isApprovedDoctor && (
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-500">
+                            Pending Approval
+                          </Badge>
+                        )}
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {!isApprovedDoctor && (
+                          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-yellow-800">Profile Under Review</p>
+                              <p className="text-xs text-yellow-700">
+                                Your doctor profile is pending approval. Once approved, patients will be able to book appointments at your practice locations.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {isLoadingLocations ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                          </div>
+                        ) : (
+                          <>
+                            <DoctorLocationManager
+                              locations={practiceLocations}
+                              onChange={setPracticeLocations}
+                              maxLocations={10}
+                            />
+
+                            <Button
+                              onClick={handleSavePracticeLocations}
+                              disabled={isSavingLocations}
+                              className="w-full"
+                            >
+                              {isSavingLocations ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                              ) : (
+                                <Save className="w-4 h-4 mr-2" />
+                              )}
+                              Save Practice Locations
+                            </Button>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
 
                 <TabsContent value="wallet">
                   <WalletSection />

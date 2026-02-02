@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface DoctorPracticeLocation {
   id: string;
-  type: 'hospital_doctor' | 'practice_location' | 'custom' | 'hospital';
+  type: 'hospital_doctor' | 'practice_location' | 'custom' | 'hospital' | 'default';
   hospital_id?: string;
   location_name: string;
   address: string | null;
@@ -118,6 +118,33 @@ export const useDoctorLocations = (doctorId: string | undefined): UseDoctorLocat
           is_primary: pl.is_primary || false,
         });
       });
+
+      // If no locations found, fetch from doctor's own profile as fallback
+      if (allLocations.length === 0) {
+        const { data: doctorData, error: docError } = await supabase
+          .from("doctors")
+          .select("id, full_name, clinic_name, clinic_address, city, phone, consultation_fee, followup_fee, available_days, available_time_start, available_time_end, appointment_duration")
+          .eq("id", doctorId)
+          .maybeSingle();
+
+        if (!docError && doctorData && doctorData.consultation_fee && doctorData.available_days?.length > 0) {
+          allLocations.push({
+            id: `default-${doctorData.id}`,
+            type: 'default',
+            location_name: doctorData.clinic_name || 'Doctor\'s Clinic',
+            address: doctorData.clinic_address || null,
+            city: doctorData.city || null,
+            contact_phone: doctorData.phone || null,
+            consultation_fee: doctorData.consultation_fee,
+            followup_fee: doctorData.followup_fee || null,
+            available_days: doctorData.available_days || [],
+            available_time_start: doctorData.available_time_start || '09:00',
+            available_time_end: doctorData.available_time_end || '17:00',
+            appointment_duration: doctorData.appointment_duration || 15,
+            is_primary: true,
+          });
+        }
+      }
 
       // Sort: primary first, then by name
       allLocations.sort((a, b) => {

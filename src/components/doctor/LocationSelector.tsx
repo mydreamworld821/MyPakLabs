@@ -6,7 +6,7 @@ import { Building2, MapPin, Clock, Phone } from "lucide-react";
 
 export interface DoctorPracticeLocation {
   id: string;
-  type: 'hospital_doctor' | 'practice_location' | 'custom' | 'hospital';
+  type: 'hospital_doctor' | 'practice_location' | 'custom' | 'hospital' | 'default';
   hospital_id?: string;
   location_name: string;
   address: string | null;

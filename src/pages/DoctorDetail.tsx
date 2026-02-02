@@ -151,10 +151,16 @@ const DoctorDetail = () => {
     }
   }, [id]);
 
-  // Reset time when date or location changes
+  // Reset date and time when location changes (different locations may have different schedules)
+  useEffect(() => {
+    setSelectedDate(undefined);
+    setSelectedTime(null);
+  }, [selectedLocationId]);
+
+  // Reset time when date changes
   useEffect(() => {
     setSelectedTime(null);
-  }, [selectedDate, selectedLocationId]);
+  }, [selectedDate]);
 
   const fetchDoctor = async () => {
     try {
@@ -278,6 +284,29 @@ const DoctorDetail = () => {
   const getPakistanTodayKey = () => getDateKey(getPakistanTime());
   const getPakistanTodayStart = () => startOfDay(getPakistanTime());
 
+  // Get day name from date (e.g., "Monday", "Tuesday")
+  const getDayName = (date: Date) => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return days[date.getDay()];
+  };
+
+  // Get available days based on selected location or doctor's default
+  const getAvailableDays = useMemo(() => {
+    if (consultationType === "physical" && selectedLocation) {
+      return selectedLocation.available_days || [];
+    }
+    // For online consultations, use doctor's default schedule
+    return doctor?.available_days || [];
+  }, [consultationType, selectedLocation, doctor]);
+
+  // Check if a specific date is available for booking
+  const isDateAvailable = (date: Date) => {
+    const dayName = getDayName(date);
+    // If no specific days are set, allow all days (backward compatibility)
+    if (getAvailableDays.length === 0) return true;
+    return getAvailableDays.includes(dayName);
+  };
+
   const isTimeSlotDisabled = (timeLabel: string, forDate?: Date) => {
     const checkDate = forDate || selectedDate;
     if (!checkDate) return false;
@@ -297,8 +326,10 @@ const DoctorDetail = () => {
 
   const hasTodayAvailableSlots = useMemo(() => {
     const pktTodayStart = getPakistanTodayStart();
+    // Check if today is an available day AND has available time slots
+    if (!isDateAvailable(pktTodayStart)) return false;
     return timeSlots.some((slot) => !isTimeSlotDisabled(slot, pktTodayStart));
-  }, [timeSlots]);
+  }, [timeSlots, getAvailableDays]);
 
   // Check if locations are available for physical consultations
   const hasMultipleLocations = practiceLocations.length > 1;
@@ -890,6 +921,12 @@ const DoctorDetail = () => {
                   {/* Calendar */}
                   <div>
                     <p className="text-xs font-medium mb-2">Select Date</p>
+                    {getAvailableDays.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Available: {getAvailableDays.map(d => d.substring(0, 3)).join(", ")}
+                      </p>
+                    )}
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -899,11 +936,17 @@ const DoctorDetail = () => {
                         const pktTodayStart = startOfDay(pktNow);
                         const dateStart = startOfDay(date);
 
+                        // Past dates
                         if (dateStart.getTime() < pktTodayStart.getTime()) return true;
 
+                        // More than 30 days ahead
                         const maxDate = new Date(pktTodayStart.getTime() + 30 * 24 * 60 * 60 * 1000);
                         if (dateStart.getTime() > maxDate.getTime()) return true;
 
+                        // Check if this day of week is available based on location schedule
+                        if (!isDateAvailable(date)) return true;
+
+                        // For today, also check if there are available time slots
                         if (dateStart.getTime() === pktTodayStart.getTime()) {
                           return !hasTodayAvailableSlots;
                         }

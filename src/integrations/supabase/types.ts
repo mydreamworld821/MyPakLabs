@@ -398,6 +398,65 @@ export type Database = {
           },
         ]
       }
+      doctor_profile_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          doctor_id: string
+          duration_seconds: number
+          hearts_count: number
+          helpful_count: number
+          id: string
+          is_active: boolean
+          likes_count: number
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          video_url: string
+          views_count: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doctor_id: string
+          duration_seconds: number
+          hearts_count?: number
+          helpful_count?: number
+          id?: string
+          is_active?: boolean
+          likes_count?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_url: string
+          views_count?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doctor_id?: string
+          duration_seconds?: number
+          hearts_count?: number
+          helpful_count?: number
+          id?: string
+          is_active?: boolean
+          likes_count?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_url?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_profile_videos_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: true
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_specializations: {
         Row: {
           created_at: string
@@ -436,6 +495,70 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      doctor_video_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction_type: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction_type: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_video_reactions_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_profile_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_video_views: {
+        Row: {
+          id: string
+          ip_hash: string | null
+          user_id: string | null
+          video_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          ip_hash?: string | null
+          user_id?: string | null
+          video_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          ip_hash?: string | null
+          user_id?: string | null
+          video_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_video_views_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_profile_videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctors: {
         Row: {
@@ -3147,6 +3270,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_video_view: { Args: { video_uuid: string }; Returns: undefined }
       mark_messages_delivered: {
         Args: { p_room_id: string; p_user_id: string }
         Returns: undefined

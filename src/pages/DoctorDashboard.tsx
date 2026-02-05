@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import DoctorAppointmentsTab from "@/components/doctor/DoctorAppointmentsTab";
 import { DoctorLocationManager, type DoctorLocation } from "@/components/doctor/DoctorLocationManager";
+ import DoctorVideoUploader from "@/components/doctor/DoctorVideoUploader";
 
 interface Specialization {
   id: string;
@@ -536,8 +537,8 @@ const DoctorDashboard = () => {
               </Card>
             )}
 
-            <Tabs defaultValue="locations" className="w-full">
-              <TabsList className="grid grid-cols-5 h-9">
+             <Tabs defaultValue="locations" className="w-full">
+               <TabsList className="grid grid-cols-6 h-9">
                 <TabsTrigger value="locations" className="text-xs">
                   <MapPinned className="w-3 h-3 mr-1" /> Locations
                 </TabsTrigger>
@@ -547,6 +548,9 @@ const DoctorDashboard = () => {
                 <TabsTrigger value="availability" className="text-xs">
                   <Calendar className="w-3 h-3 mr-1" /> Schedule
                 </TabsTrigger>
+                 <TabsTrigger value="video" className="text-xs">
+                   <Video className="w-3 h-3 mr-1" /> Video
+                 </TabsTrigger>
                 <TabsTrigger value="appointments" className="text-xs">
                   <Clock className="w-3 h-3 mr-1" /> Bookings
                 </TabsTrigger>
@@ -602,6 +606,11 @@ const DoctorDashboard = () => {
                 </Card>
               </TabsContent>
 
+               {/* Video Tab */}
+               <TabsContent value="video" className="mt-4">
+                 {profile && <DoctorVideoUploader doctorId={profile.id} />}
+               </TabsContent>
+ 
               {/* Profile Tab */}
               <TabsContent value="profile" className="mt-4 space-y-4">
                 <Card>

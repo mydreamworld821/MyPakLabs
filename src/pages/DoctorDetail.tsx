@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import HospitalBadges from "@/components/HospitalBadges";
 import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+ import DoctorVideoPlayer from "@/components/doctor/DoctorVideoPlayer";
 
 interface Doctor {
   id: string;
@@ -667,13 +668,21 @@ const DoctorDetail = () => {
 
               {/* Details Tabs */}
               <Tabs defaultValue="about" className="w-full">
-                <TabsList className="w-full grid grid-cols-4">
+                 <TabsList className="w-full grid grid-cols-5">
+                   <TabsTrigger value="video" className="text-xs">Video</TabsTrigger>
                   <TabsTrigger value="about" className="text-xs">About</TabsTrigger>
                   <TabsTrigger value="services" className="text-xs">Services</TabsTrigger>
                   <TabsTrigger value="location" className="text-xs">Location</TabsTrigger>
                   <TabsTrigger value="reviews" className="text-xs">Reviews</TabsTrigger>
                 </TabsList>
 
+                 <TabsContent value="video" className="mt-4">
+                   <DoctorVideoPlayer
+                     doctorId={doctor.id}
+                     doctorName={doctor.full_name}
+                   />
+                 </TabsContent>
+ 
                 <TabsContent value="about" className="mt-4">
                   <Card>
                     <CardContent className="p-4 space-y-4">

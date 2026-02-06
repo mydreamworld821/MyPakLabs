@@ -26,8 +26,10 @@ import {
   ChevronDown,
   AlertTriangle,
   Store,
-  MessageCircle
+  MessageCircle,
+  Bell
 } from "lucide-react";
+import NotificationPanel from "@/components/NotificationPanel";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -449,7 +451,8 @@ const Navbar = () => {
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-1">
+            {user && <NotificationPanel />}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -656,9 +659,12 @@ const Navbar = () => {
             <div className="pt-2 border-t border-border space-y-1">
               {user ? (
                 <>
-                  <div className="px-3 py-2 bg-muted rounded-lg">
-                    <p className="text-xs font-medium">{user.user_metadata?.full_name || 'User'}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  <div className="px-3 py-2 bg-muted rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium">{user.user_metadata?.full_name || 'User'}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <NotificationPanel />
                   </div>
                   <Link to="/profile" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" size="sm" className="w-full gap-2 text-xs">

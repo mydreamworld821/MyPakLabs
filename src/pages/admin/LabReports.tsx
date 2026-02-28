@@ -145,29 +145,30 @@ const LabReports = () => {
 
     // Column definitions
     const cols = [
-      { header: "Lab Name", width: usableWidth * 0.14 },
+      { header: "Lab Name", width: usableWidth * 0.15 },
       { header: "Patient Name", width: usableWidth * 0.12 },
-      { header: "Booking Date", width: usableWidth * 0.1 },
-      { header: "Avail Date", width: usableWidth * 0.1 },
-      { header: "Availed", width: usableWidth * 0.07 },
-      { header: "Test Names", width: usableWidth * 0.25 },
+      { header: "Booking Date", width: usableWidth * 0.10 },
+      { header: "Avail Date", width: usableWidth * 0.10 },
+      { header: "Availed", width: usableWidth * 0.08 },
+      { header: "Test Names", width: usableWidth * 0.23 },
       { header: "Total Price", width: usableWidth * 0.11 },
       { header: "Discount Price", width: usableWidth * 0.11 },
     ];
 
     let y = 28;
-    const rowHeight = 7;
-    const headerHeight = 8;
+    const lineHeight = 5;
+    const cellPadding = 3;
+    const headerHeight = 9;
 
     const drawTableHeader = () => {
-      doc.setFillColor(240, 240, 240);
+      doc.setFillColor(0, 102, 153);
       doc.rect(margin, y, usableWidth, headerHeight, "F");
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       let x = margin;
       cols.forEach((col) => {
-        doc.text(col.header, x + 1, y + 5.5);
+        doc.text(col.header, x + 2, y + 6);
         x += col.width;
       });
       y += headerHeight;
@@ -175,96 +176,137 @@ const LabReports = () => {
 
     drawTableHeader();
 
-    // Uniform body font: 12
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-
     // Calculate total discount availed
     const totalDiscountAvailed = orders
       .filter((o) => o.is_availed)
       .reduce((s, o) => s + Number(o.discounted_total || 0), 0);
 
-    orders.forEach((order, idx) => {
-      const testNames = order.tests.map((t: any) => t.test_name || "Unknown").join(", ");
-      const lines = doc.splitTextToSize(testNames, cols[5].width - 2);
-      const neededHeight = Math.max(rowHeight, lines.length * 4 + 2);
+    // Total tests count
+    const totalTests = orders.reduce((s, o) => s + (o.tests?.length || 0), 0);
 
-      if (y + neededHeight > pageHeight - 20) {
+    orders.forEach((order, idx) => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+
+      // Pre-calculate wrapped text for all columns
+      const labLines = doc.splitTextToSize(order.lab_name || "N/A", cols[0].width - 4);
+      const patientLines = doc.splitTextToSize(order.patient_name || "Unknown", cols[1].width - 4);
+      const testNames = order.tests.map((t: any) => t.test_name || "Unknown").join(", ");
+      const testLines = doc.splitTextToSize(testNames, cols[5].width - 4);
+      const availText = order.is_availed ? "Availed" : "Not Availed";
+
+      // Calculate row height based on tallest cell
+      const maxLines = Math.max(labLines.length, patientLines.length, testLines.length, 1);
+      const rowHeight = Math.max(maxLines * lineHeight + cellPadding * 2, 10);
+
+      // Page break check
+      if (y + rowHeight > pageHeight - 20) {
         doc.addPage();
         y = 10;
         drawTableHeader();
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
       }
 
+      // Alternate row background
       if (idx % 2 === 0) {
-        doc.setFillColor(248, 248, 255);
-        doc.rect(margin, y, usableWidth, neededHeight, "F");
+        doc.setFillColor(245, 247, 250);
+      } else {
+        doc.setFillColor(255, 255, 255);
       }
+      doc.rect(margin, y, usableWidth, rowHeight, "F");
 
-      doc.setTextColor(50, 50, 50);
-      doc.setFontSize(12);
+      // Draw bottom border for each row
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y + rowHeight, margin + usableWidth, y + rowHeight);
+
+      // Draw vertical column separators
+      let separatorX = margin;
+      cols.forEach((col) => {
+        separatorX += col.width;
+        if (separatorX < margin + usableWidth) {
+          doc.setDrawColor(230, 230, 230);
+          doc.setLineWidth(0.2);
+          doc.line(separatorX, y, separatorX, y + rowHeight);
+        }
+      });
+
+      const textY = y + cellPadding + 3;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40, 40, 40);
       let x = margin;
 
       // Lab Name
-      const labLines = doc.splitTextToSize(order.lab_name || "N/A", cols[0].width - 2);
-      doc.text(labLines, x + 1, y + 4);
+      doc.text(labLines, x + 2, textY);
       x += cols[0].width;
 
       // Patient Name
-      const patientLines = doc.splitTextToSize(order.patient_name || "Unknown", cols[1].width - 2);
-      doc.text(patientLines, x + 1, y + 4);
+      doc.text(patientLines, x + 2, textY);
       x += cols[1].width;
 
       // Booking Date
-      doc.text(format(new Date(order.created_at), "dd MMM yyyy"), x + 1, y + 4);
+      doc.text(format(new Date(order.created_at), "dd MMM yyyy"), x + 2, textY);
       x += cols[2].width;
 
       // Avail Date
-      doc.text(order.availed_at ? format(new Date(order.availed_at), "dd MMM yyyy") : "-", x + 1, y + 4);
+      doc.text(order.availed_at ? format(new Date(order.availed_at), "dd MMM yyyy") : "-", x + 2, textY);
       x += cols[3].width;
 
-      // Availed
-      const availText = order.is_availed ? "Availed" : "Not Availed";
-      if (order.is_availed) doc.setTextColor(0, 128, 0);
-      else doc.setTextColor(200, 0, 0);
-      doc.text(availText, x + 1, y + 4);
-      doc.setTextColor(50, 50, 50);
+      // Availed status
+      if (order.is_availed) {
+        doc.setTextColor(0, 128, 0);
+      } else {
+        doc.setTextColor(200, 0, 0);
+      }
+      doc.text(availText, x + 2, textY);
+      doc.setTextColor(40, 40, 40);
       x += cols[4].width;
 
-      // Tests
-      doc.text(lines, x + 1, y + 4);
+      // Test Names
+      doc.text(testLines, x + 2, textY);
       x += cols[5].width;
 
       // Total Price
-      doc.text(`Rs. ${Number(order.original_total).toLocaleString()}`, x + 1, y + 4);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Rs. ${Number(order.original_total).toLocaleString()}`, x + 2, textY);
       x += cols[6].width;
 
       // Discount Price
       doc.setTextColor(0, 102, 153);
-      doc.text(`Rs. ${Number(order.discounted_total).toLocaleString()}`, x + 1, y + 4);
-      doc.setTextColor(50, 50, 50);
+      doc.text(`Rs. ${Number(order.discounted_total).toLocaleString()}`, x + 2, textY);
+      doc.setTextColor(40, 40, 40);
+      doc.setFont("helvetica", "normal");
 
-      y += neededHeight;
+      y += rowHeight;
     });
 
-    // Summary footer — font 13 bold
-    if (y + 30 > pageHeight - 10) {
+    // Summary footer — line by line
+    const summaryLineHeight = 8;
+    const summaryLines = 5;
+    const summaryHeight = summaryLines * summaryLineHeight + 10;
+
+    if (y + summaryHeight + 10 > pageHeight - 10) {
       doc.addPage();
       y = 10;
     }
 
-    y += 5;
+    y += 8;
     doc.setFillColor(0, 102, 153);
-    doc.rect(margin, y, usableWidth, 20, "F");
+    doc.rect(margin, y, usableWidth, summaryHeight, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
-    doc.text(`Total Original Price: Rs. ${totals.totalOriginal.toLocaleString()}`, margin + 5, y + 6);
-    doc.text(`Total Discount Price: Rs. ${totals.totalDiscounted.toLocaleString()}`, margin + usableWidth * 0.35, y + 6);
-    doc.text(`Total Savings: Rs. ${totals.totalSavings.toLocaleString()}`, margin + usableWidth * 0.7, y + 6);
-    doc.text(`Total Orders: ${orders.length}`, margin + 5, y + 13);
-    doc.text(`Total Discount Availed: Rs. ${totalDiscountAvailed.toLocaleString()}`, margin + usableWidth * 0.35, y + 13);
+
+    let sy = y + 8;
+    doc.text(`Total Orders:  ${orders.length}`, margin + 5, sy);
+    sy += summaryLineHeight;
+    doc.text(`Total Tests:  ${totalTests}`, margin + 5, sy);
+    sy += summaryLineHeight;
+    doc.text(`Total Price of Tests:  Rs. ${totals.totalOriginal.toLocaleString()}`, margin + 5, sy);
+    sy += summaryLineHeight;
+    doc.text(`Total Discount of Tests:  Rs. ${totals.totalDiscounted.toLocaleString()}`, margin + 5, sy);
+    sy += summaryLineHeight;
+    doc.text(`Total Discount Availed:  Rs. ${totalDiscountAvailed.toLocaleString()}`, margin + 5, sy);
 
     // Footer
     doc.setFontSize(8);

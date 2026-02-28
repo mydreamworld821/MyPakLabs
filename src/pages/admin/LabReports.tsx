@@ -138,7 +138,7 @@ const LabReports = () => {
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("MyPakLabs - Lab Details Report", margin, 14);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const labLabel = selectedLab === "all" ? "All Labs" : labs.find((l) => l.id === selectedLab)?.name || "Selected Lab";
     doc.text(`Date: ${format(new Date(startDate), "dd MMM yyyy")} - ${format(new Date(endDate), "dd MMM yyyy")}  |  Lab: ${labLabel}  |  Total Orders: ${orders.length}`, margin, 20);
@@ -163,7 +163,7 @@ const LabReports = () => {
       doc.setFillColor(240, 240, 240);
       doc.rect(margin, y, usableWidth, headerHeight, "F");
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(7.5);
+      doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       let x = margin;
       cols.forEach((col) => {
@@ -175,18 +175,26 @@ const LabReports = () => {
 
     drawTableHeader();
 
+    // Uniform body font: 12
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(12);
+
+    // Calculate total discount availed
+    const totalDiscountAvailed = orders
+      .filter((o) => o.is_availed)
+      .reduce((s, o) => s + Number(o.discounted_total || 0), 0);
 
     orders.forEach((order, idx) => {
       const testNames = order.tests.map((t: any) => t.test_name || "Unknown").join(", ");
       const lines = doc.splitTextToSize(testNames, cols[5].width - 2);
-      const neededHeight = Math.max(rowHeight, lines.length * 3.5 + 2);
+      const neededHeight = Math.max(rowHeight, lines.length * 4 + 2);
 
       if (y + neededHeight > pageHeight - 20) {
         doc.addPage();
         y = 10;
         drawTableHeader();
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
       }
 
       if (idx % 2 === 0) {
@@ -195,6 +203,7 @@ const LabReports = () => {
       }
 
       doc.setTextColor(50, 50, 50);
+      doc.setFontSize(12);
       let x = margin;
 
       // Lab Name
@@ -239,25 +248,26 @@ const LabReports = () => {
       y += neededHeight;
     });
 
-    // Summary footer
-    if (y + 20 > pageHeight - 10) {
+    // Summary footer — font 13 bold
+    if (y + 30 > pageHeight - 10) {
       doc.addPage();
       y = 10;
     }
 
     y += 5;
     doc.setFillColor(0, 102, 153);
-    doc.rect(margin, y, usableWidth, 14, "F");
+    doc.rect(margin, y, usableWidth, 20, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.text(`Total Original Price: Rs. ${totals.totalOriginal.toLocaleString()}`, margin + 5, y + 6);
     doc.text(`Total Discount Price: Rs. ${totals.totalDiscounted.toLocaleString()}`, margin + usableWidth * 0.35, y + 6);
     doc.text(`Total Savings: Rs. ${totals.totalSavings.toLocaleString()}`, margin + usableWidth * 0.7, y + 6);
-    doc.text(`Total Orders: ${orders.length}`, margin + 5, y + 12);
+    doc.text(`Total Orders: ${orders.length}`, margin + 5, y + 13);
+    doc.text(`Total Discount Availed: Rs. ${totalDiscountAvailed.toLocaleString()}`, margin + usableWidth * 0.35, y + 13);
 
     // Footer
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.setFont("helvetica", "normal");
     doc.text(`Generated on ${format(new Date(), "dd MMM yyyy, hh:mm a")} | MyPakLabs`, margin, pageHeight - 5);

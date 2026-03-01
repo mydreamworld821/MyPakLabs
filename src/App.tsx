@@ -95,7 +95,7 @@ import AdminHealthPackages from "./pages/admin/HealthPackages";
 import HealthPackages from "./pages/HealthPackages";
 import AdminNurseCommissions from "./pages/admin/NurseCommissions";
 import AdminLegalPages from "./pages/admin/LegalPages";
-import AdminLabReports from "./pages/admin/LabReports";
+import AdminUniversalReports from "./pages/admin/UniversalReports";
 import LegalPage from "./pages/LegalPage";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 import ChatList from "./pages/ChatList";
@@ -223,7 +223,7 @@ const AppContent = () => {
           <Route path="/admin/health-packages" element={<ProtectedRoute requireAdmin><AdminHealthPackages /></ProtectedRoute>} />
           <Route path="/admin/nurse-commissions" element={<ProtectedRoute requireAdmin><AdminNurseCommissions /></ProtectedRoute>} />
           <Route path="/admin/legal-pages" element={<ProtectedRoute requireAdmin><AdminLegalPages /></ProtectedRoute>} />
-          <Route path="/admin/lab-reports" element={<ProtectedRoute requireAdmin><AdminLabReports /></ProtectedRoute>} />
+          <Route path="/admin/lab-reports" element={<ProtectedRoute requireAdmin><AdminUniversalReports /></ProtectedRoute>} />
           
           {/* Moderator Routes */}
           <Route path="/moderator" element={<ProtectedRoute requireModerator><ModeratorDashboard /></ProtectedRoute>} />

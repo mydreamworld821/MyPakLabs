@@ -136,19 +136,21 @@ export const generateUniversalPDF = (
     x += cols[3].width;
 
     // Details - same font, properly wrapped
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(fontSize);
     doc.text(detailLines, x + 2, textY);
     x += cols[4].width;
 
     // Total
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica", "normal");
     doc.text(`Rs. ${order.originalTotal.toLocaleString()}`, x + 2, textY);
     x += cols[5].width;
 
     // Final
     doc.setTextColor(0, 102, 153);
+    doc.setFont("helvetica", "normal");
     doc.text(`Rs. ${order.discountedTotal.toLocaleString()}`, x + 2, textY);
     doc.setTextColor(40, 40, 40);
-    doc.setFont("helvetica", "normal");
 
     y += rowHeight;
   };

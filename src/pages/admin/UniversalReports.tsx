@@ -107,7 +107,18 @@ const UniversalReports = () => {
 
           data.forEach(o => {
             const tests = Array.isArray(o.tests) ? o.tests : [];
-            const items = tests.map((t: any) => t.test_name || t.name || "Unknown").join(", ");
+            const itemParts: string[] = [];
+            tests.forEach((t: any) => {
+              if (t.type === "package" && Array.isArray(t.tests_included)) {
+                // Clean package name (remove emoji prefix)
+                const pkgName = (t.test_name || t.name || "Package").replace(/📦\s*/g, "").trim();
+                const includedTests = t.tests_included.map((inc: any) => inc.name || "Test").join(", ");
+                itemParts.push(`[${pkgName}]: ${includedTests}`);
+              } else {
+                itemParts.push(t.test_name || t.name || "Unknown");
+              }
+            });
+            const items = itemParts.join(", ");
             results.push({
               id: o.id, category: "lab",
               entityName: o.lab_id ? labMap[o.lab_id] || "Unknown Lab" : "N/A",

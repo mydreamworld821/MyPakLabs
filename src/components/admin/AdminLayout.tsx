@@ -367,7 +367,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
             <FlaskConical className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold">Medilabs Admin</span>
+          <span className="font-semibold">MyPakLabs Admin</span>
         </div>
       </header>
 
@@ -385,7 +385,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               <FlaskConical className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-bold">Medilabs</h1>
+              <h1 className="font-bold">MyPakLabs</h1>
               <p className="text-xs text-muted-foreground">Admin Panel</p>
             </div>
           </div>

@@ -68,6 +68,7 @@ export const generateUniversalPDF = (
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.text(`${title} (${count})`, margin + 3, y + 6.5);
+    doc.setFont("helvetica", "normal");
     y += 12;
   };
 
@@ -83,6 +84,7 @@ export const generateUniversalPDF = (
       doc.text(col.header, x + 2, y + 5.5);
       x += col.width;
     });
+    doc.setFont("helvetica", "normal");
     y += headerHeight;
   };
 

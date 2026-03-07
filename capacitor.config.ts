@@ -3,6 +3,7 @@ import type { CapacitorConfig } from '@capacitor/core';
 const config: CapacitorConfig = {
   appId: 'com.mypaklabs.app',
   appName: 'MyPakLabs',
+  // IMPORTANT: For production APK/AAB builds, comment out the entire 'server' block below
   webDir: 'dist',
   server: {
     // For development: enables hot-reload from Lovable sandbox

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -6,29 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { CitySelect } from "@/components/ui/city-select";
-import NearbyPharmaciesMap from "@/components/pharmacy/NearbyPharmaciesMap";
 import { usePageLayoutSettings } from "@/hooks/usePageLayoutSettings";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import PharmacyListCard from "@/components/directory/PharmacyListCard";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { 
   Store, 
   Search, 
   MapPin, 
-  Clock, 
-  Truck, 
-  Star,
-  Phone,
   Loader2,
-  Pill,
-  X,
-  Navigation
+  Star,
+  Navigation,
+  RefreshCw,
+  AlertCircle,
+  LocateFixed,
+  List,
 } from "lucide-react";
 
 interface MedicalStore {
@@ -46,18 +41,44 @@ interface MedicalStore {
   rating: number;
   review_count: number;
   is_featured: boolean;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  google_maps_url?: string | null;
 }
+
+interface NearbyStore extends MedicalStore {
+  distance: number;
+  hasCoordinates: boolean;
+}
+
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const FindPharmacies = () => {
   const navigate = useNavigate();
+  const { getCurrentPosition } = useGeolocation();
   const [stores, setStores] = useState<MedicalStore[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
-  const [medicineSearch, setMedicineSearch] = useState("");
-  const [showMedicineSearch, setShowMedicineSearch] = useState(false);
 
-  // Get admin-managed layout settings
+  // GPS / Nearby state
+  const [activeTab, setActiveTab] = useState<"all" | "nearby">("all");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyStores, setNearbyStores] = useState<NearbyStore[]>([]);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [radius, setRadius] = useState(10);
+
   const { settings: layoutSettings, getGridClasses } = usePageLayoutSettings("pharmacies_listing");
 
   useEffect(() => {
@@ -89,7 +110,46 @@ const FindPharmacies = () => {
     }
   };
 
+  // Compute nearby stores when location or radius changes
+  const computeNearby = useCallback((allStores: MedicalStore[], lat: number, lng: number, r: number) => {
+    const result: NearbyStore[] = allStores
+      .filter(s => s.location_lat && s.location_lng)
+      .map(s => ({
+        ...s,
+        distance: calculateDistance(lat, lng, s.location_lat!, s.location_lng!),
+        hasCoordinates: true,
+      }))
+      .filter(s => s.distance <= r)
+      .sort((a, b) => a.distance - b.distance);
+    setNearbyStores(result);
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && stores.length > 0) {
+      computeNearby(stores, userLocation.lat, userLocation.lng, radius);
+    }
+  }, [userLocation, stores, radius, computeNearby]);
+
+  const enableLocation = async () => {
+    setGpsLoading(true);
+    setLocationError(null);
+    const position = await getCurrentPosition();
+    if (position) {
+      setUserLocation({ lat: position.latitude, lng: position.longitude });
+      setActiveTab("nearby");
+      toast.success("Location found! Showing nearby pharmacies.");
+    } else {
+      setLocationError("Could not get your location. Please allow location access.");
+    }
+    setGpsLoading(false);
+  };
+
   const filteredStores = stores.filter(store =>
+    store.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    store.area?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredNearby = nearbyStores.filter(store =>
     store.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     store.area?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -97,11 +157,7 @@ const FindPharmacies = () => {
   const featuredStores = filteredStores.filter(s => s.is_featured);
   const regularStores = filteredStores.filter(s => !s.is_featured);
 
-  const handleOrderWithMedicine = (storeId: string) => {
-    // Navigate to order page with medicine name pre-filled
-    navigate(`/order-medicine/${storeId}?medicine=${encodeURIComponent(medicineSearch)}`);
-    setShowMedicineSearch(false);
-  };
+  const displayStores = activeTab === "nearby" ? filteredNearby : filteredStores;
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,56 +172,179 @@ const FindPharmacies = () => {
             </p>
           </div>
 
-          {/* Nearby Pharmacies Map */}
-          <div className="max-w-2xl mx-auto mb-6">
-            <NearbyPharmaciesMap />
+          {/* Tabs: Nearby / All */}
+          <div className="max-w-2xl mx-auto mb-5">
+            <div className="flex rounded-lg border border-border bg-muted/30 p-1 gap-1">
+              <Button
+                variant={activeTab === "nearby" ? "default" : "ghost"}
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={() => {
+                  if (!userLocation && !gpsLoading) {
+                    enableLocation();
+                  } else {
+                    setActiveTab("nearby");
+                  }
+                }}
+                disabled={gpsLoading}
+              >
+                {gpsLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <LocateFixed className="w-4 h-4" />
+                )}
+                Nearby
+              </Button>
+              <Button
+                variant={activeTab === "all" ? "default" : "ghost"}
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={() => setActiveTab("all")}
+              >
+                <List className="w-4 h-4" />
+                All Pharmacies
+              </Button>
+            </div>
           </div>
 
-          {/* Store Search & Filter */}
+          {/* Nearby Controls */}
+          {activeTab === "nearby" && userLocation && (
+            <div className="max-w-2xl mx-auto mb-5">
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">GPS Active</span>
+                      <Badge variant="outline" className="text-xs">
+                        {radius} km radius
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={enableLocation}
+                      disabled={gpsLoading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${gpsLoading ? "animate-spin" : ""}`} />
+                    </Button>
+                  </div>
+                  <Slider
+                    value={[radius]}
+                    onValueChange={(v) => setRadius(v[0])}
+                    min={3}
+                    max={25}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[10px] text-muted-foreground">3 km</span>
+                    <span className="text-[10px] text-muted-foreground">25 km</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Location Error */}
+          {activeTab === "nearby" && locationError && (
+            <div className="max-w-2xl mx-auto mb-5">
+              <Card className="border-destructive/20 bg-destructive/5">
+                <CardContent className="p-4 flex flex-col items-center text-center gap-3">
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                  <p className="text-sm text-muted-foreground">{locationError}</p>
+                  <Button onClick={enableLocation} variant="outline" size="sm">
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Try Again
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Search & Filter (show city filter only for "All" tab) */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="flex gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search pharmacies or areas..."
+                  placeholder={activeTab === "nearby" ? "Search nearby pharmacies..." : "Search pharmacies or areas..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 text-sm"
                 />
               </div>
-              <CitySelect
-                value={selectedCity}
-                onValueChange={setSelectedCity}
-                showAllOption
-                allOptionLabel="All Cities"
-                className="w-40"
-              />
+              {activeTab === "all" && (
+                <CitySelect
+                  value={selectedCity}
+                  onValueChange={setSelectedCity}
+                  showAllOption
+                  allOptionLabel="All Cities"
+                  className="w-40"
+                />
+              )}
             </div>
           </div>
 
           {/* Results */}
-          {loading ? (
+          {(loading || (activeTab === "nearby" && gpsLoading)) ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : filteredStores.length === 0 ? (
+          ) : activeTab === "nearby" && !userLocation ? (
+            // Waiting for GPS — prompt is already shown above via enableLocation
+            <div className="text-center py-12">
+              <LocateFixed className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="font-semibold mb-1">Enable Location</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Allow location access to find pharmacies near you
+              </p>
+              <Button onClick={enableLocation} disabled={gpsLoading}>
+                <Navigation className="w-4 h-4 mr-2" />
+                Enable GPS
+              </Button>
+            </div>
+          ) : displayStores.length === 0 ? (
             <div className="text-center py-12">
               <Store className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
               <h3 className="font-semibold mb-1">No Pharmacies Found</h3>
               <p className="text-sm text-muted-foreground">
-                Try adjusting your search or selecting a different city
+                {activeTab === "nearby"
+                  ? `No pharmacies found within ${radius} km. Try increasing the radius.`
+                  : "Try adjusting your search or selecting a different city"}
               </p>
             </div>
+          ) : activeTab === "nearby" ? (
+            /* Nearby results with distance badges */
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Found {filteredNearby.length} {filteredNearby.length === 1 ? "pharmacy" : "pharmacies"} within {radius} km
+              </p>
+              <div
+                className={getGridClasses()}
+                style={{ gap: `${layoutSettings.items_gap}px` }}
+              >
+                {filteredNearby.map((store) => (
+                  <div key={store.id} className="relative">
+                    <Badge className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-[10px]">
+                      {store.distance.toFixed(1)} km
+                    </Badge>
+                    <PharmacyListCard store={store} settings={layoutSettings} />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
+            /* All pharmacies */
             <div className="space-y-8">
-              {/* Featured Stores */}
               {featuredStores.length > 0 && (
                 <div>
                   <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <Star className="w-5 h-5 text-amber-500" />
                     Featured Pharmacies
                   </h2>
-                  <div 
+                  <div
                     className={getGridClasses()}
                     style={{ gap: `${layoutSettings.items_gap}px` }}
                   >
@@ -175,13 +354,11 @@ const FindPharmacies = () => {
                   </div>
                 </div>
               )}
-
-              {/* All Stores */}
               <div>
                 {featuredStores.length > 0 && (
                   <h2 className="text-lg font-semibold mb-4">All Pharmacies</h2>
                 )}
-                <div 
+                <div
                   className={getGridClasses()}
                   style={{ gap: `${layoutSettings.items_gap}px` }}
                 >
@@ -195,102 +372,6 @@ const FindPharmacies = () => {
         </div>
       </main>
       <Footer />
-
-      {/* Medicine Search Dialog */}
-      <Dialog open={showMedicineSearch} onOpenChange={setShowMedicineSearch}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pill className="w-5 h-5 text-emerald-600" />
-              Search Medicine
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 mt-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Enter medicine name (e.g., Panadol, Augmentin)..."
-                value={medicineSearch}
-                onChange={(e) => setMedicineSearch(e.target.value)}
-                className="pl-9"
-                autoFocus
-              />
-              {medicineSearch && (
-                <button
-                  onClick={() => setMedicineSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {medicineSearch.length >= 2 && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Select a pharmacy to order <span className="font-medium text-foreground">"{medicineSearch}"</span>
-                </p>
-                
-                <div className="max-h-[300px] overflow-y-auto space-y-2">
-                  {stores.length === 0 ? (
-                    <p className="text-center py-4 text-sm text-muted-foreground">
-                      No pharmacies available. Please try again later.
-                    </p>
-                  ) : (
-                    stores.slice(0, 10).map((store) => (
-                      <Card 
-                        key={store.id} 
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleOrderWithMedicine(store.id)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                              {store.logo_url ? (
-                                <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-lg" />
-                              ) : (
-                                <Store className="w-5 h-5 text-emerald-600" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{store.name}</p>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {store.area}, {store.city}
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                              {store.delivery_available && (
-                                <Badge variant="outline" className="text-[10px] bg-blue-50">
-                                  <Truck className="w-3 h-3 mr-1" />
-                                  Delivery
-                                </Badge>
-                              )}
-                              <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700">
-                                Order Here
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {medicineSearch.length < 2 && (
-              <div className="text-center py-6">
-                <Pill className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  Type at least 2 characters to search for a medicine
-                </p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

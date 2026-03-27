@@ -694,6 +694,15 @@ const PharmacyDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+      {/* Store Settings Dialog */}
+      {store && (
+        <PharmacySettingsDialog
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          storeId={store.id}
+          onSaved={fetchStoreAndOrders}
+        />
+      )}
     </div>
   );
 };

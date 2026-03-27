@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import PharmacySettingsDialog from "@/components/pharmacy/PharmacySettingsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,6 +72,7 @@ const PharmacyDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedOrder, setSelectedOrder] = useState<MedicineOrder | null>(null);
   const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     // Wait for auth to resolve before redirecting.
@@ -335,7 +337,7 @@ const PharmacyDashboard = () => {
                   <Badge className={store.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
                     {store.is_active ? "Active" : "Inactive"}
                   </Badge>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
                     <Settings className="w-4 h-4" />
                   </Button>
                 </div>
@@ -692,6 +694,15 @@ const PharmacyDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+      {/* Store Settings Dialog */}
+      {store && (
+        <PharmacySettingsDialog
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          storeId={store.id}
+          onSaved={fetchStoreAndOrders}
+        />
+      )}
     </div>
   );
 };

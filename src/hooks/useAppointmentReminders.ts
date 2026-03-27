@@ -7,7 +7,7 @@ const sentReminders = new Set<string>();
 
 export const useAppointmentReminders = () => {
   const { user } = useAuth();
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const checkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const checkAndSendReminders = useCallback(async () => {
     if (!user) return;

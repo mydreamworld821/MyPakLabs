@@ -52,7 +52,7 @@
    useEffect(() => {
      if (!video) return;
  
-     let viewTimer: NodeJS.Timeout;
+     let viewTimer: ReturnType<typeof setTimeout>;
  
      const handleTimeUpdate = () => {
        if (videoRef.current && videoRef.current.currentTime >= 3 && !hasTrackedView) {

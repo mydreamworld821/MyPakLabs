@@ -121,28 +121,6 @@ const FindPharmacies = () => {
             <NearbyPharmaciesMap />
           </div>
 
-          {/* Medicine Search Card */}
-          <Card className="max-w-2xl mx-auto mb-6 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <Pill className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm">Search for Medicine</h3>
-                  <p className="text-xs text-muted-foreground">Find which pharmacies have your medicine</p>
-                </div>
-              </div>
-              <Button 
-                className="w-full bg-emerald-600 hover:bg-emerald-700"
-                onClick={() => setShowMedicineSearch(true)}
-              >
-                <Search className="w-4 h-4 mr-2" />
-                Search Medicine
-              </Button>
-            </CardContent>
-          </Card>
-
           {/* Store Search & Filter */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="flex gap-3">

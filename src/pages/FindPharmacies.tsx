@@ -112,7 +112,7 @@ const FindPharmacies = () => {
 
   // Compute nearby stores when location or radius changes
   const computeNearby = useCallback((allStores: MedicalStore[], lat: number, lng: number, r: number) => {
-    const result: NearbyStore[] = allStores
+    const withCoords: NearbyStore[] = allStores
       .filter(s => s.location_lat && s.location_lng)
       .map(s => ({
         ...s,
@@ -121,6 +121,18 @@ const FindPharmacies = () => {
       }))
       .filter(s => s.distance <= r)
       .sort((a, b) => a.distance - b.distance);
+
+    // Fallback: if no GPS-tagged pharmacies found, include all pharmacies without GPS
+    // so users still see results even when pharmacies haven't added coordinates yet
+    const withoutCoords: NearbyStore[] = allStores
+      .filter(s => !s.location_lat || !s.location_lng)
+      .map(s => ({
+        ...s,
+        distance: -1,
+        hasCoordinates: false,
+      }));
+
+    const result = withCoords.length > 0 ? [...withCoords, ...withoutCoords] : withoutCoords;
     setNearbyStores(result);
   }, []);
 

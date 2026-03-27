@@ -337,10 +337,14 @@ const FindPharmacies = () => {
                 className={getGridClasses()}
                 style={{ gap: `${layoutSettings.items_gap}px` }}
               >
-                {filteredNearby.map((store) => (
+              {filteredNearby.map((store) => (
                   <div key={store.id} className="relative">
-                    <Badge className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-[10px]">
-                      {store.distance.toFixed(1)} km
+                    <Badge className={`absolute top-2 right-2 z-10 text-[10px] ${
+                      store.hasCoordinates 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {store.hasCoordinates ? `${store.distance.toFixed(1)} km` : "No GPS"}
                     </Badge>
                     <PharmacyListCard store={store} settings={layoutSettings} />
                   </div>

@@ -97,6 +97,7 @@ import AdminNurseCommissions from "./pages/admin/NurseCommissions";
 import AdminLegalPages from "./pages/admin/LegalPages";
 import AdminUniversalReports from "./pages/admin/UniversalReports";
 import AdminAppVersions from "./pages/admin/AppVersions";
+import DownloadApp from "./pages/DownloadApp";
 import LegalPage from "./pages/LegalPage";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 import ChatList from "./pages/ChatList";

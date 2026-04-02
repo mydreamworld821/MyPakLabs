@@ -20,6 +20,7 @@ import { PatientTestimonials } from "@/components/home/PatientTestimonials";
 import OurPartners from "@/components/home/OurPartners";
 import FeaturedHealthPackages from "@/components/home/FeaturedHealthPackages";
 import AppDownloadPopup from "@/components/home/AppDownloadPopup";
+import AppDownloadBanner from "@/components/home/AppDownloadBanner";
 
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";

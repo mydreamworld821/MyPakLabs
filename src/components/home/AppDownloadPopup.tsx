@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Download, Star, Shield, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, Star, Shield, Zap } from "lucide-react";
 import appIcon from "@/assets/mypaklabs-logo.png";
 
 interface AppVersion {
@@ -52,30 +51,29 @@ const AppDownloadPopup = () => {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - click anywhere goes to download */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-in fade-in duration-300"
-        onClick={handleDismiss}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-in fade-in duration-300 cursor-pointer"
+        onClick={handleDownload}
       />
 
-      {/* Popup */}
-      <div className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-lg z-[10000] animate-in slide-in-from-bottom duration-500 md:slide-in-from-bottom-0 md:fade-in">
+      {/* Popup - entire popup is clickable */}
+      <div
+        className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-lg z-[10000] animate-in slide-in-from-bottom duration-500 md:slide-in-from-bottom-0 md:fade-in cursor-pointer"
+        onClick={handleDownload}
+      >
         <div className="bg-background rounded-t-3xl md:rounded-3xl shadow-2xl border overflow-hidden">
           {/* Header with gradient and app icon */}
           <div className="bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-6 text-primary-foreground relative">
             <button
-              onClick={handleDismiss}
+              onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/25 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl p-1.5 shrink-0">
-                <img 
-                  src={appIcon} 
-                  alt="MyPakLabs" 
-                  className="w-full h-full object-contain"
-                />
+                <img src={appIcon} alt="MyPakLabs" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h3 className="text-xl font-bold tracking-tight">MyPakLabs</h3>
@@ -91,22 +89,15 @@ const AppDownloadPopup = () => {
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <div>
-              <h4 className="font-semibold text-base text-foreground mb-1.5">
+              <h4 className="font-semibold text-base text-foreground mb-1">
                 Get the full experience on your phone
               </h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Book lab tests, find nurses & pharmacies near you — faster, easier, and with exclusive app-only features.
+                Book lab tests, find nurses & pharmacies near you — tap anywhere to continue.
               </p>
             </div>
-
-            {version.release_notes && (
-              <div className="text-sm text-muted-foreground bg-muted/60 p-3 rounded-xl border">
-                <span className="font-semibold text-foreground">What's new:</span>{" "}
-                {version.release_notes}
-              </div>
-            )}
 
             <div className="flex items-center gap-5 text-xs text-muted-foreground">
               {version.file_size_mb && (
@@ -120,16 +111,6 @@ const AppDownloadPopup = () => {
                 <Shield className="w-3.5 h-3.5 text-green-600" />
                 Verified & Secure
               </span>
-            </div>
-
-            <div className="flex gap-3 pt-1">
-              <Button onClick={handleDownload} className="flex-1 gap-2 h-12 text-base font-semibold rounded-xl" size="lg">
-                <Download className="w-5 h-5" />
-                Download App
-              </Button>
-              <Button variant="outline" onClick={handleDismiss} className="h-12 px-6 rounded-xl" size="lg">
-                Later
-              </Button>
             </div>
           </div>
         </div>

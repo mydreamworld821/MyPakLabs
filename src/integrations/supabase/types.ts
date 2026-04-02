@@ -2862,6 +2862,41 @@ export type Database = {
         }
         Relationships: []
       }
+      review_replies: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          review_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          review_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          review_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_replies_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           admin_notes: string | null
@@ -3416,6 +3451,7 @@ export type Database = {
         | "nurse"
         | "pharmacy"
         | "platform"
+        | "app"
       review_status: "pending" | "approved" | "rejected"
       wallet_transaction_type: "credit" | "debit"
     }
@@ -3596,6 +3632,7 @@ export const Constants = {
         "nurse",
         "pharmacy",
         "platform",
+        "app",
       ],
       review_status: ["pending", "approved", "rejected"],
       wallet_transaction_type: ["credit", "debit"],

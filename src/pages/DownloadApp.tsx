@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AppReviewsSection } from "@/components/reviews/AppReviewsSection";
-import appIcon from "@/assets/playstore-icon.png";
+import appIcon from "@/assets/mypaklabs-logo.png";
 import { toast } from "sonner";
 
 interface AppVersion {

@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_versions: {
+        Row: {
+          created_at: string
+          download_count: number
+          file_size_mb: number | null
+          file_url: string
+          id: string
+          is_active: boolean
+          release_notes: string | null
+          updated_at: string
+          uploaded_by: string | null
+          version_code: number
+          version_name: string
+        }
+        Insert: {
+          created_at?: string
+          download_count?: number
+          file_size_mb?: number | null
+          file_url: string
+          id?: string
+          is_active?: boolean
+          release_notes?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+          version_code: number
+          version_name: string
+        }
+        Update: {
+          created_at?: string
+          download_count?: number
+          file_size_mb?: number | null
+          file_url?: string
+          id?: string
+          is_active?: boolean
+          release_notes?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+          version_code?: number
+          version_name?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_date: string
@@ -3311,6 +3353,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_download_count: {
+        Args: { version_id: string }
+        Returns: undefined
       }
       increment_video_view: { Args: { video_uuid: string }; Returns: undefined }
       mark_messages_delivered: {

@@ -387,6 +387,7 @@ const Index = () => {
       <SeoFooterSection />
 
       <Footer />
+      <AppDownloadPopup />
     </div>;
 };
 export default Index;

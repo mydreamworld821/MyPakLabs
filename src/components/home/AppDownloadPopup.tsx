@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, Download, Star, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import appIcon from "@/assets/playstore-icon.png";
+import appIcon from "@/assets/mypaklabs-logo.png";
 
 interface AppVersion {
   id: string;

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Star, Shield, Zap } from "lucide-react";
-import appIcon from "@/assets/mypaklabs-logo.png";
+import { X, Download, Share2, Star, Shield, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import appIcon from "@/assets/playstore-icon.png";
+import { toast } from "sonner";
 
 interface AppVersion {
   id: string;
@@ -37,36 +39,56 @@ const AppDownloadPopup = () => {
     fetchVersion();
   }, []);
 
-  const handleDismiss = () => {
+  const handleDismiss = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setVisible(false);
     sessionStorage.setItem("apk-popup-dismissed", "true");
   };
 
-  const handleDownload = () => {
+  const goToDownload = () => {
     handleDismiss();
     window.location.href = "/download";
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/download`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "MyPakLabs - Healthcare App",
+          text: "Download MyPakLabs app for lab tests, nurses & pharmacies near you!",
+          url: shareUrl,
+        });
+      } catch {
+        // cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Download link copied to clipboard!");
+    }
   };
 
   if (!visible || !version) return null;
 
   return (
     <>
-      {/* Backdrop - click anywhere goes to download */}
+      {/* Backdrop - click goes to download */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-in fade-in duration-300 cursor-pointer"
-        onClick={handleDownload}
+        onClick={goToDownload}
       />
 
-      {/* Popup - entire popup is clickable */}
+      {/* Popup - whole popup clickable */}
       <div
         className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-lg z-[10000] animate-in slide-in-from-bottom duration-500 md:slide-in-from-bottom-0 md:fade-in cursor-pointer"
-        onClick={handleDownload}
+        onClick={goToDownload}
       >
         <div className="bg-background rounded-t-3xl md:rounded-3xl shadow-2xl border overflow-hidden">
-          {/* Header with gradient and app icon */}
+          {/* Header */}
           <div className="bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-6 text-primary-foreground relative">
             <button
-              onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+              onClick={(e) => handleDismiss(e)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/25 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -95,9 +117,16 @@ const AppDownloadPopup = () => {
                 Get the full experience on your phone
               </h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Book lab tests, find nurses & pharmacies near you — tap anywhere to continue.
+                Book lab tests, find nurses & pharmacies near you — faster, easier, and with exclusive app-only features.
               </p>
             </div>
+
+            {version.release_notes && (
+              <div className="text-sm text-muted-foreground bg-muted/60 p-3 rounded-xl border">
+                <span className="font-semibold text-foreground">What's new:</span>{" "}
+                {version.release_notes}
+              </div>
+            )}
 
             <div className="flex items-center gap-5 text-xs text-muted-foreground">
               {version.file_size_mb && (
@@ -111,6 +140,26 @@ const AppDownloadPopup = () => {
                 <Shield className="w-3.5 h-3.5 text-green-600" />
                 Verified & Secure
               </span>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-1">
+              <Button
+                onClick={(e) => { e.stopPropagation(); goToDownload(); }}
+                className="flex-1 gap-2 h-12 text-base font-semibold rounded-xl"
+                size="lg"
+              >
+                <Download className="w-5 h-5" />
+                Get App
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                className="h-12 px-5 rounded-xl"
+                size="lg"
+              >
+                <Share2 className="w-5 h-5" />
+              </Button>
             </div>
           </div>
         </div>

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import appIcon from "@/assets/mypaklabs-logo.png";
-import { toast } from "sonner";
 
 interface AppVersion {
   id: string;
@@ -42,24 +41,6 @@ const AppDownloadBanner = () => {
 
   const handleDownload = () => {
     window.location.href = "/download";
-  };
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/download`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "MyPakLabs - Healthcare App",
-          text: "Download MyPakLabs app for lab tests, nurses & pharmacies near you!",
-          url: shareUrl,
-        });
-      } catch {
-        // user cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Download link copied to clipboard!");
-    }
   };
 
   if (dismissed || !version) return null;

@@ -67,30 +67,19 @@ const AppDownloadBanner = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[999] animate-in slide-in-from-bottom duration-500">
-      <div className="bg-primary text-primary-foreground px-3 py-2.5 flex items-center gap-3 shadow-lg">
+      <div
+        className="bg-primary text-primary-foreground px-3 py-2.5 flex items-center gap-3 shadow-lg cursor-pointer"
+        onClick={handleDownload}
+      >
         <img src={appIcon} alt="MyPakLabs" className="w-10 h-10 rounded-xl bg-white p-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">MyPakLabs App</p>
-          <p className="text-[10px] opacity-80">Book labs, nurses & more</p>
+          <p className="text-[10px] opacity-80">Tap anywhere to download</p>
         </div>
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 px-3 text-xs font-semibold shrink-0"
-          onClick={handleShare}
+        <button
+          onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+          className="p-1 opacity-70 hover:opacity-100 shrink-0"
         >
-          <Share2 className="w-3.5 h-3.5 mr-1" />
-          Share
-        </Button>
-        <Button
-          size="sm"
-          className="h-8 px-3 text-xs font-semibold bg-white text-primary hover:bg-white/90 shrink-0"
-          onClick={handleDownload}
-        >
-          <Download className="w-3.5 h-3.5 mr-1" />
-          Get
-        </Button>
-        <button onClick={handleDismiss} className="p-1 opacity-70 hover:opacity-100 shrink-0">
           <X className="w-4 h-4" />
         </button>
       </div>

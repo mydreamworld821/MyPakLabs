@@ -97,6 +97,7 @@ import AdminNurseCommissions from "./pages/admin/NurseCommissions";
 import AdminLegalPages from "./pages/admin/LegalPages";
 import AdminUniversalReports from "./pages/admin/UniversalReports";
 import AdminAppVersions from "./pages/admin/AppVersions";
+import DownloadApp from "./pages/DownloadApp";
 import LegalPage from "./pages/LegalPage";
 import NativeMobileWrapper from "./components/NativeMobileWrapper";
 import ChatList from "./pages/ChatList";
@@ -175,6 +176,7 @@ const AppContent = () => {
           <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/health-packages" element={<HealthPackages />} />
+          <Route path="/download" element={<DownloadApp />} />
           <Route path="/partner-registration" element={<PartnerRegistration />} />
           {/* Chat Routes */}
           <Route path="/chats" element={<ChatList />} />

@@ -176,6 +176,7 @@ const AppContent = () => {
           <Route path="/order-medicine/:storeId" element={<OrderMedicine />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/health-packages" element={<HealthPackages />} />
+          <Route path="/download" element={<DownloadApp />} />
           <Route path="/partner-registration" element={<PartnerRegistration />} />
           {/* Chat Routes */}
           <Route path="/chats" element={<ChatList />} />

@@ -390,6 +390,7 @@ const Index = () => {
 
       <Footer />
       <AppDownloadPopup />
+      <AppDownloadBanner />
     </div>;
 };
 export default Index;

@@ -43,11 +43,9 @@ const AppDownloadPopup = () => {
     sessionStorage.setItem("apk-popup-dismissed", "true");
   };
 
-  const handleDownload = async () => {
-    if (!version) return;
-    await supabase.rpc("increment_download_count" as any, { version_id: version.id });
-    window.open(version.file_url, "_blank");
+  const handleDownload = () => {
     handleDismiss();
+    window.location.href = "/download";
   };
 
   if (!visible || !version) return null;

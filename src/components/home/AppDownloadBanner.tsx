@@ -41,10 +41,8 @@ const AppDownloadBanner = () => {
     sessionStorage.setItem("apk-banner-dismissed", "true");
   };
 
-  const handleDownload = async () => {
-    if (!version) return;
-    await supabase.rpc("increment_download_count" as any, { version_id: version.id });
-    window.open(version.file_url, "_blank");
+  const handleDownload = () => {
+    window.location.href = "/download";
   };
 
   const handleShare = async () => {

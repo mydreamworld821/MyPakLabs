@@ -19,6 +19,7 @@ import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { PatientTestimonials } from "@/components/home/PatientTestimonials";
 import OurPartners from "@/components/home/OurPartners";
 import FeaturedHealthPackages from "@/components/home/FeaturedHealthPackages";
+import AppDownloadPopup from "@/components/home/AppDownloadPopup";
 
 import { useSectionConfig } from "@/hooks/useHomepageSections";
 import { useAuth } from "@/contexts/AuthContext";

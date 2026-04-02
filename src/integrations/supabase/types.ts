@@ -3354,6 +3354,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_download_count: {
+        Args: { version_id: string }
+        Returns: undefined
+      }
       increment_video_view: { Args: { video_uuid: string }; Returns: undefined }
       mark_messages_delivered: {
         Args: { p_room_id: string; p_user_id: string }

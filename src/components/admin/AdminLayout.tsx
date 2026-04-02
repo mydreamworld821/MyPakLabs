@@ -81,6 +81,7 @@ const navItems = [
   { href: "/admin/nurse-commissions", label: "Nurse Commissions", icon: Wallet },
   { href: "/admin/lab-reports", label: "Lab Reports", icon: FileText },
   { href: "/admin/legal-pages", label: "Legal Pages", icon: FileText },
+  { href: "/admin/app-versions", label: "App Versions", icon: Zap },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 

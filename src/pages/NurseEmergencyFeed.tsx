@@ -133,8 +133,26 @@ export default function NurseEmergencyFeed() {
         },
         () => {
           fetchRequests();
-          // Play notification sound for new requests (in-page sound)
           playNotificationSound();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'nurse_offers',
+        },
+        (payload: any) => {
+          // Refresh when patient sends a counter offer
+          if (payload.new?.patient_counter_price) {
+            fetchRequests();
+            playNotificationSound();
+            toast({
+              title: "💰 Patient Counter Offer!",
+              description: `Patient offered PKR ${payload.new.patient_counter_price.toLocaleString()}`,
+            });
+          }
         }
       )
       .subscribe();

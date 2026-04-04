@@ -287,6 +287,40 @@ export default function EmergencyRequestStatus() {
     fetchRequest();
   };
 
+  const handleSubmitCounterOffer = async () => {
+    if (!counterOffer || !counterPrice) {
+      toast({ title: "Error", description: "Please enter your counter price", variant: "destructive" });
+      return;
+    }
+
+    setSubmittingCounter(true);
+
+    const { error } = await supabase
+      .from("nurse_offers")
+      .update({
+        patient_counter_price: parseInt(counterPrice),
+        status: "countered" as any,
+      })
+      .eq("id", counterOffer.id);
+
+    setSubmittingCounter(false);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to send counter offer", variant: "destructive" });
+      return;
+    }
+
+    toast({
+      title: "Counter Offer Sent! 💰",
+      description: `Your counter of PKR ${parseInt(counterPrice).toLocaleString()} has been sent to ${counterOffer.nurse.full_name}`,
+    });
+
+    setCounterDialogOpen(false);
+    setCounterOffer(null);
+    setCounterPrice("");
+    fetchOffers();
+  };
+
   const handleCancelRequest = async () => {
     const { error } = await supabase
       .from("emergency_nursing_requests")

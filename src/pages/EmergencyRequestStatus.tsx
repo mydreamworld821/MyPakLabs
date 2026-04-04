@@ -621,6 +621,19 @@ export default function EmergencyRequestStatus() {
                             "{offer.message}"
                           </p>
                         )}
+                        {/* Show counter offer status if nurse accepted patient's counter */}
+                        {offer.patient_counter_price && offer.status === 'pending' && (
+                          <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2 text-sm">
+                            <span className="text-amber-700 font-medium">Your counter: PKR {offer.patient_counter_price.toLocaleString()}</span>
+                            <span className="text-amber-600 ml-1">— waiting for nurse response</span>
+                          </div>
+                        )}
+                        {offer.patient_counter_price && offer.status === 'countered' && (
+                          <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2 text-sm">
+                            <span className="text-blue-700 font-medium">Your counter: PKR {offer.patient_counter_price.toLocaleString()}</span>
+                            <span className="text-blue-600 ml-1">— nurse reviewing</span>
+                          </div>
+                        )}
                         <div className="flex gap-2 mt-3">
                           <Button
                             size="sm"
@@ -633,6 +646,19 @@ export default function EmergencyRequestStatus() {
                             ) : (
                               <>Accept <CheckCircle2 className="w-4 h-4 ml-1" /></>
                             )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                            onClick={() => {
+                              setCounterOffer(offer);
+                              setCounterPrice(offer.offered_price.toString());
+                              setCounterDialogOpen(true);
+                            }}
+                          >
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            Counter
                           </Button>
                           <Button size="sm" variant="outline" asChild>
                             <a href={`/nurse/${offer.nurse.id}`} target="_blank">

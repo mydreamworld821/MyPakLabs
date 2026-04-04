@@ -121,6 +121,10 @@ export default function EmergencyRequestStatus() {
   const [acceptingOffer, setAcceptingOffer] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [counterDialogOpen, setCounterDialogOpen] = useState(false);
+  const [counterOffer, setCounterOffer] = useState<NurseOffer | null>(null);
+  const [counterPrice, setCounterPrice] = useState("");
+  const [submittingCounter, setSubmittingCounter] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [tip, setTip] = useState("");

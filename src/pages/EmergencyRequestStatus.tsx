@@ -42,6 +42,7 @@ interface NurseOffer {
   message: string | null;
   status: string;
   distance_km: number | null;
+  patient_counter_price: number | null;
   created_at: string;
   nurse: {
     id: string;

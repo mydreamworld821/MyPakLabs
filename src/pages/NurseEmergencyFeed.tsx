@@ -225,13 +225,15 @@ export default function NurseEmergencyFeed() {
     if (nurseProfile) {
       const { data: offersData } = await supabase
         .from("nurse_offers")
-        .select("request_id")
+        .select("request_id, status, patient_counter_price")
         .eq("nurse_id", nurseProfile.id);
 
       if (offersData) {
         const offersMap: Record<string, boolean> = {};
-        offersData.forEach((o) => { offersMap[o.request_id] = true; });
+        offersData.forEach((o: any) => { offersMap[o.request_id] = true; });
         setMyOffers(offersMap);
+        // Store full offer data for counter-offer display
+        setMyOfferDetails(offersData as any[]);
       }
     }
 

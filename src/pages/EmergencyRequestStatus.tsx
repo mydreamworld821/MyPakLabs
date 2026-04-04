@@ -753,6 +753,49 @@ export default function EmergencyRequestStatus() {
           </DialogContent>
         </Dialog>
 
+        {/* Counter Offer Dialog */}
+        <Dialog open={counterDialogOpen} onOpenChange={setCounterDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Counter Offer</DialogTitle>
+              <DialogDescription>
+                Propose a different price to {counterOffer?.nurse.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {counterOffer && (
+                <div className="bg-muted rounded-lg p-3 text-sm">
+                  <p>Nurse's offer: <span className="font-bold">PKR {counterOffer.offered_price.toLocaleString()}</span></p>
+                  <p className="text-muted-foreground">ETA: {counterOffer.eta_minutes} min</p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Your Counter Price (PKR)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₨</span>
+                  <Input
+                    type="number"
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    placeholder="Enter your price"
+                    className="pl-8 text-lg font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCounterDialogOpen(false)}>Cancel</Button>
+              <Button
+                className="bg-amber-600 hover:bg-amber-700"
+                onClick={handleSubmitCounterOffer}
+                disabled={submittingCounter || !counterPrice}
+              >
+                {submittingCounter ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Counter Offer"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Rating Dialog */}
         <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
           <DialogContent>

@@ -266,7 +266,7 @@ export default function NurseEmergencyFeed() {
 
     const { error } = await supabase
       .from("nurse_offers")
-      .insert({
+      .upsert({
         request_id: selectedRequest.id,
         nurse_id: nurseProfile.id,
         offered_price: parseInt(offerPrice),
@@ -275,7 +275,9 @@ export default function NurseEmergencyFeed() {
         nurse_lat: currentLocation?.lat || null,
         nurse_lng: currentLocation?.lng || null,
         distance_km: distance ? Math.round(distance * 100) / 100 : null,
-      });
+        status: 'pending' as any,
+        patient_counter_price: null,
+      }, { onConflict: 'request_id,nurse_id' });
 
     setSubmittingOffer(false);
 

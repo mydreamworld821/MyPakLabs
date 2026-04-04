@@ -2149,6 +2149,7 @@ export type Database = {
           nurse_lat: number | null
           nurse_lng: number | null
           offered_price: number
+          patient_counter_price: number | null
           request_id: string
           status: Database["public"]["Enums"]["nurse_offer_status"]
           updated_at: string
@@ -2163,6 +2164,7 @@ export type Database = {
           nurse_lat?: number | null
           nurse_lng?: number | null
           offered_price: number
+          patient_counter_price?: number | null
           request_id: string
           status?: Database["public"]["Enums"]["nurse_offer_status"]
           updated_at?: string
@@ -2177,6 +2179,7 @@ export type Database = {
           nurse_lat?: number | null
           nurse_lng?: number | null
           offered_price?: number
+          patient_counter_price?: number | null
           request_id?: string
           status?: Database["public"]["Enums"]["nurse_offer_status"]
           updated_at?: string
@@ -3441,7 +3444,12 @@ export type Database = {
         | "cancelled"
       emergency_urgency: "critical" | "within_1_hour" | "scheduled"
       message_delivery_status: "sent" | "delivered" | "read"
-      nurse_offer_status: "pending" | "accepted" | "rejected" | "expired"
+      nurse_offer_status:
+        | "pending"
+        | "accepted"
+        | "rejected"
+        | "expired"
+        | "countered"
       order_status: "pending" | "confirmed" | "completed" | "cancelled"
       prescription_status: "pending_review" | "approved" | "rejected"
       review_entity_type:
@@ -3622,7 +3630,13 @@ export const Constants = {
       ],
       emergency_urgency: ["critical", "within_1_hour", "scheduled"],
       message_delivery_status: ["sent", "delivered", "read"],
-      nurse_offer_status: ["pending", "accepted", "rejected", "expired"],
+      nurse_offer_status: [
+        "pending",
+        "accepted",
+        "rejected",
+        "expired",
+        "countered",
+      ],
       order_status: ["pending", "confirmed", "completed", "cancelled"],
       prescription_status: ["pending_review", "approved", "rejected"],
       review_entity_type: [

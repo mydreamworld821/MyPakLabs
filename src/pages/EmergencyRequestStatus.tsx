@@ -42,6 +42,7 @@ interface NurseOffer {
   message: string | null;
   status: string;
   distance_km: number | null;
+  patient_counter_price: number | null;
   created_at: string;
   nurse: {
     id: string;
@@ -121,6 +122,10 @@ export default function EmergencyRequestStatus() {
   const [acceptingOffer, setAcceptingOffer] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [counterDialogOpen, setCounterDialogOpen] = useState(false);
+  const [counterOffer, setCounterOffer] = useState<NurseOffer | null>(null);
+  const [counterPrice, setCounterPrice] = useState("");
+  const [submittingCounter, setSubmittingCounter] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [tip, setTip] = useState("");
@@ -280,6 +285,40 @@ export default function EmergencyRequestStatus() {
 
     setAcceptingOffer(null);
     fetchRequest();
+  };
+
+  const handleSubmitCounterOffer = async () => {
+    if (!counterOffer || !counterPrice) {
+      toast({ title: "Error", description: "Please enter your counter price", variant: "destructive" });
+      return;
+    }
+
+    setSubmittingCounter(true);
+
+    const { error } = await supabase
+      .from("nurse_offers")
+      .update({
+        patient_counter_price: parseInt(counterPrice),
+        status: "countered" as any,
+      })
+      .eq("id", counterOffer.id);
+
+    setSubmittingCounter(false);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to send counter offer", variant: "destructive" });
+      return;
+    }
+
+    toast({
+      title: "Counter Offer Sent! 💰",
+      description: `Your counter of PKR ${parseInt(counterPrice).toLocaleString()} has been sent to ${counterOffer.nurse.full_name}`,
+    });
+
+    setCounterDialogOpen(false);
+    setCounterOffer(null);
+    setCounterPrice("");
+    fetchOffers();
   };
 
   const handleCancelRequest = async () => {
@@ -617,6 +656,19 @@ export default function EmergencyRequestStatus() {
                             "{offer.message}"
                           </p>
                         )}
+                        {/* Show counter offer status if nurse accepted patient's counter */}
+                        {offer.patient_counter_price && offer.status === 'pending' && (
+                          <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2 text-sm">
+                            <span className="text-amber-700 font-medium">Your counter: PKR {offer.patient_counter_price.toLocaleString()}</span>
+                            <span className="text-amber-600 ml-1">— waiting for nurse response</span>
+                          </div>
+                        )}
+                        {offer.patient_counter_price && offer.status === 'countered' && (
+                          <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2 text-sm">
+                            <span className="text-blue-700 font-medium">Your counter: PKR {offer.patient_counter_price.toLocaleString()}</span>
+                            <span className="text-blue-600 ml-1">— nurse reviewing</span>
+                          </div>
+                        )}
                         <div className="flex gap-2 mt-3">
                           <Button
                             size="sm"
@@ -629,6 +681,19 @@ export default function EmergencyRequestStatus() {
                             ) : (
                               <>Accept <CheckCircle2 className="w-4 h-4 ml-1" /></>
                             )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                            onClick={() => {
+                              setCounterOffer(offer);
+                              setCounterPrice(offer.offered_price.toString());
+                              setCounterDialogOpen(true);
+                            }}
+                          >
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            Counter
                           </Button>
                           <Button size="sm" variant="outline" asChild>
                             <a href={`/nurse/${offer.nurse.id}`} target="_blank">
@@ -683,6 +748,49 @@ export default function EmergencyRequestStatus() {
               </Button>
               <Button variant="destructive" onClick={handleCancelRequest}>
                 Yes, Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Counter Offer Dialog */}
+        <Dialog open={counterDialogOpen} onOpenChange={setCounterDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Counter Offer</DialogTitle>
+              <DialogDescription>
+                Propose a different price to {counterOffer?.nurse.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {counterOffer && (
+                <div className="bg-muted rounded-lg p-3 text-sm">
+                  <p>Nurse's offer: <span className="font-bold">PKR {counterOffer.offered_price.toLocaleString()}</span></p>
+                  <p className="text-muted-foreground">ETA: {counterOffer.eta_minutes} min</p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Your Counter Price (PKR)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₨</span>
+                  <Input
+                    type="number"
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    placeholder="Enter your price"
+                    className="pl-8 text-lg font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCounterDialogOpen(false)}>Cancel</Button>
+              <Button
+                className="bg-amber-600 hover:bg-amber-700"
+                onClick={handleSubmitCounterOffer}
+                disabled={submittingCounter || !counterPrice}
+              >
+                {submittingCounter ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Counter Offer"}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -94,6 +94,7 @@ export default function NurseEmergencyFeed() {
   const [nurseProfile, setNurseProfile] = useState<NurseProfile | null>(null);
   const [requests, setRequests] = useState<EmergencyRequest[]>([]);
   const [myOffers, setMyOffers] = useState<Record<string, boolean>>({});
+  const [myOfferDetails, setMyOfferDetails] = useState<Array<{ request_id: string; status: string; patient_counter_price: number | null }>>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   
   // Offer dialog state
@@ -132,8 +133,26 @@ export default function NurseEmergencyFeed() {
         },
         () => {
           fetchRequests();
-          // Play notification sound for new requests (in-page sound)
           playNotificationSound();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'nurse_offers',
+        },
+        (payload: any) => {
+          // Refresh when patient sends a counter offer
+          if (payload.new?.patient_counter_price) {
+            fetchRequests();
+            playNotificationSound();
+            toast({
+              title: "💰 Patient Counter Offer!",
+              description: `Patient offered PKR ${payload.new.patient_counter_price.toLocaleString()}`,
+            });
+          }
         }
       )
       .subscribe();
@@ -225,13 +244,15 @@ export default function NurseEmergencyFeed() {
     if (nurseProfile) {
       const { data: offersData } = await supabase
         .from("nurse_offers")
-        .select("request_id")
+        .select("request_id, status, patient_counter_price")
         .eq("nurse_id", nurseProfile.id);
 
       if (offersData) {
         const offersMap: Record<string, boolean> = {};
-        offersData.forEach((o) => { offersMap[o.request_id] = true; });
+        offersData.forEach((o: any) => { offersMap[o.request_id] = true; });
         setMyOffers(offersMap);
+        // Store full offer data for counter-offer display
+        setMyOfferDetails(offersData as any[]);
       }
     }
 
@@ -263,7 +284,7 @@ export default function NurseEmergencyFeed() {
 
     const { error } = await supabase
       .from("nurse_offers")
-      .insert({
+      .upsert({
         request_id: selectedRequest.id,
         nurse_id: nurseProfile.id,
         offered_price: parseInt(offerPrice),
@@ -272,7 +293,9 @@ export default function NurseEmergencyFeed() {
         nurse_lat: currentLocation?.lat || null,
         nurse_lng: currentLocation?.lng || null,
         distance_km: distance ? Math.round(distance * 100) / 100 : null,
-      });
+        status: 'pending' as any,
+        patient_counter_price: null,
+      }, { onConflict: 'request_id,nurse_id' });
 
     setSubmittingOffer(false);
 
@@ -436,21 +459,64 @@ export default function NurseEmergencyFeed() {
                       </p>
                     )}
 
-                    <div className="flex gap-2">
-                      {myOffers[request.id] ? (
-                        <Button className="flex-1" variant="outline" disabled>
-                          <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
-                          Offer Sent
-                        </Button>
-                      ) : (
-                        <Button
-                          className="flex-1 bg-red-600 hover:bg-red-700"
-                          onClick={() => openOfferDialog(request)}
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Send Offer
-                        </Button>
-                      )}
+                    <div className="space-y-2">
+                      {(() => {
+                        const offerDetail = myOfferDetails.find(o => o.request_id === request.id);
+                        if (offerDetail?.patient_counter_price) {
+                          return (
+                            <>
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-sm font-medium text-amber-800">
+                                  💰 Patient countered: PKR {offerDetail.patient_counter_price.toLocaleString()}
+                                </p>
+                                <div className="flex gap-2 mt-2">
+                                  <Button
+                                    size="sm"
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    onClick={async () => {
+                                      const { error } = await supabase
+                                        .from("nurse_offers")
+                                        .update({ 
+                                          offered_price: offerDetail.patient_counter_price!,
+                                          status: "pending" as any 
+                                        })
+                                        .eq("request_id", request.id)
+                                        .eq("nurse_id", nurseProfile!.id);
+                                      if (!error) {
+                                        toast({ title: "Counter Accepted!", description: "You accepted the patient's counter price" });
+                                        fetchRequests();
+                                      }
+                                    }}
+                                  >
+                                    Accept Counter
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openOfferDialog(request)}
+                                  >
+                                    New Offer
+                                  </Button>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        }
+                        return myOffers[request.id] ? (
+                          <Button className="flex-1 w-full" variant="outline" disabled>
+                            <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                            Offer Sent
+                          </Button>
+                        ) : (
+                          <Button
+                            className="flex-1 w-full bg-red-600 hover:bg-red-700"
+                            onClick={() => openOfferDialog(request)}
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            Send Offer
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>

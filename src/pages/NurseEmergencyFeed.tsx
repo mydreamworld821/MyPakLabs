@@ -94,6 +94,7 @@ export default function NurseEmergencyFeed() {
   const [nurseProfile, setNurseProfile] = useState<NurseProfile | null>(null);
   const [requests, setRequests] = useState<EmergencyRequest[]>([]);
   const [myOffers, setMyOffers] = useState<Record<string, boolean>>({});
+  const [myOfferDetails, setMyOfferDetails] = useState<Array<{ request_id: string; status: string; patient_counter_price: number | null }>>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   
   // Offer dialog state

@@ -604,14 +604,14 @@ export default function EmergencyRequestStatus() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-yellow-500" />
-                Nurse Offers ({offers.filter(o => o.status === "pending").length})
+                Nurse Offers ({offers.filter(o => o.status === "pending" || o.status === "countered").length})
               </h2>
               <Button variant="ghost" size="sm" onClick={fetchOffers}>
                 <RefreshCw className="w-4 h-4 mr-1" /> Refresh
               </Button>
             </div>
 
-            {offers.filter(o => o.status === "pending").length === 0 ? (
+            {offers.filter(o => o.status === "pending" || o.status === "countered").length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="py-8 text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-3" />
@@ -622,7 +622,7 @@ export default function EmergencyRequestStatus() {
                 </CardContent>
               </Card>
             ) : (
-              offers.filter(o => o.status === "pending").map((offer) => (
+              offers.filter(o => o.status === "pending" || o.status === "countered").map((offer) => (
                 <Card key={offer.id} className="hover:border-red-200 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">

@@ -478,6 +478,7 @@ export default function NurseEmergencyFeed() {
                                         .from("nurse_offers")
                                         .update({ 
                                           offered_price: offerDetail.patient_counter_price!,
+                                          patient_counter_price: null,
                                           status: "pending" as any 
                                         })
                                         .eq("request_id", request.id)

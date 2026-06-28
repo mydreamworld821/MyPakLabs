@@ -159,7 +159,7 @@ const NurseDetail = () => {
         .single();
 
       if (error) throw error;
-      setNurse(data);
+      setNurse(data as unknown as Nurse);
     } catch (error) {
       console.error("Error fetching nurse:", error);
     } finally {

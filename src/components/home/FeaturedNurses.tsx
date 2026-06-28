@@ -80,10 +80,11 @@ const FeaturedNurses = ({ className }: FeaturedNursesProps) => {
 
         if (error) throw error;
 
-        setNurses(data || []);
+        const nursesData = (data || []) as unknown as Nurse[];
+        setNurses(nursesData);
 
         // Extract unique cities
-        const uniqueCities = [...new Set((data || [])
+        const uniqueCities = [...new Set(nursesData
           .map(n => n.city)
           .filter((city): city is string => !!city)
         )];

@@ -463,7 +463,7 @@ const HealthPosts = () => {
 
                 <div
                   className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: viewingPost.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(viewingPost.content || "") }}
                 />
 
                 <div className="flex justify-end gap-2 pt-4 border-t">

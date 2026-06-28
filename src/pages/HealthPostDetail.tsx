@@ -418,7 +418,7 @@ const HealthPostDetail = () => {
 
             <div
               className="prose prose-sm dark:prose-invert max-w-none mb-6"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || "") }}
             />
 
             {post.tags && post.tags.length > 0 && (

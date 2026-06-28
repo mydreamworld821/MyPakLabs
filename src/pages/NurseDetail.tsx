@@ -152,7 +152,7 @@ const NurseDetail = () => {
     
     try {
       const { data, error } = await supabase
-        .from("nurses")
+        .from("public_nurses" as any)
         .select("*")
         .eq("id", id)
         .eq("status", "approved")

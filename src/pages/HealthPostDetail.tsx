@@ -113,7 +113,7 @@ const HealthPostDetail = () => {
 
       const userIds = [...new Set(data.filter(c => !c.is_doctor_reply).map(c => c.user_id))];
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("public_profiles" as any)
         .select("user_id, full_name")
         .in("user_id", userIds);
       

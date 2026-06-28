@@ -57,7 +57,7 @@ export const AppReviewCard = ({ review, isAdmin = false }: AppReviewCardProps) =
       if (userIds.length === 0) return [] as ReviewReply[];
 
       const { data: profilesData } = await supabase
-        .from("profiles")
+        .from("public_profiles" as any)
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
 

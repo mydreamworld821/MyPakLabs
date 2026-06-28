@@ -4,6 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useFirebasePushNotifications } from '@/hooks/useFirebasePushNotifications';
 import EmergencyFlashNotification from '@/components/EmergencyFlashNotification';
+import CounterOfferFlashNotification, { CounterRole } from '@/components/CounterOfferFlashNotification';
+
+interface CounterFlash {
+  offerId: string;
+  requestId: string;
+  role: CounterRole;
+  counterpartyName: string;
+  myCurrentPrice: number;
+  theirCounterPrice: number;
+  etaMinutes?: number;
+}
 
 // Global Error Boundary for the entire notification system
 class NotificationSystemErrorBoundary extends Component<

@@ -1968,6 +1968,13 @@ export type Database = {
             referencedRelation: "nurses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "nurse_bookings_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "public_nurses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       nurse_commission_payments: {
@@ -2025,6 +2032,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "nurse_commission_payments_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "public_nurses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "nurse_commission_payments_wallet_id_fkey"
             columns: ["wallet_id"]
             isOneToOne: false
@@ -2073,6 +2087,13 @@ export type Database = {
             columns: ["nurse_id"]
             isOneToOne: false
             referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_emergency_tracking_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "public_nurses"
             referencedColumns: ["id"]
           },
           {
@@ -2136,6 +2157,13 @@ export type Database = {
             referencedRelation: "nurses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "nurse_hospitals_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "public_nurses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       nurse_offers: {
@@ -2193,6 +2221,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "nurse_offers_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "public_nurses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "nurse_offers_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
@@ -2244,6 +2279,13 @@ export type Database = {
             columns: ["nurse_id"]
             isOneToOne: false
             referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_wallet_transactions_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "public_nurses"
             referencedColumns: ["id"]
           },
           {
@@ -2301,6 +2343,13 @@ export type Database = {
             columns: ["nurse_id"]
             isOneToOne: true
             referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_wallets_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: true
+            referencedRelation: "public_nurses"
             referencedColumns: ["id"]
           },
         ]
@@ -3343,7 +3392,111 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_nurses: {
+        Row: {
+          available_days: string[] | null
+          available_shifts: string[] | null
+          certifications: string[] | null
+          city: string | null
+          created_at: string | null
+          emergency_available: boolean | null
+          experience_years: number | null
+          featured_order: number | null
+          fee_negotiable: boolean | null
+          full_name: string | null
+          gender: string | null
+          home_visit_radius: number | null
+          id: string | null
+          institute_name: string | null
+          is_featured: boolean | null
+          languages_spoken: string[] | null
+          monthly_package_fee: number | null
+          per_hour_fee: number | null
+          per_visit_fee: number | null
+          photo_url: string | null
+          qualification: string | null
+          rating: number | null
+          review_count: number | null
+          services_offered: string[] | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          available_days?: string[] | null
+          available_shifts?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          created_at?: string | null
+          emergency_available?: boolean | null
+          experience_years?: number | null
+          featured_order?: number | null
+          fee_negotiable?: boolean | null
+          full_name?: string | null
+          gender?: string | null
+          home_visit_radius?: number | null
+          id?: string | null
+          institute_name?: string | null
+          is_featured?: boolean | null
+          languages_spoken?: string[] | null
+          monthly_package_fee?: number | null
+          per_hour_fee?: number | null
+          per_visit_fee?: number | null
+          photo_url?: string | null
+          qualification?: string | null
+          rating?: number | null
+          review_count?: number | null
+          services_offered?: string[] | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          available_days?: string[] | null
+          available_shifts?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          created_at?: string | null
+          emergency_available?: boolean | null
+          experience_years?: number | null
+          featured_order?: number | null
+          fee_negotiable?: boolean | null
+          full_name?: string | null
+          gender?: string | null
+          home_visit_radius?: number | null
+          id?: string | null
+          institute_name?: string | null
+          is_featured?: boolean | null
+          languages_spoken?: string[] | null
+          monthly_package_fee?: number | null
+          per_hour_fee?: number | null
+          per_visit_fee?: number | null
+          photo_url?: string | null
+          qualification?: string | null
+          rating?: number | null
+          review_count?: number | null
+          services_offered?: string[] | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_nurse_earnings: {

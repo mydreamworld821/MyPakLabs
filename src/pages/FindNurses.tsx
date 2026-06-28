@@ -95,7 +95,7 @@ const FindNurses = () => {
     setLoading(true);
     try {
       let query = supabase
-        .from("nurses")
+        .from("public_nurses" as any)
         .select("*")
         .eq("status", "approved")
         .order("is_featured", { ascending: false })
@@ -117,7 +117,7 @@ const FindNurses = () => {
 
       if (error) throw error;
 
-      let filteredNurses = data || [];
+      let filteredNurses = (data || []) as unknown as Nurse[];
 
       // Filter by service
       if (selectedService !== "all") {

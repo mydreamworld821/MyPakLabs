@@ -42,7 +42,7 @@ const HomeNursingInCity = () => {
       if (!city) return;
       
       const { data, error } = await supabase
-        .from("nurses")
+        .from("public_nurses" as any)
         .select("*")
         .eq("status", "approved")
         .ilike("city", formattedCity)
@@ -52,7 +52,7 @@ const HomeNursingInCity = () => {
       if (error) {
         console.error("Error fetching nurses:", error);
       } else {
-        setNurses(data || []);
+        setNurses((data || []) as any);
         if (data?.length === 0) {
           const { data: cityData } = await supabase
             .from("cities")

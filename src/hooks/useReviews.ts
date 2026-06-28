@@ -49,10 +49,11 @@ export const useReviews = (entityType?: ReviewEntityType, entityId?: string | nu
 
       // Fetch profiles for each review
       const userIds = [...new Set(reviewsData.map(r => r.user_id))];
-      const { data: profilesData } = await supabase
-        .from('profiles')
+      const { data: profilesRaw } = await supabase
+        .from('public_profiles' as any)
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
+      const profilesData = (profilesRaw || []) as unknown as Array<{ user_id: string; full_name: string | null; avatar_url: string | null }>;
 
       // Merge profiles with reviews
       const reviewsWithProfiles = reviewsData.map(review => ({
@@ -60,7 +61,7 @@ export const useReviews = (entityType?: ReviewEntityType, entityId?: string | nu
         profiles: profilesData?.find(p => p.user_id === review.user_id) || null,
       }));
 
-      return reviewsWithProfiles as Review[];
+      return reviewsWithProfiles as unknown as Review[];
     },
     enabled: !!entityType,
   });
@@ -208,10 +209,11 @@ export const useFeaturedReviews = (limit = 6) => {
 
       // Fetch profiles for each review
       const userIds = [...new Set(reviewsData.map(r => r.user_id))];
-      const { data: profilesData } = await supabase
-        .from('profiles')
+      const { data: profilesRaw } = await supabase
+        .from('public_profiles' as any)
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
+      const profilesData = (profilesRaw || []) as unknown as Array<{ user_id: string; full_name: string | null; avatar_url: string | null }>;
 
       // Merge profiles with reviews
       const reviewsWithProfiles = reviewsData.map(review => ({
@@ -219,7 +221,7 @@ export const useFeaturedReviews = (limit = 6) => {
         profiles: profilesData?.find(p => p.user_id === review.user_id) || null,
       }));
 
-      return reviewsWithProfiles as Review[];
+      return reviewsWithProfiles as unknown as Review[];
     },
   });
 };

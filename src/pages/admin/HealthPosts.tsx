@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -463,7 +464,7 @@ const HealthPosts = () => {
 
                 <div
                   className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: viewingPost.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(viewingPost.content || "") }}
                 />
 
                 <div className="flex justify-end gap-2 pt-4 border-t">

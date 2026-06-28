@@ -34,7 +34,7 @@ const FeaturedNurses = ({ className }: FeaturedNursesProps) => {
       try {
         // First try to get featured nurses
         let { data, error } = await supabase
-          .from("nurses")
+          .from("public_nurses" as any)
           .select(`
             id,
             full_name,
@@ -56,7 +56,7 @@ const FeaturedNurses = ({ className }: FeaturedNursesProps) => {
         // If no featured nurses, fallback to top rated approved nurses
         if (!data || data.length === 0) {
           const fallback = await supabase
-            .from("nurses")
+            .from("public_nurses" as any)
             .select(`
               id,
               full_name,
@@ -80,10 +80,11 @@ const FeaturedNurses = ({ className }: FeaturedNursesProps) => {
 
         if (error) throw error;
 
-        setNurses(data || []);
+        const nursesData = (data || []) as unknown as Nurse[];
+        setNurses(nursesData);
 
         // Extract unique cities
-        const uniqueCities = [...new Set((data || [])
+        const uniqueCities = [...new Set(nursesData
           .map(n => n.city)
           .filter((city): city is string => !!city)
         )];

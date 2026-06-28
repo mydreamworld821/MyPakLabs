@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,10 +112,11 @@ const HealthPostDetail = () => {
       if (error) throw error;
 
       const userIds = [...new Set(data.filter(c => !c.is_doctor_reply).map(c => c.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
+      const { data: profilesRaw } = await supabase
+        .from("public_profiles" as any)
         .select("user_id, full_name")
         .in("user_id", userIds);
+      const profiles = (profilesRaw || []) as unknown as Array<{ user_id: string; full_name: string | null }>;
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
 
@@ -418,7 +420,7 @@ const HealthPostDetail = () => {
 
             <div
               className="prose prose-sm dark:prose-invert max-w-none mb-6"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || "") }}
             />
 
             {post.tags && post.tags.length > 0 && (

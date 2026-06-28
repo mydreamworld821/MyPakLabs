@@ -152,14 +152,14 @@ const NurseDetail = () => {
     
     try {
       const { data, error } = await supabase
-        .from("nurses")
+        .from("public_nurses" as any)
         .select("*")
         .eq("id", id)
         .eq("status", "approved")
         .single();
 
       if (error) throw error;
-      setNurse(data);
+      setNurse(data as unknown as Nurse);
     } catch (error) {
       console.error("Error fetching nurse:", error);
     } finally {

@@ -22,7 +22,7 @@ const TrustSection = () => {
       const [doctorsRes, labsRes, nursesRes, hospitalsRes] = await Promise.all([
         supabase.from('doctors').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
         supabase.from('labs').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('nurses').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('public_nurses' as any).select('id', { count: 'exact', head: true }).eq('status', 'approved'),
         supabase.from('hospitals').select('id', { count: 'exact', head: true }).eq('is_active', true)
       ]);
       

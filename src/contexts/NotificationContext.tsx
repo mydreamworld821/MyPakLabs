@@ -502,6 +502,14 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
           />
         )}
       </NotificationSystemErrorBoundary>
+
+      {counterFlash && (
+        <CounterOfferFlashNotification
+          {...counterFlash}
+          onDismiss={() => setCounterFlash(null)}
+          autoHideSeconds={60}
+        />
+      )}
     </NotificationContext.Provider>
   );
 };

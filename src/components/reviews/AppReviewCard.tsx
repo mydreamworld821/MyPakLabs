@@ -56,10 +56,11 @@ export const AppReviewCard = ({ review, isAdmin = false }: AppReviewCardProps) =
       const userIds = [...new Set((data || []).map((r: any) => r.user_id))];
       if (userIds.length === 0) return [] as ReviewReply[];
 
-      const { data: profilesData } = await supabase
+      const { data: profilesRaw } = await supabase
         .from("public_profiles" as any)
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
+      const profilesData = (profilesRaw || []) as unknown as Array<{ user_id: string; full_name: string | null; avatar_url: string | null }>;
 
       return (data || []).map((reply: any) => ({
         ...reply,

@@ -112,10 +112,11 @@ const HealthPostDetail = () => {
       if (error) throw error;
 
       const userIds = [...new Set(data.filter(c => !c.is_doctor_reply).map(c => c.user_id))];
-      const { data: profiles } = await supabase
+      const { data: profilesRaw } = await supabase
         .from("public_profiles" as any)
         .select("user_id, full_name")
         .in("user_id", userIds);
+      const profiles = (profilesRaw || []) as unknown as Array<{ user_id: string; full_name: string | null }>;
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
 

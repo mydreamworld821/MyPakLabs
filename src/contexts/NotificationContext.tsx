@@ -110,6 +110,11 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   const [isApprovedNurse, setIsApprovedNurse] = useState(false);
   const [nurseLocation, setNurseLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nurseRadius, setNurseRadius] = useState<number>(10); // Default 10km
+  const [counterFlash, setCounterFlash] = useState<CounterFlash | null>(null);
+
+  const playBeep = useCallback(() => {
+    try { playNotificationSound(); } catch { /* noop */ }
+  }, [playNotificationSound]);
 
   // Get nurse's current location
   useEffect(() => {

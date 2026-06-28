@@ -353,6 +353,89 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     };
   }, [handleNewEmergencyRequest]);
 
+  // === Counter-offer flash subscriptions ===
+  // Nurse side: my offer was countered by patient (patient_counter_price set, status='countered')
+  useEffect(() => {
+    if (!isApprovedNurse || !nurseId) return;
+    const channel = supabase
+      .channel(`nurse-counter-flash-${nurseId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'nurse_offers', filter: `nurse_id=eq.${nurseId}` },
+        async (payload: any) => {
+          const n = payload.new, o = payload.old;
+          if (!n) return;
+          // Patient just set/changed a counter price
+          const counterChanged = n.patient_counter_price && n.patient_counter_price !== o?.patient_counter_price;
+          if (!counterChanged || n.status !== 'countered') return;
+          // Look up patient name
+          const { data: req } = await supabase
+            .from('emergency_nursing_requests')
+            .select('patient_name')
+            .eq('id', n.request_id)
+            .maybeSingle();
+          playBeep();
+          setCounterFlash({
+            offerId: n.id,
+            requestId: n.request_id,
+            role: 'nurse',
+            counterpartyName: req?.patient_name || 'Patient',
+            myCurrentPrice: n.offered_price,
+            theirCounterPrice: n.patient_counter_price,
+            etaMinutes: n.eta_minutes,
+          });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isApprovedNurse, nurseId, playBeep]);
+
+  // Patient side: nurse responded to my counter (counter cleared OR price changed back to pending after countered)
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`patient-counter-flash-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'nurse_offers' },
+        async (payload: any) => {
+          const n = payload.new, o = payload.old;
+          if (!n) return;
+          // Did nurse send a new price after our counter? (status went countered -> pending and offered_price changed)
+          const nurseResponded =
+            o?.status === 'countered' &&
+            n.status === 'pending' &&
+            n.offered_price !== o.offered_price;
+          if (!nurseResponded) return;
+          // Verify the request belongs to current patient
+          const { data: req } = await supabase
+            .from('emergency_nursing_requests')
+            .select('patient_id, patient_name')
+            .eq('id', n.request_id)
+            .maybeSingle();
+          if (!req || req.patient_id !== user.id) return;
+          const { data: nurseRow } = await supabase
+            .from('nurses')
+            .select('full_name')
+            .eq('id', n.nurse_id)
+            .maybeSingle();
+          playBeep();
+          setCounterFlash({
+            offerId: n.id,
+            requestId: n.request_id,
+            role: 'patient',
+            counterpartyName: nurseRow?.full_name || 'Nurse',
+            myCurrentPrice: o?.patient_counter_price || o?.offered_price || 0,
+            theirCounterPrice: n.offered_price,
+            etaMinutes: n.eta_minutes,
+          });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, playBeep]);
+
+
   // Combined permission request that also enables FCM
   const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
     const browserResult = await requestPermission();

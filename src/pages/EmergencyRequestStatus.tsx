@@ -181,10 +181,9 @@ export default function EmergencyRequestStatus() {
           table: 'nurse_emergency_tracking',
           filter: `request_id=eq.${id}`,
         },
-        (payload) => {
-          if (payload.new) {
-            setTracking(payload.new as Tracking);
-          }
+        () => {
+          // Always re-fetch fresh row from DB so patient & nurse stay in sync
+          fetchTracking();
         }
       )
       .subscribe();

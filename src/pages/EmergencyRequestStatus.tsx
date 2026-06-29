@@ -149,7 +149,11 @@ export default function EmergencyRequestStatus() {
         },
         (payload) => {
           if (payload.new) {
-            setRequest(payload.new as EmergencyRequest);
+            const next = payload.new as EmergencyRequest;
+            setRequest(next);
+            if (next.status === "accepted" || next.status === "in_progress") {
+              fetchTracking();
+            }
           }
         }
       )
@@ -181,10 +185,9 @@ export default function EmergencyRequestStatus() {
           table: 'nurse_emergency_tracking',
           filter: `request_id=eq.${id}`,
         },
-        (payload) => {
-          if (payload.new) {
-            setTracking(payload.new as Tracking);
-          }
+        () => {
+          // Always re-fetch fresh row from DB so patient & nurse stay in sync
+          fetchTracking();
         }
       )
       .subscribe();

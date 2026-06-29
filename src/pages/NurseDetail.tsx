@@ -73,6 +73,7 @@ interface Nurse {
   gender: string;
   phone: string;
   whatsapp_number: string | null;
+  status?: string;
 }
 
 interface HospitalAffiliation {
@@ -155,7 +156,6 @@ const NurseDetail = () => {
         .from("public_nurses" as any)
         .select("*")
         .eq("id", id)
-        .eq("status", "approved")
         .single();
 
       if (error) throw error;
@@ -211,7 +211,12 @@ const NurseDetail = () => {
 
   const handleSubmitBooking = async () => {
     if (!nurse) return;
-    
+
+    if (nurse.status === "suspended") {
+      toast.error("This nurse is currently suspended and cannot accept bookings.");
+      return;
+    }
+
     if (!bookingForm.patient_name || !bookingForm.patient_phone || !bookingForm.service_needed || !bookingForm.preferred_date || !bookingForm.preferred_time) {
       toast.error("Please fill all required fields");
       return;
@@ -350,10 +355,17 @@ const NurseDetail = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl font-bold">{nurse.full_name}</h1>
-                  <Badge className="bg-white/20 text-white">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    PNC Verified
-                  </Badge>
+                  {nurse.status === "suspended" ? (
+                    <Badge className="bg-orange-500 text-white hover:bg-orange-500">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Suspended
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-white/20 text-white">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      PNC Verified
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm text-white/80 mt-1">{nurse.qualification}</p>
                 <div className="flex items-center gap-4 mt-2 flex-wrap">
@@ -370,7 +382,7 @@ const NurseDetail = () => {
                     {nurse.experience_years} years experience
                   </div>
                 </div>
-                {nurse.emergency_available && (
+                {nurse.status !== "suspended" && nurse.emergency_available && (
                   <Badge variant="destructive" className="mt-2">
                     <AlertCircle className="w-3 h-3 mr-1" />
                     Available for Emergency
@@ -640,31 +652,41 @@ const NurseDetail = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="space-y-2">
-                    <Button 
-                      className="w-full bg-rose-600 hover:bg-rose-700" 
-                      onClick={() => setShowBookingDialog(true)}
-                    >
-                      <CalendarPlus className="w-4 h-4 mr-2" />
-                      Book Home Visit
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      className="w-full" 
-                      onClick={handleCall}
-                    >
-                      <Phone className="w-4 h-4 mr-2" />
-                      Call Now
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-green-600 text-green-600 hover:bg-green-50"
-                      onClick={handleWhatsApp}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      WhatsApp
-                    </Button>
-                  </div>
+                  {nurse.status === "suspended" ? (
+                    <div className="p-3 rounded-lg border border-orange-300 bg-orange-50 text-orange-800 text-xs flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold mb-0.5">Profile Suspended</p>
+                        <p>This nurse is temporarily suspended and is not accepting new bookings or calls. Please choose another nurse.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full bg-rose-600 hover:bg-rose-700" 
+                        onClick={() => setShowBookingDialog(true)}
+                      >
+                        <CalendarPlus className="w-4 h-4 mr-2" />
+                        Book Home Visit
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="w-full" 
+                        onClick={handleCall}
+                      >
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call Now
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-green-600 text-green-600 hover:bg-green-50"
+                        onClick={handleWhatsApp}
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        WhatsApp
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Booking Dialog */}
                   <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>

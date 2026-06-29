@@ -240,7 +240,6 @@ export default function NurseActiveJob() {
           nurse_id: nurseId,
           current_lat: position.latitude,
           current_lng: position.longitude,
-          status: "on_way",
         }, { onConflict: "request_id,nurse_id" });
     }
 
@@ -255,7 +254,6 @@ export default function NurseActiveJob() {
             nurse_id: nurseId,
             current_lat: pos.latitude,
             current_lng: pos.longitude,
-            status: tracking?.status || "on_way",
           }, { onConflict: "request_id,nurse_id" });
       },
       (error) => console.error("Watch error:", error)
@@ -293,7 +291,6 @@ export default function NurseActiveJob() {
           nurse_id: nurseId,
           current_lat: position.latitude,
           current_lng: position.longitude,
-          status: tracking?.status || "on_way",
         }, {
           onConflict: "request_id,nurse_id"
         });
@@ -354,6 +351,11 @@ export default function NurseActiveJob() {
     }
 
     setUpdating(false);
+    setTracking((prev) => ({
+      status: newStatus,
+      arrived_at: newStatus === "arrived" ? updateData.arrived_at : prev?.arrived_at ?? null,
+      service_started_at: newStatus === "in_service" ? updateData.service_started_at : prev?.service_started_at ?? null,
+    }));
     fetchTracking();
     toast({ title: `Status updated: ${newStatus.replace("_", " ").toUpperCase()}` });
   };

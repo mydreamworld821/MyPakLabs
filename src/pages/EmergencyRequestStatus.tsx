@@ -149,7 +149,11 @@ export default function EmergencyRequestStatus() {
         },
         (payload) => {
           if (payload.new) {
-            setRequest(payload.new as EmergencyRequest);
+            const next = payload.new as EmergencyRequest;
+            setRequest(next);
+            if (next.status === "accepted" || next.status === "in_progress") {
+              fetchTracking();
+            }
           }
         }
       )

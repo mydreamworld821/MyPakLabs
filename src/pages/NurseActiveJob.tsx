@@ -316,30 +316,46 @@ export default function NurseActiveJob() {
       updateData.service_started_at = new Date().toISOString();
     }
 
-    // Get current location
-    const position = await getCurrentPosition();
-    if (position) {
-      updateData.current_lat = position.latitude;
-      updateData.current_lng = position.longitude;
-
-      await supabase
-        .from("nurse_emergency_tracking")
-        .upsert(updateData, { onConflict: "request_id,nurse_id" });
-
-      if (newStatus === "in_service") {
-        await supabase
-          .from("emergency_nursing_requests")
-          .update({ status: "in_progress" })
-          .eq("id", id);
+    // Location is optional — never block status updates if GPS is denied/unavailable
+    try {
+      const position = await getCurrentPosition();
+      if (position) {
+        updateData.current_lat = position.latitude;
+        updateData.current_lng = position.longitude;
+      } else if (job) {
+        updateData.current_lat = job.location_lat;
+        updateData.current_lng = job.location_lng;
       }
-
-      setUpdating(false);
-      fetchTracking();
-      toast({ title: `Status updated: ${newStatus.replace("_", " ").toUpperCase()}` });
-    } else {
-      setUpdating(false);
-      toast({ title: "Error", description: "Could not get location", variant: "destructive" });
+    } catch (e) {
+      console.warn("Location unavailable, proceeding without GPS", e);
+      if (job) {
+        updateData.current_lat = job.location_lat;
+        updateData.current_lng = job.location_lng;
+      }
     }
+
+    const { error } = await supabase
+      .from("nurse_emergency_tracking")
+      .upsert(updateData, { onConflict: "request_id,nurse_id" });
+
+    if (error) {
+      setUpdating(false);
+      console.error("Tracking update error:", error);
+      toast({ title: "Error", description: error.message || "Failed to update status", variant: "destructive" });
+      return;
+    }
+
+    if (newStatus === "in_service") {
+      const { error: reqErr } = await supabase
+        .from("emergency_nursing_requests")
+        .update({ status: "in_progress" })
+        .eq("id", id);
+      if (reqErr) console.error("Request status update error:", reqErr);
+    }
+
+    setUpdating(false);
+    fetchTracking();
+    toast({ title: `Status updated: ${newStatus.replace("_", " ").toUpperCase()}` });
   };
 
   const handleComplete = async () => {
